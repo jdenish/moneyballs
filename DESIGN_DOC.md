@@ -42,11 +42,11 @@ After seeding:
 
 ---
 
-## Pot System (Balanced Scheduling)
+## Pod System (Balanced Scheduling)
 
 Teams are seeded 1-16 and divided into 4 pots:
 
-| Pot A (1-4) | Pot B (5-8) | Pot C (9-12) | Pot D (13-16) |
+| Pod A (1-4) | Pod B (5-8) | Pod C (9-12) | Pod D (13-16) |
 |-------------|-------------|--------------|---------------|
 | Seed 1      | Seed 5      | Seed 9       | Seed 13       |
 | Seed 2      | Seed 6      | Seed 10      | Seed 14       |
@@ -412,7 +412,7 @@ Current tournament app already exports compatible JSON via **💾 Save** button.
 ### Phase 1: Current App ✅
 - [x] Tournament manager app
 - [x] Import teams, DUPR tracking
-- [x] Pot system with balanced scheduling
+- [x] Pod system with balanced scheduling
 - [x] Round robin scoring
 - [x] Double elimination bracket
 - [x] Save/Load progress (JSON)
