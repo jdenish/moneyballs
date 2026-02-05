@@ -164,6 +164,14 @@ L-Final (L-Semi winner vs W-Final loser):
 
 ## App Features
 
+### Live Site
+**https://jdenish.github.io/moneyballs/Jordan_Moneyball.html**
+
+### Deployment
+Files are deployed to GitHub Pages via the GitHub API. After making changes locally, Claude can push updates to the repo without touching work git config.
+
+**GitHub Repo:** https://github.com/jdenish/moneyballs
+
 ### Files
 - `Jordan_Moneyball.html` - CDN version (needs internet on first load)
 - `Jordan_Moneyball_offline.html` - Fully offline, no internet needed
@@ -186,6 +194,18 @@ L-Final (L-Semi winner vs W-Final loser):
 - **Drag & Drop Seeding** - Reorder teams on Setup page by dragging (☰ handle)
 - **🔗 Share Link** - Copy URL to clipboard for spectators to view live bracket
 - **Spectator Mode** - Read-only view when opening shared link (no editing controls)
+
+### How Share Link Works
+The **🔗 Share Link** button encodes the entire tournament state (teams, scores, bracket) into the URL as a base64 string after `?s=`.
+
+**Tournament day workflow:**
+1. Enter scores as games finish
+2. Click **🔗 Share Link** → URL copied to clipboard
+3. Paste new link in group chat / text message
+4. Spectators open link to see current bracket (read-only)
+5. Repeat after each round of updates
+
+**Note:** Each click generates a NEW URL because the state changes. Spectators need the latest link to see latest scores (no auto-refresh).
 
 ### Color Coding
 - **Gray border** - Waiting for teams
@@ -405,8 +425,8 @@ Current tournament app already exports compatible JSON via **💾 Save** button.
 - [x] Bo3 individual game score display
 
 ### Phase 2: Master Site Foundation
-- [ ] Set up GitHub repository
-- [ ] Deploy current app to GitHub Pages
+- [x] Set up GitHub repository (https://github.com/jdenish/moneyballs)
+- [x] Deploy current app to GitHub Pages (https://jdenish.github.io/moneyballs/)
 - [ ] Create history page (list all tournaments)
 - [ ] Create tournament detail page (read-only bracket view)
 - [ ] Add "Submit Tournament" button to main app
