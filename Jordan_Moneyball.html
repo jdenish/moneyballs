@@ -868,21 +868,90 @@ Matthew Chen / Johny Mario`);
 
         let results = `JORDAN'S MONEYBALLS - ${date}\n`;
         results += `==================================================\n\n`;
-        results += `FINAL STANDINGS\n`;
+        results += `🏆 FINAL STANDINGS (BRACKET)\n`;
         results += `------------------------------\n`;
-        results += `1st ($520): ${winner ? winner.name : 'TBD'}\n`;
-        results += `2nd ($220): ${second ? second.name : 'TBD'}\n`;
-        results += `3rd ($100): ${third ? third.name : 'TBD'}\n\n`;
-        results += `TEAMS\n`;
+        results += `🥇 1st ($520): ${winner ? winner.name : 'TBD'}\n`;
+        results += `🥈 2nd ($220): ${second ? second.name : 'TBD'}\n`;
+        results += `🥉 3rd ($100): ${third ? third.name : 'TBD'}\n\n`;
+
+        results += `TEAMS (INITIAL SEEDING)\n`;
         results += `------------------------------\n`;
         teams.forEach((t, i) => {
           results += `${i + 1}. ${getTeamName(t)}${getTeamDupr(t) ? ` (${getTeamDupr(t)})` : ''}\n`;
         });
-        results += `\nSEEDING RESULTS\n`;
+
+        results += `\n==================================================\n`;
+        results += `ROUND ROBIN SCORES\n`;
+        results += `==================================================\n\n`;
+
+        results += `GAME 1\n`;
+        results += `------------------------------\n`;
+        seedingMatches.game1.forEach(m => {
+          const score = seedingScores[m.id];
+          if (score && score.s1 !== undefined && score.s2 !== undefined) {
+            const s1Won = parseInt(score.s1) > parseInt(score.s2);
+            results += `${s1Won ? '✓' : ' '} ${m.t1.name} ${score.s1}-${score.s2} ${m.t2.name} ${!s1Won ? '✓' : ''}\n`;
+          }
+        });
+
+        results += `\nGAME 2\n`;
+        results += `------------------------------\n`;
+        seedingMatches.game2.forEach(m => {
+          const score = seedingScores[m.id];
+          if (score && score.s1 !== undefined && score.s2 !== undefined) {
+            const s1Won = parseInt(score.s1) > parseInt(score.s2);
+            results += `${s1Won ? '✓' : ' '} ${m.t1.name} ${score.s1}-${score.s2} ${m.t2.name} ${!s1Won ? '✓' : ''}\n`;
+          }
+        });
+
+        results += `\nROUND ROBIN STANDINGS\n`;
         results += `------------------------------\n`;
         standings.forEach((t, i) => {
-          results += `${i + 1}. ${t.name} ${t.wins}-${t.losses} (${t.pf - t.pa >= 0 ? '+' : ''}${t.pf - t.pa})\n`;
+          const bracket = i < 8 ? '→ Winners' : '→ Losers';
+          results += `${i + 1}. ${t.name} ${t.wins}-${t.losses} (${t.pf - t.pa >= 0 ? '+' : ''}${t.pf - t.pa}) ${bracket}\n`;
         });
+
+        results += `\n==================================================\n`;
+        results += `BRACKET SCORES\n`;
+        results += `==================================================\n\n`;
+
+        const formatBracketMatch = (id, label) => {
+          const match = bracketMatches[id];
+          const score = bracketScores[id];
+          if (!match || !match.t1 || !match.t2) return '';
+          if (!score) return `${label}: ${match.t1.name} vs ${match.t2.name} - Not played\n`;
+
+          if (match.bo3 && score.games && score.games.length > 0) {
+            const gameScores = score.games.map(g => `${g.s1}-${g.s2}`).join(', ');
+            const t1Wins = score.games.filter(g => g.s1 > g.s2).length;
+            const t2Wins = score.games.filter(g => g.s2 > g.s1).length;
+            const winner = t1Wins > t2Wins ? match.t1.name : match.t2.name;
+            return `${label}: ${match.t1.name} vs ${match.t2.name} (${gameScores}) → ${winner}\n`;
+          } else if (score.s1 !== undefined && score.s2 !== undefined) {
+            const winner = parseInt(score.s1) > parseInt(score.s2) ? match.t1.name : match.t2.name;
+            return `${label}: ${match.t1.name} ${score.s1}-${score.s2} ${match.t2.name} → ${winner}\n`;
+          }
+          return '';
+        };
+
+        results += `WINNERS BRACKET\n`;
+        results += `------------------------------\n`;
+        ['wqf1', 'wqf2', 'wqf3', 'wqf4'].forEach(id => results += formatBracketMatch(id, 'W-QF'));
+        ['wsf1', 'wsf2'].forEach(id => results += formatBracketMatch(id, 'W-SF'));
+        results += formatBracketMatch('wf', 'W-Final (Bo3)');
+
+        results += `\nLOSERS BRACKET\n`;
+        results += `------------------------------\n`;
+        ['lr1m1', 'lr1m2', 'lr1m3', 'lr1m4'].forEach(id => results += formatBracketMatch(id, 'L-R1'));
+        ['lr2m1', 'lr2m2', 'lr2m3', 'lr2m4'].forEach(id => results += formatBracketMatch(id, 'L-R2'));
+        ['lr3m1', 'lr3m2'].forEach(id => results += formatBracketMatch(id, 'L-R3'));
+        ['lr4m1', 'lr4m2'].forEach(id => results += formatBracketMatch(id, 'L-R4'));
+        results += formatBracketMatch('lsf', 'L-Semi');
+        results += formatBracketMatch('lf', 'L-Final');
+
+        results += `\nGRAND FINAL (Bo3)\n`;
+        results += `------------------------------\n`;
+        results += formatBracketMatch('gf', 'Grand Final');
 
         const blob = new Blob([results], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
@@ -891,7 +960,7 @@ Matthew Chen / Johny Mario`);
         a.download = `moneyballs-results-${new Date().toISOString().split('T')[0]}.txt`;
         a.click();
         URL.revokeObjectURL(url);
-      }, [teams, standings, getTeamName, getTeamDupr, getBracketMatchTeam, getBracketMatchLoser]);
+      }, [teams, standings, seedingMatches, seedingScores, bracketMatches, bracketScores, getTeamName, getTeamDupr, getBracketMatchTeam, getBracketMatchLoser]);
 
       const gfWinner = getBracketMatchTeam('gf');
 
@@ -925,6 +994,7 @@ Matthew Chen / Johny Mario`);
             <button onClick={() => setPhase('roundrobin')} className={`px-3 py-1 rounded text-sm ${phase === 'roundrobin' ? 'bg-blue-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Round Robin</button>
             <button onClick={() => setPhase('standings')} className={`px-3 py-1 rounded text-sm ${phase === 'standings' ? 'bg-cyan-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Standings</button>
             <button onClick={() => setPhase('bracket')} className={`px-3 py-1 rounded text-sm ${phase === 'bracket' ? 'bg-green-600' : 'bg-gray-700'}`} disabled={!allSeedingComplete}>Bracket</button>
+            <button onClick={() => setPhase('results')} className={`px-3 py-1 rounded text-sm ${phase === 'results' ? 'bg-yellow-600' : 'bg-gray-700'}`} disabled={!gfWinner}>Results</button>
           </div>
 
           {phase === 'import' && (
@@ -1187,6 +1257,38 @@ Matthew Chen / Johny Mario`);
                     readOnly={spectatorMode}
                   />
                 </div>
+                <div className="w-56 flex-shrink-0 pt-16">
+                  <h3 className="text-yellow-400 font-semibold mb-2 text-center text-sm">🏆 Grand Final</h3>
+                  <BracketMatch
+                    match={bracketMatches.gf}
+                    score={bracketScores.gf || {}}
+                    override={bracketOverrides.gf}
+                    isOnCourt={onCourt.gf}
+                    showOverride={showOverride}
+                    onScoreChange={(field, value) => handleBracketScore('gf', bracketMatches.gf?.t1, bracketMatches.gf?.t2, field, value)}
+                    onToggleCourt={() => toggleOnCourt('gf')}
+                    onOverride={(team) => handleBracketOverride('gf', team, team === bracketMatches.gf?.t1 ? bracketMatches.gf?.t2 : bracketMatches.gf?.t1)}
+                    onClearOverride={() => clearBracketOverride('gf')}
+                    winner={gfWinner}
+                    readOnly={spectatorMode}
+                  />
+                  {gfWinner && (
+                    <div className="mt-3 bg-gradient-to-r from-yellow-700 to-yellow-600 p-3 rounded text-center border-2 border-yellow-400">
+                      <div className="text-xs text-yellow-200">🥇 CHAMPION ($520)</div>
+                      {gfWinner.name.split(' / ').map((p, i) => (
+                        <div key={i} className="text-sm font-bold text-white">{p}</div>
+                      ))}
+                    </div>
+                  )}
+                  {getBracketMatchLoser('gf') && (
+                    <div className="mt-2 bg-gradient-to-r from-gray-500 to-gray-400 p-2 rounded text-center border border-gray-300">
+                      <div className="text-xs text-gray-200">🥈 2nd ($220)</div>
+                      {getBracketMatchLoser('gf').name.split(' / ').map((p, i) => (
+                        <div key={i} className="text-xs font-semibold text-white">{p}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <h2 className="text-lg font-semibold text-red-400 mb-2">Losers Bracket</h2>
@@ -1302,37 +1404,70 @@ Matthew Chen / Johny Mario`);
                     winner={getBracketMatchTeam('lf')}
                     readOnly={spectatorMode}
                   />
-                </div>
-              </div>
-
-              <div className="flex justify-center mt-4">
-                <div className="w-56">
-                  <h3 className="text-yellow-400 font-semibold mb-2 text-center">🏆 Grand Final</h3>
-                  <BracketMatch
-                    match={bracketMatches.gf}
-                    score={bracketScores.gf || {}}
-                    override={bracketOverrides.gf}
-                    isOnCourt={onCourt.gf}
-                    showOverride={showOverride}
-                    onScoreChange={(field, value) => handleBracketScore('gf', bracketMatches.gf?.t1, bracketMatches.gf?.t2, field, value)}
-                    onToggleCourt={() => toggleOnCourt('gf')}
-                    onOverride={(team) => handleBracketOverride('gf', team, team === bracketMatches.gf?.t1 ? bracketMatches.gf?.t2 : bracketMatches.gf?.t1)}
-                    onClearOverride={() => clearBracketOverride('gf')}
-                    winner={gfWinner}
-                    readOnly={spectatorMode}
-                  />
-                  {gfWinner && (
-                    <div className="mt-4 bg-green-800 p-4 rounded text-center border border-green-500">
-                      <div className="text-sm text-green-300">Champion</div>
-                      <div className="text-lg font-bold">🏆</div>
-                      {gfWinner.name.split(' / ').map((p, i) => (
-                        <div key={i} className="text-base font-bold">{p}</div>
-                      ))}
-                      <button onClick={downloadResults} className="mt-3 bg-green-600 hover:bg-green-500 px-4 py-2 rounded text-sm font-semibold">
-                        📥 Download Results
-                      </button>
+                  {getBracketMatchTeam('lf') && (
+                    <div className="mt-2 text-center">
+                      <div className="text-xs text-yellow-400">↗ to Grand Final</div>
                     </div>
                   )}
+                  {getBracketMatchLoser('lf') && (
+                    <div className="mt-2 bg-gradient-to-r from-amber-800 to-amber-700 p-2 rounded text-center border border-amber-500">
+                      <div className="text-xs text-amber-200">🥉 3rd Place ($100)</div>
+                      {getBracketMatchLoser('lf').name.split(' / ').map((p, i) => (
+                        <div key={i} className="text-xs font-semibold text-white">{p}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {phase === 'results' && (
+            <div className="max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold text-center mb-6">🏆 Final Results</h2>
+
+              <div className="space-y-4">
+                {gfWinner && (
+                  <div className="bg-gradient-to-r from-yellow-700 to-yellow-600 p-6 rounded-lg border-2 border-yellow-400 text-center">
+                    <div className="text-lg text-yellow-200">🥇 1st Place - $520</div>
+                    {gfWinner.name.split(' / ').map((p, i) => (
+                      <div key={i} className="text-2xl font-bold text-white">{p}</div>
+                    ))}
+                  </div>
+                )}
+
+                {getBracketMatchLoser('gf') && (
+                  <div className="bg-gradient-to-r from-gray-500 to-gray-400 p-5 rounded-lg border-2 border-gray-300 text-center">
+                    <div className="text-md text-gray-200">🥈 2nd Place - $220</div>
+                    {getBracketMatchLoser('gf').name.split(' / ').map((p, i) => (
+                      <div key={i} className="text-xl font-bold text-white">{p}</div>
+                    ))}
+                  </div>
+                )}
+
+                {getBracketMatchLoser('lf') && (
+                  <div className="bg-gradient-to-r from-amber-800 to-amber-700 p-4 rounded-lg border-2 border-amber-500 text-center">
+                    <div className="text-sm text-amber-200">🥉 3rd Place - $100</div>
+                    {getBracketMatchLoser('lf').name.split(' / ').map((p, i) => (
+                      <div key={i} className="text-lg font-bold text-white">{p}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-8 text-center">
+                <button onClick={downloadResults} className="bg-green-600 hover:bg-green-500 px-6 py-3 rounded-lg text-lg font-semibold">
+                  📥 Download Full Results
+                </button>
+              </div>
+
+              <div className="mt-8 bg-gray-800 rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-3 text-center">Tournament Summary</h3>
+                <div className="text-sm text-gray-400 space-y-1">
+                  <div className="flex justify-between"><span>Total Prize Pool:</span><span className="text-white">$960</span></div>
+                  <div className="flex justify-between"><span>Entry Fee:</span><span className="text-white">$30/player ($60/team)</span></div>
+                  <div className="flex justify-between"><span>Teams:</span><span className="text-white">16</span></div>
+                  <div className="flex justify-between"><span>Format:</span><span className="text-white">Double Elimination</span></div>
                 </div>
               </div>
             </div>
