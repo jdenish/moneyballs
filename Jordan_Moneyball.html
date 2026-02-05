@@ -924,19 +924,32 @@ Matthew Chen / Johny Mario`);
 
           {phase === 'setup' && (
             <div className="max-w-4xl mx-auto">
-              <h2 className="text-xl font-semibold mb-2 text-center">Teams & Pots</h2>
+              <h2 className="text-xl font-semibold mb-2 text-center">Teams & Pods</h2>
               <p className="text-gray-400 text-xs text-center mb-4">Drag teams to reorder seeding</p>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <div className="flex gap-2 mb-2">
-                    <span className="text-yellow-400 font-semibold">Pot A (1-4)</span>
-                    <span className="text-blue-400 font-semibold">Pot B (5-8)</span>
-                  </div>
-                  {[0, 1, 2, 3, 4, 5, 6, 7].map(i => (
+                  <h3 className="text-yellow-400 font-semibold mb-2">Pod A (1-4)</h3>
+                  {[0, 1, 2, 3].map(i => (
                     <TeamInput
                       key={`team-${i}`}
                       index={i}
-                      color={i < 4 ? 'text-yellow-400' : 'text-blue-400'}
+                      color="text-yellow-400"
+                      team={teams[i]}
+                      dupr={getTeamDupr(teams[i])}
+                      onChange={(field, value) => handleTeamChange(i, field, value)}
+                      onDragStart={handleDragStart}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      isDragging={dragIndex === i}
+                      isDragOver={dragOverIndex === i}
+                    />
+                  ))}
+                  <h3 className="text-blue-400 font-semibold mb-2 mt-4">Pod B (5-8)</h3>
+                  {[4, 5, 6, 7].map(i => (
+                    <TeamInput
+                      key={`team-${i}`}
+                      index={i}
+                      color="text-blue-400"
                       team={teams[i]}
                       dupr={getTeamDupr(teams[i])}
                       onChange={(field, value) => handleTeamChange(i, field, value)}
@@ -949,15 +962,28 @@ Matthew Chen / Johny Mario`);
                   ))}
                 </div>
                 <div>
-                  <div className="flex gap-2 mb-2">
-                    <span className="text-green-400 font-semibold">Pot C (9-12)</span>
-                    <span className="text-red-400 font-semibold">Pot D (13-16)</span>
-                  </div>
-                  {[8, 9, 10, 11, 12, 13, 14, 15].map(i => (
+                  <h3 className="text-green-400 font-semibold mb-2">Pod C (9-12)</h3>
+                  {[8, 9, 10, 11].map(i => (
                     <TeamInput
                       key={`team-${i}`}
                       index={i}
-                      color={i < 12 ? 'text-green-400' : 'text-red-400'}
+                      color="text-green-400"
+                      team={teams[i]}
+                      dupr={getTeamDupr(teams[i])}
+                      onChange={(field, value) => handleTeamChange(i, field, value)}
+                      onDragStart={handleDragStart}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      isDragging={dragIndex === i}
+                      isDragOver={dragOverIndex === i}
+                    />
+                  ))}
+                  <h3 className="text-red-400 font-semibold mb-2 mt-4">Pod D (13-16)</h3>
+                  {[12, 13, 14, 15].map(i => (
+                    <TeamInput
+                      key={`team-${i}`}
+                      index={i}
+                      color="text-red-400"
                       team={teams[i]}
                       dupr={getTeamDupr(teams[i])}
                       onChange={(field, value) => handleTeamChange(i, field, value)}
