@@ -9,7 +9,7 @@ A tournament management app for 16-team doubles pickleball tournaments.
 ## Features
 
 - Import teams and manage seeding with drag & drop
-- Balanced round robin scheduling (pot system)
+- Balanced round robin scheduling (pod system)
 - Double elimination bracket with Bo3 finals
 - Live score tracking with "on court" status
 - Share link for spectators to follow along (read-only view)
