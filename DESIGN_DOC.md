@@ -207,7 +207,13 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 - **Spectator Mode** - Read-only view when opening shared link (no editing controls)
 
 ### How Share Link Works
-The **🔗 Share Link** button encodes the entire tournament state (teams, scores, bracket) into the URL as a base64 string after `?s=`.
+The **🔗 Share Link** button encodes the entire tournament state (teams, scores, bracket) into the URL after `?s=`.
+
+**Technical details:**
+- State is compressed using pako (zlib) before encoding
+- Uses URL-safe base64 (replaces `+` with `-`, `/` with `_`)
+- Compression reduces URL length by ~50-60% for better text message compatibility
+- Backwards compatible with old uncompressed links
 
 **Tournament day workflow:**
 1. Enter scores as games finish
