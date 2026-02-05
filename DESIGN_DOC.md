@@ -168,17 +168,28 @@ L-Final (L-Semi winner vs W-Final loser):
 **https://jdenish.github.io/moneyballs/Jordan_Moneyball.html**
 
 ### Deployment
-Files are deployed to GitHub Pages via the GitHub API. After making changes locally, Claude can push updates to the repo without touching work git config.
+Files are deployed to GitHub Pages via the GitHub API using a Personal Access Token. This keeps work git config completely separate.
 
 **GitHub Repo:** https://github.com/jdenish/moneyballs
+
+**To deploy updates:**
+1. Make changes locally
+2. Tell Claude "push it"
+3. Claude pushes via GitHub API (no local git needed)
+4. Wait ~30 seconds for GitHub Pages to rebuild
+
+**Setup (one-time):**
+- Created fine-grained Personal Access Token at github.com/settings/tokens
+- Token scoped to `jdenish/moneyballs` repo only
+- Permission: Contents (read/write)
 
 ### Files
 - `Jordan_Moneyball.html` - CDN version (needs internet on first load)
 - `Jordan_Moneyball_offline.html` - Fully offline, no internet needed
 
 ### Tabs/Phases
-1. **Import** - Paste team list in "Player 1 / Player 2" format
-2. **Setup** - Edit teams, add DUPR ratings, randomize matchups
+1. **Import** - Team list pre-populated (see "Upcoming Tournament Team List" section), click Import to proceed
+2. **Setup** - Edit teams, add DUPR ratings, drag to reorder seeding, randomize matchups
 3. **Round Robin** - Enter scores for seeding games
 4. **Standings** - Live rankings with W-L, PF, PA, PD
 5. **Bracket** - Double elimination with score entry
