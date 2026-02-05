@@ -192,7 +192,8 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 2. **Setup** - Edit teams, add DUPR ratings, drag to reorder seeding, randomize matchups
 3. **Round Robin** - Enter scores for seeding games
 4. **Standings** - Live rankings with W-L, PF, PA, PD
-5. **Bracket** - Double elimination with score entry
+5. **Bracket** - Double elimination with score entry, Grand Final positioned to the right of W-Final
+6. **Results** - Final standings with 🥇🥈🥉 gold/silver/bronze highlighting and download button (unlocks when Grand Final is complete)
 
 ### Key Features
 - **DUPR Tracking** - Optional player ratings (placeholder "4.5"), shows combined team DUPR
@@ -200,11 +201,12 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 - **Next Up Queue** - Shows ready matches not yet on court
 - **Manual Override** - Force winner without entering scores (checkbox reveals "W" buttons)
 - **Save/Load Progress** - Export/import JSON file
-- **Download Results** - Generate .txt file with final standings
+- **Download Results** - Comprehensive .txt file with all RR scores, bracket scores, and final standings
 - **🎲 Test Scores** - Generate fake scores based on seeding for testing (higher seeds favored ~3% per seed difference)
 - **Drag & Drop Seeding** - Reorder teams on Setup page by dragging (☰ handle)
 - **🔗 Share Link** - Copy URL to clipboard for spectators to view live bracket
 - **Spectator Mode** - Read-only view when opening shared link (no editing controls)
+- **Placement Highlights** - 🥇 Gold, 🥈 Silver, 🥉 Bronze highlighting in bracket and Results tab
 
 ### How Share Link Works
 The **🔗 Share Link** button encodes the entire tournament state (teams, scores, bracket) into the URL after `?s=`.
