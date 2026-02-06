@@ -293,13 +293,13 @@ Matthew Chen / Johny Mario`);
       // Default winners count based on team count
       const defaultWinnersCount = { 12: 12, 13: 8, 14: 8, 15: 8, 16: 8 };
 
-      // Payouts based on team count (prize pool only, not including organizer fee)
+      // Payouts based on team count (prize pool only, $140 organizer fee)
       const payouts = {
-        12: { first: 360, second: 180, third: 60, total: 600 },
-        13: { first: 400, second: 200, third: 60, total: 660 },
-        14: { first: 440, second: 200, third: 80, total: 720 },
-        15: { first: 480, second: 220, third: 80, total: 780 },
-        16: { first: 500, second: 240, third: 100, total: 840 }
+        12: { first: 360, second: 160, third: 60, total: 580 },
+        13: { first: 400, second: 180, third: 60, total: 640 },
+        14: { first: 440, second: 200, third: 60, total: 700 },
+        15: { first: 480, second: 200, third: 80, total: 760 },
+        16: { first: 500, second: 220, third: 100, total: 820 }
       };
       const currentPayouts = payouts[teamCount] || payouts[16];
 
