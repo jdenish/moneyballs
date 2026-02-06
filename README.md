@@ -9,8 +9,11 @@ A tournament management app for 12-16 team doubles pickleball tournaments.
 ## Features
 
 - **12-16 team support** with automatic payout adjustments
-- **Pool system** for 12/16 teams (snake draft seeding, 3 RR games within pool)
-- **Random matchups** for 13/14/15 teams (3 RR games)
+- **Team count selector** - select expected team count, auto-detects from pasted list, validates on import
+- **Configurable RR games** - choose 2 (seed-balanced) or 3 games
+  - 3 games: pools for 12/16 teams (snake draft), random for 13-15
+  - 2 games: seed-balanced matchups (1v2, 3v4, etc.) for all team counts
+- **Pool system** for 12/16 teams with 3 RR games (snake draft seeding)
 - **Configurable bracket split** - choose how many teams go to Winners vs Losers
 - **No-repeat constraint** - teams from same pool won't face each other in bracket R1
 - **Drag & drop seeding** - reorder teams on Setup page
@@ -38,12 +41,13 @@ A tournament management app for 12-16 team doubles pickleball tournaments.
 ## Quick Start
 
 1. Open the [live site](https://jdenish.github.io/moneyballs/Jordan_Moneyball.html)
-2. Paste team list (format: `Player 1 / Player 2`)
-3. Click "Import Teams"
-4. Configure winners bracket size if needed
-5. Click "Randomize Matchups"
-6. Enter scores as games finish
-7. Share link with spectators after each update
+2. Select team count (auto-detects when you paste)
+3. Paste team list (format: `Player 1 / Player 2`)
+4. Click "Import Teams" (validates count matches selection)
+5. Configure RR games (2 or 3) and winners bracket size
+6. Click "Randomize Matchups"
+7. Enter scores as games finish
+8. Share link with spectators after each update
 
 ## Documentation
 
