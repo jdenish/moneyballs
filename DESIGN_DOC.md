@@ -211,14 +211,19 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 - `Jordan_Moneyball_offline.html` - Fully offline, no internet needed
 
 ### Tabs/Phases
-1. **Import** - Team list pre-populated (see "Upcoming Tournament Team List" section), click Import to proceed
-2. **Setup** - Edit teams, add DUPR ratings, drag to reorder seeding, randomize matchups
-3. **Round Robin** - Enter scores for seeding games
-4. **Standings** - Live rankings with W-L, PF, PA, PD
+1. **Import** - Paste team list (12-16 teams), auto-detects count and sets defaults
+2. **Setup** - Edit teams, configure winners bracket size, drag to reorder seeding, randomize matchups
+3. **Round Robin** - Enter scores for 3 seeding games, shows pool assignments for 12/16 teams
+4. **Standings** - Live rankings with W-L, PF, PA, PD, pool indicator
 5. **Bracket** - Double elimination with score entry, Grand Final positioned to the right of W-Final
 6. **Results** - Final standings with 🥇🥈🥉 gold/silver/bronze highlighting and download button (unlocks when Grand Final is complete)
 
 ### Key Features
+- **12-16 Team Support** - Automatic payout adjustments based on team count
+- **Pool System** - Snake draft pools for 12/16 teams, 3 RR games within pool
+- **Random Matchups** - 3 random RR games for 13/14/15 teams
+- **Configurable Bracket Split** - Choose how many teams go to Winners vs Losers (default: 12 all winners, 13-16 gets 8)
+- **No-Repeat Constraint** - Teams from same pool won't face each other in bracket R1, swaps shown in UI
 - **DUPR Tracking** - Optional player ratings (placeholder "4.5"), shows combined team DUPR
 - **On Court Tracking** - Mark matches as "on court" (orange highlight)
 - **Next Up Queue** - Shows ready matches not yet on court
@@ -227,7 +232,7 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 - **Download Results** - Comprehensive .txt file with all RR scores, bracket scores, and final standings
 - **🎲 Test Scores** - Generate fake scores based on seeding for testing (higher seeds favored ~3% per seed difference)
 - **Drag & Drop Seeding** - Reorder teams on Setup page by dragging (☰ handle)
-- **🔗 Share Link** - Copy URL to clipboard for spectators to view live bracket
+- **🔗 Share Link** - Compressed URL for spectators to view live bracket
 - **Spectator Mode** - Read-only view when opening shared link (no editing controls)
 - **Placement Highlights** - 🥇 Gold, 🥈 Silver, 🥉 Bronze highlighting in bracket and Results tab
 
