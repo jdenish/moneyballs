@@ -292,7 +292,6 @@ Copy/paste this into the Import tab:
 ```
 Oscar Serra / Sanil Jagtiani
 Jack Hared / Preston Gordon
-Ted Holway / Alex Szczepkowski
 Matvey Radionov / Matt Meadows
 Lukas Choi / William Hayes
 Jordan Denish / Alex Tong
@@ -302,9 +301,10 @@ Jeff Comer / Kenoa Tio
 Matthew Matro / Zach Bowe
 Bruno Casino Remondo / Drew Von Bargen
 Austin Gow / Peter Weaver
-Alex Boory / Ronald Marchese
 Austin Keefer / Mason McCabe
+Alex Boory / Ronald Marchese
 Shashank Kamdar / Zachary Lessner
+Kevin Herod / Jameson Mays
 Matthew Chen / Johny Mario
 ```
 
