@@ -270,6 +270,7 @@ Alex Boory / Ronald Marchese
 Austin Keefer / Mason McCabe
 Shashank Kamdar / Zachary Lessner
 Matthew Chen / Johny Mario`);
+      const [teamCount, setTeamCount] = useState(16);
       const [teams, setTeams] = useState(Array.from({ length: 16 }, () => ({ p1Name: '', p1Dupr: '', p2Name: '', p2Dupr: '' })));
       const [seedingScores, setSeedingScores] = useState({});
       const [bracketScores, setBracketScores] = useState({});
@@ -277,12 +278,25 @@ Matthew Chen / Johny Mario`);
       const [matchupsGenerated, setMatchupsGenerated] = useState(false);
       const [game1Matchups, setGame1Matchups] = useState([]);
       const [game2Matchups, setGame2Matchups] = useState([]);
+      const [game3Matchups, setGame3Matchups] = useState([]);
+      const [pools, setPools] = useState({});
+      const [bracketSwaps, setBracketSwaps] = useState([]);
       const [onCourt, setOnCourt] = useState({});
       const [showOverride, setShowOverride] = useState(false);
       const [dragIndex, setDragIndex] = useState(null);
       const [dragOverIndex, setDragOverIndex] = useState(null);
       const [spectatorMode, setSpectatorMode] = useState(false);
       const [linkCopied, setLinkCopied] = useState(false);
+
+      // Payouts based on team count (prize pool only, not including organizer fee)
+      const payouts = {
+        12: { first: 420, second: 120, third: 60, total: 600 },
+        13: { first: 440, second: 160, third: 60, total: 660 },
+        14: { first: 480, second: 160, third: 80, total: 720 },
+        15: { first: 500, second: 200, third: 80, total: 780 },
+        16: { first: 520, second: 220, third: 100, total: 840 }
+      };
+      const currentPayouts = payouts[teamCount] || payouts[16];
 
       // Check URL for shared state on load
       React.useEffect(() => {
@@ -305,12 +319,15 @@ Matthew Chen / Johny Mario`);
               // Fall back to old uncompressed format
               decoded = JSON.parse(atob(sharedState));
             }
+            if (decoded.teamCount) setTeamCount(decoded.teamCount);
             if (decoded.teams) setTeams(decoded.teams);
             if (decoded.seedingScores) setSeedingScores(decoded.seedingScores);
             if (decoded.bracketScores) setBracketScores(decoded.bracketScores);
             if (decoded.bracketOverrides) setBracketOverrides(decoded.bracketOverrides);
             if (decoded.game1Matchups) setGame1Matchups(decoded.game1Matchups);
             if (decoded.game2Matchups) setGame2Matchups(decoded.game2Matchups);
+            if (decoded.game3Matchups) setGame3Matchups(decoded.game3Matchups);
+            if (decoded.pools) setPools(decoded.pools);
             if (decoded.matchupsGenerated) setMatchupsGenerated(decoded.matchupsGenerated);
             if (decoded.onCourt) setOnCourt(decoded.onCourt);
             setSpectatorMode(true);
@@ -323,12 +340,15 @@ Matthew Chen / Johny Mario`);
 
       const shareLink = useCallback(() => {
         const state = {
+          teamCount,
           teams,
           seedingScores,
           bracketScores,
           bracketOverrides,
           game1Matchups,
           game2Matchups,
+          game3Matchups,
+          pools,
           matchupsGenerated,
           onCourt,
           phase
@@ -344,7 +364,7 @@ Matthew Chen / Johny Mario`);
           setLinkCopied(true);
           setTimeout(() => setLinkCopied(false), 2000);
         });
-      }, [teams, seedingScores, bracketScores, bracketOverrides, game1Matchups, game2Matchups, matchupsGenerated, onCourt, phase]);
+      }, [teamCount, teams, seedingScores, bracketScores, bracketOverrides, game1Matchups, game2Matchups, game3Matchups, pools, matchupsGenerated, onCourt, phase]);
 
       const handleDragStart = useCallback((e, index) => {
         setDragIndex(index);
@@ -400,11 +420,12 @@ Matthew Chen / Johny Mario`);
           return null;
         }).filter(Boolean);
 
-        if (parsed.length === 16) {
+        if (parsed.length >= 12 && parsed.length <= 16) {
+          setTeamCount(parsed.length);
           setTeams(parsed);
           setPhase('setup');
         } else {
-          alert(`Found ${parsed.length} teams, need exactly 16.`);
+          alert(`Found ${parsed.length} teams, need 12-16 teams.`);
         }
       }, [importText]);
 
@@ -418,32 +439,74 @@ Matthew Chen / Johny Mario`);
           return a;
         };
 
-        const potA = shuffle([0, 1, 2, 3]);
-        const potB = shuffle([4, 5, 6, 7]);
-        const potC = shuffle([8, 9, 10, 11]);
-        const potD = shuffle([12, 13, 14, 15]);
+        // Pools of 4 for 12 and 16 teams (snake draft)
+        if (teamCount === 12 || teamCount === 16) {
+          const numPools = teamCount === 12 ? 3 : 4;
+          const poolSize = 4;
 
-        const g1 = [
-          { t1: potA[0], t2: potB[0] }, { t1: potA[1], t2: potB[1] },
-          { t1: potA[2], t2: potB[2] }, { t1: potA[3], t2: potB[3] },
-          { t1: potC[0], t2: potD[0] }, { t1: potC[1], t2: potD[1] },
-          { t1: potC[2], t2: potD[2] }, { t1: potC[3], t2: potD[3] }
-        ];
+          // Snake draft: 1,2,3,4 then 8,7,6,5 then 9,10,11,12...
+          const poolAssignments = {};
+          const poolTeams = Array.from({ length: numPools }, () => []);
 
-        const potC2 = shuffle([...potC]);
-        const potD2 = shuffle([...potD]);
-        const g2 = [
-          { t1: potA[0], t2: potC2[0] }, { t1: potA[1], t2: potC2[1] },
-          { t1: potA[2], t2: potC2[2] }, { t1: potA[3], t2: potC2[3] },
-          { t1: potB[0], t2: potD2[0] }, { t1: potB[1], t2: potD2[1] },
-          { t1: potB[2], t2: potD2[2] }, { t1: potB[3], t2: potD2[3] }
-        ];
+          for (let i = 0; i < teamCount; i++) {
+            const row = Math.floor(i / numPools);
+            let poolIdx = i % numPools;
+            if (row % 2 === 1) poolIdx = numPools - 1 - poolIdx; // Snake
+            poolTeams[poolIdx].push(i);
+            poolAssignments[i] = poolIdx;
+          }
 
-        setGame1Matchups(g1);
-        setGame2Matchups(g2);
+          setPools(poolAssignments);
+
+          // Within each pool: Game 1: 1v3, 2v4; Game 2: 1v2, 3v4; Game 3: 1v4, 2v3
+          const g1 = [], g2 = [], g3 = [];
+          poolTeams.forEach(pool => {
+            g1.push({ t1: pool[0], t2: pool[2] }, { t1: pool[1], t2: pool[3] });
+            g2.push({ t1: pool[0], t2: pool[1] }, { t1: pool[2], t2: pool[3] });
+            g3.push({ t1: pool[0], t2: pool[3] }, { t1: pool[1], t2: pool[2] });
+          });
+
+          setGame1Matchups(shuffle(g1));
+          setGame2Matchups(shuffle(g2));
+          setGame3Matchups(shuffle(g3));
+        } else {
+          // 13, 14, 15 teams: 3 random RR games
+          // Each team plays 3 unique opponents, balanced as much as possible
+          const allTeams = Array.from({ length: teamCount }, (_, i) => i);
+          const opponents = {};
+          allTeams.forEach(t => opponents[t] = []);
+
+          const g1 = [], g2 = [], g3 = [];
+
+          // For each game round, pair up teams who haven't played each other
+          for (let round = 0; round < 3; round++) {
+            const available = [...allTeams];
+            const roundMatches = [];
+
+            while (available.length >= 2) {
+              const t1 = available.shift();
+              // Find opponent t1 hasn't played yet
+              let t2Idx = available.findIndex(t => !opponents[t1].includes(t));
+              if (t2Idx === -1) t2Idx = 0; // Fallback if no unique opponent
+              const t2 = available.splice(t2Idx, 1)[0];
+
+              opponents[t1].push(t2);
+              opponents[t2].push(t1);
+              roundMatches.push({ t1, t2 });
+            }
+
+            if (round === 0) setGame1Matchups(shuffle(roundMatches));
+            else if (round === 1) setGame2Matchups(shuffle(roundMatches));
+            else setGame3Matchups(shuffle(roundMatches));
+          }
+
+          // No pools for random matchups
+          setPools({});
+        }
+
         setMatchupsGenerated(true);
         setSeedingScores({});
-      }, []);
+      }, [teamCount]);
 
       const teamData = useMemo(() => {
         return teams.map((t, i) => ({
@@ -456,7 +519,7 @@ Matthew Chen / Johny Mario`);
       const seedingMatches = useMemo(() => {
         const t = teamData;
         if (matchupsGenerated && game1Matchups.length && game2Matchups.length) {
-          return {
+          const result = {
             game1: game1Matchups.map((m, i) => ({
               id: `g1m${i}`,
               t1: t[m.t1],
@@ -468,19 +531,26 @@ Matthew Chen / Johny Mario`);
               t1: t[m.t1],
               t2: t[m.t2],
               court: i + 1
+            })),
+            game3: game3Matchups.map((m, i) => ({
+              id: `g3m${i}`,
+              t1: t[m.t1],
+              t2: t[m.t2],
+              court: i + 1
             }))
           };
+          return result;
         }
-        return { game1: [], game2: [] };
-      }, [teamData, matchupsGenerated, game1Matchups, game2Matchups]);
+        return { game1: [], game2: [], game3: [] };
+      }, [teamData, matchupsGenerated, game1Matchups, game2Matchups, game3Matchups]);
 
       const standings = useMemo(() => {
         const stats = {};
         teamData.forEach(t => {
-          stats[t.seed] = { ...t, wins: 0, losses: 0, pf: 0, pa: 0, h2h: {} };
+          stats[t.seed] = { ...t, wins: 0, losses: 0, pf: 0, pa: 0, h2h: {}, pool: pools[t.seed - 1] };
         });
 
-        [...seedingMatches.game1, ...seedingMatches.game2].forEach(m => {
+        [...seedingMatches.game1, ...seedingMatches.game2, ...seedingMatches.game3].forEach(m => {
           const score = seedingScores[m.id];
           if (score && score.s1 !== '' && score.s2 !== '' && score.s1 !== undefined && score.s2 !== undefined) {
             const s1 = parseInt(score.s1);
@@ -515,16 +585,71 @@ Matthew Chen / Johny Mario`);
       }, [teamData, seedingScores, seedingMatches]);
 
       const bracketTeams = useMemo(() => {
-        if (standings.length < 16) return { winners: [], losers: [] };
-        return {
-          winners: standings.slice(0, 8),
-          losers: standings.slice(8, 16)
+        if (standings.length < teamCount) return { winners: [], losers: [], swaps: [] };
+
+        // Split into winners and losers
+        const winnersCount = Math.ceil(teamCount / 2);
+        const losersCount = teamCount - winnersCount;
+        let winners = standings.slice(0, winnersCount);
+        let losers = standings.slice(winnersCount);
+
+        const swaps = [];
+
+        // Apply no-repeat constraint: no same-pool matchups in round 1
+        // Standard matchups by seed: 1v8, 4v5, 2v7, 3v6 (for 8 teams)
+        const applyNoRepeat = (teams, bracketName) => {
+          if (teams.length < 2) return teams;
+          const result = [...teams];
+
+          // Get matchups based on team count
+          const getMatchups = (n) => {
+            if (n <= 4) return [[0, n-1], [1, n-2]].filter(m => m[1] >= 0 && m[0] < m[1]);
+            if (n <= 6) return [[0, n-1], [1, n-2], [2, n-3]].filter(m => m[1] >= 0 && m[0] < m[1]);
+            if (n <= 8) return [[0, 7], [3, 4], [1, 6], [2, 5]].filter(m => m[1] < n);
+            return [[0, 7], [3, 4], [1, 6], [2, 5]];
+          };
+
+          const matchups = getMatchups(result.length);
+
+          // Check each matchup for same-pool conflict
+          for (const [i, j] of matchups) {
+            if (i >= result.length || j >= result.length) continue;
+            const t1 = result[i];
+            const t2 = result[j];
+
+            // Check if same pool (only if pools are assigned)
+            if (t1.pool !== undefined && t2.pool !== undefined && t1.pool === t2.pool) {
+              // Find someone to swap with (not seed 1, and not from same pool as opponent)
+              for (let k = j + 1; k < result.length; k++) {
+                if (result[k].pool !== t1.pool) {
+                  // Also check that swapping doesn't create a new conflict
+                  const otherMatchup = matchups.find(m => m.includes(k));
+                  if (otherMatchup) {
+                    const otherIdx = otherMatchup[0] === k ? otherMatchup[1] : otherMatchup[0];
+                    if (otherIdx < result.length && result[otherIdx].pool === t2.pool) continue; // Would create new conflict
+                  }
+
+                  swaps.push(`${bracketName}: Swapped seed ${j + 1} (${t2.name}) with seed ${k + 1} (${result[k].name}) to avoid pool rematch`);
+                  [result[j], result[k]] = [result[k], result[j]];
+                  break;
+                }
+              }
+            }
+          }
+          return result;
         };
-      }, [standings]);
+
+        winners = applyNoRepeat(winners, 'Winners');
+        losers = applyNoRepeat(losers, 'Losers');
+
+        setBracketSwaps(swaps);
+
+        return { winners, losers, swaps };
+      }, [standings, teamCount]);
 
       const generateFakeSeedingScores = useCallback(() => {
         const fakeScores = {};
-        [...seedingMatches.game1, ...seedingMatches.game2].forEach(m => {
+        [...seedingMatches.game1, ...seedingMatches.game2, ...seedingMatches.game3].forEach(m => {
           const seedDiff = m.t2.seed - m.t1.seed; // positive = t1 is better seed
           const t1WinProb = 0.5 + (seedDiff * 0.03); // 3% advantage per seed difference
           const t1Wins = Math.random() < t1WinProb;
@@ -696,9 +821,13 @@ Matthew Chen / Johny Mario`);
       }, [bracketScores, bracketOverrides]);
 
       const bracketMatches = useMemo(() => {
-        const w = bracketTeams.winners;
-        const l = bracketTeams.losers;
-        if (w.length < 8) return {};
+        const w = bracketTeams.winners || [];
+        const l = bracketTeams.losers || [];
+        if (w.length < 6 || teamCount < 12) return {}; // Need at least 6 winners for a meaningful bracket
+
+        // For now, support 16-team bracket (8v8) fully
+        // TODO: Add byes for 12-15 teams
+        if (w.length < 8 || l.length < 8) return {};
 
         return {
           wqf1: { id: 'wqf1', t1: w[0], t2: w[7], round: 'W-QF', court: 1 },
@@ -766,7 +895,7 @@ Matthew Chen / Johny Mario`);
       }, []);
 
       const allSeedingComplete = useMemo(() => {
-        const allMatches = [...seedingMatches.game1, ...seedingMatches.game2];
+        const allMatches = [...seedingMatches.game1, ...seedingMatches.game2, ...seedingMatches.game3];
         if (!allMatches.length) return false;
         return allMatches.every(m => {
           const s = seedingScores[m.id];
@@ -778,7 +907,7 @@ Matthew Chen / Johny Mario`);
         const matches = [];
         Object.keys(onCourt).forEach(id => {
           if (onCourt[id]) {
-            const seedMatch = [...seedingMatches.game1, ...seedingMatches.game2].find(m => m.id === id);
+            const seedMatch = [...seedingMatches.game1, ...seedingMatches.game2, ...seedingMatches.game3].find(m => m.id === id);
             if (seedMatch) {
               matches.push({ ...seedMatch, type: 'seeding' });
               return;
@@ -870,9 +999,9 @@ Matthew Chen / Johny Mario`);
         results += `==================================================\n\n`;
         results += `🏆 FINAL STANDINGS (BRACKET)\n`;
         results += `------------------------------\n`;
-        results += `🥇 1st ($520): ${winner ? winner.name : 'TBD'}\n`;
-        results += `🥈 2nd ($220): ${second ? second.name : 'TBD'}\n`;
-        results += `🥉 3rd ($100): ${third ? third.name : 'TBD'}\n\n`;
+        results += `🥇 1st ($${currentPayouts.first}): ${winner ? winner.name : 'TBD'}\n`;
+        results += `🥈 2nd ($${currentPayouts.second}): ${second ? second.name : 'TBD'}\n`;
+        results += `🥉 3rd ($${currentPayouts.third}): ${third ? third.name : 'TBD'}\n\n`;
 
         results += `TEAMS (INITIAL SEEDING)\n`;
         results += `------------------------------\n`;
@@ -904,10 +1033,23 @@ Matthew Chen / Johny Mario`);
           }
         });
 
+        if (seedingMatches.game3.length > 0) {
+          results += `\nGAME 3\n`;
+          results += `------------------------------\n`;
+          seedingMatches.game3.forEach(m => {
+            const score = seedingScores[m.id];
+            if (score && score.s1 !== undefined && score.s2 !== undefined) {
+              const s1Won = parseInt(score.s1) > parseInt(score.s2);
+              results += `${s1Won ? '✓' : ' '} ${m.t1.name} ${score.s1}-${score.s2} ${m.t2.name} ${!s1Won ? '✓' : ''}\n`;
+            }
+          });
+        }
+
         results += `\nROUND ROBIN STANDINGS\n`;
         results += `------------------------------\n`;
+        const winnersCount = Math.ceil(teamCount / 2);
         standings.forEach((t, i) => {
-          const bracket = i < 8 ? '→ Winners' : '→ Losers';
+          const bracket = i < winnersCount ? '→ Winners' : '→ Losers';
           results += `${i + 1}. ${t.name} ${t.wins}-${t.losses} (${t.pf - t.pa >= 0 ? '+' : ''}${t.pf - t.pa}) ${bracket}\n`;
         });
 
@@ -967,7 +1109,7 @@ Matthew Chen / Johny Mario`);
       return (
         <div className="bg-gray-900 text-white p-4 min-h-screen">
           <h1 className="text-2xl font-bold text-center mb-1">🏓 Jordan's Moneyballs</h1>
-          <p className="text-center text-gray-400 text-sm mb-2">$30/player • $520/$220/$100</p>
+          <p className="text-center text-gray-400 text-sm mb-2">$30/player • ${currentPayouts.first}/${currentPayouts.second}/${currentPayouts.third}</p>
 
           {spectatorMode && (
             <div className="bg-blue-900 border border-blue-500 text-blue-200 text-center py-2 px-4 rounded mb-3 max-w-md mx-auto">
@@ -1007,7 +1149,7 @@ Matthew Chen / Johny Mario`);
                 onChange={(e) => setImportText(e.target.value)}
               />
               <button onClick={parseImportText} className="w-full mt-4 bg-orange-600 hover:bg-orange-500 py-2 rounded font-semibold">
-                Import 16 Teams →
+                Import Teams (12-16) →
               </button>
             </div>
           )}
@@ -1102,13 +1244,32 @@ Matthew Chen / Johny Mario`);
           )}
 
           {phase === 'roundrobin' && (
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-xl font-semibold">Round Robin</h2>
+                <h2 className="text-xl font-semibold">Round Robin ({teamCount} teams, {Object.keys(pools).length > 0 ? `${teamCount === 12 ? '3' : '4'} pools` : '3 random games'})</h2>
                 {!spectatorMode && <button onClick={generateFakeSeedingScores} className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>}
               </div>
               {!spectatorMode && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} />}
-              <div className="grid md:grid-cols-2 gap-4">
+
+              {Object.keys(pools).length > 0 && (
+                <div className="mb-4 bg-gray-800 rounded p-3">
+                  <div className="text-sm font-semibold mb-2">Pool Assignments (Snake Draft)</div>
+                  <div className="grid grid-cols-3 md:grid-cols-4 gap-2 text-xs">
+                    {Array.from({ length: teamCount === 12 ? 3 : 4 }, (_, poolIdx) => (
+                      <div key={poolIdx} className="bg-gray-700 rounded p-2">
+                        <div className="font-semibold text-center mb-1" style={{ color: ['#facc15', '#60a5fa', '#4ade80', '#f87171'][poolIdx] }}>
+                          Pool {String.fromCharCode(65 + poolIdx)}
+                        </div>
+                        {Object.entries(pools).filter(([_, p]) => p === poolIdx).map(([teamIdx]) => (
+                          <div key={teamIdx} className="truncate text-gray-300">{parseInt(teamIdx) + 1}. {teams[teamIdx]?.p1Name?.split(' ')[0]}</div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <h3 className="text-blue-400 font-semibold mb-2 text-center">Game 1</h3>
                   <div className="space-y-2">
@@ -1141,6 +1302,22 @@ Matthew Chen / Johny Mario`);
                     ))}
                   </div>
                 </div>
+                <div>
+                  <h3 className="text-yellow-400 font-semibold mb-2 text-center">Game 3</h3>
+                  <div className="space-y-2">
+                    {seedingMatches.game3.map(m => (
+                      <SeedingMatch
+                        key={m.id}
+                        match={m}
+                        score={seedingScores[m.id] || {}}
+                        isOnCourt={onCourt[m.id]}
+                        onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
+                        onToggleCourt={() => toggleOnCourt(m.id)}
+                        readOnly={spectatorMode}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
               {allSeedingComplete && (
                 <button onClick={() => setPhase('bracket')} className="w-full mt-4 bg-green-600 py-2 rounded font-semibold">
@@ -1156,24 +1333,38 @@ Matthew Chen / Johny Mario`);
               <div className="bg-gray-800 rounded p-3">
                 <div className="text-xs text-gray-500 flex px-2 mb-2">
                   <span className="w-8">Rk</span>
+                  {Object.keys(pools).length > 0 && <span className="w-10">Pool</span>}
                   <span className="flex-1">Team</span>
                   <span className="w-12 text-center">W-L</span>
                   <span className="w-12 text-center">PF</span>
                   <span className="w-12 text-center">PA</span>
                   <span className="w-12 text-right">PD</span>
                 </div>
-                {standings.map((t, i) => (
-                  <div key={t.seed} className={`flex items-center text-sm py-2 px-2 rounded mb-1 ${i < 8 ? 'bg-blue-900/30' : 'bg-red-900/30'}`}>
-                    <span className={`w-8 font-bold ${i < 8 ? 'text-blue-400' : 'text-red-400'}`}>{i + 1}</span>
-                    <span className="flex-1 truncate">{t.name}</span>
-                    <span className="w-12 text-center">{t.wins}-{t.losses}</span>
-                    <span className="w-12 text-center text-gray-400">{t.pf}</span>
-                    <span className="w-12 text-center text-gray-400">{t.pa}</span>
-                    <span className={`w-12 text-right ${t.pf - t.pa > 0 ? 'text-green-400' : t.pf - t.pa < 0 ? 'text-red-400' : ''}`}>
-                      {t.pf - t.pa > 0 ? '+' : ''}{t.pf - t.pa}
-                    </span>
-                  </div>
-                ))}
+                {standings.map((t, i) => {
+                  const winnersCount = Math.ceil(teamCount / 2);
+                  const isWinners = i < winnersCount;
+                  const poolColors = ['text-yellow-400', 'text-blue-400', 'text-green-400', 'text-red-400'];
+                  return (
+                    <div key={t.seed} className={`flex items-center text-sm py-2 px-2 rounded mb-1 ${isWinners ? 'bg-blue-900/30' : 'bg-red-900/30'}`}>
+                      <span className={`w-8 font-bold ${isWinners ? 'text-blue-400' : 'text-red-400'}`}>{i + 1}</span>
+                      {Object.keys(pools).length > 0 && (
+                        <span className={`w-10 text-xs ${poolColors[t.pool] || 'text-gray-400'}`}>
+                          {t.pool !== undefined ? String.fromCharCode(65 + t.pool) : '-'}
+                        </span>
+                      )}
+                      <span className="flex-1 truncate">{t.name}</span>
+                      <span className="w-12 text-center">{t.wins}-{t.losses}</span>
+                      <span className="w-12 text-center text-gray-400">{t.pf}</span>
+                      <span className="w-12 text-center text-gray-400">{t.pa}</span>
+                      <span className={`w-12 text-right ${t.pf - t.pa > 0 ? 'text-green-400' : t.pf - t.pa < 0 ? 'text-red-400' : ''}`}>
+                        {t.pf - t.pa > 0 ? '+' : ''}{t.pf - t.pa}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-2 text-xs text-gray-500 text-center">
+                Top {Math.ceil(teamCount / 2)} → Winners Bracket | Bottom {Math.floor(teamCount / 2)} → Losers Bracket
               </div>
               {allSeedingComplete && (
                 <button onClick={() => setPhase('bracket')} className="w-full mt-4 bg-green-600 py-2 rounded font-semibold">
@@ -1186,6 +1377,15 @@ Matthew Chen / Johny Mario`);
           {phase === 'bracket' && (
             <div className="max-w-6xl mx-auto overflow-x-auto">
               {!spectatorMode && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} />}
+
+              {bracketSwaps.length > 0 && (
+                <div className="mb-3 bg-yellow-900/50 border border-yellow-600 rounded p-2 text-sm">
+                  <div className="font-semibold text-yellow-400 mb-1">🔄 Seeding Adjusted (No Pool Rematches in R1)</div>
+                  {bracketSwaps.map((swap, i) => (
+                    <div key={i} className="text-yellow-200 text-xs">{swap}</div>
+                  ))}
+                </div>
+              )}
 
               <div className="flex justify-between items-center mb-2">
                 <h2 className="text-lg font-semibold text-blue-400">Winners Bracket</h2>
@@ -1274,7 +1474,7 @@ Matthew Chen / Johny Mario`);
                   />
                   {gfWinner && (
                     <div className="mt-3 bg-gradient-to-r from-yellow-700 to-yellow-600 p-3 rounded text-center border-2 border-yellow-400">
-                      <div className="text-xs text-yellow-200">🥇 CHAMPION ($520)</div>
+                      <div className="text-xs text-yellow-200">🥇 CHAMPION (${currentPayouts.first})</div>
                       {gfWinner.name.split(' / ').map((p, i) => (
                         <div key={i} className="text-sm font-bold text-white">{p}</div>
                       ))}
@@ -1282,7 +1482,7 @@ Matthew Chen / Johny Mario`);
                   )}
                   {getBracketMatchLoser('gf') && (
                     <div className="mt-2 bg-gradient-to-r from-gray-500 to-gray-400 p-2 rounded text-center border border-gray-300">
-                      <div className="text-xs text-gray-200">🥈 2nd ($220)</div>
+                      <div className="text-xs text-gray-200">🥈 2nd (${currentPayouts.second})</div>
                       {getBracketMatchLoser('gf').name.split(' / ').map((p, i) => (
                         <div key={i} className="text-xs font-semibold text-white">{p}</div>
                       ))}
@@ -1411,7 +1611,7 @@ Matthew Chen / Johny Mario`);
                   )}
                   {getBracketMatchLoser('lf') && (
                     <div className="mt-2 bg-gradient-to-r from-amber-800 to-amber-700 p-2 rounded text-center border border-amber-500">
-                      <div className="text-xs text-amber-200">🥉 3rd Place ($100)</div>
+                      <div className="text-xs text-amber-200">🥉 3rd Place (${currentPayouts.third})</div>
                       {getBracketMatchLoser('lf').name.split(' / ').map((p, i) => (
                         <div key={i} className="text-xs font-semibold text-white">{p}</div>
                       ))}
@@ -1429,7 +1629,7 @@ Matthew Chen / Johny Mario`);
               <div className="space-y-4">
                 {gfWinner && (
                   <div className="bg-gradient-to-r from-yellow-700 to-yellow-600 p-6 rounded-lg border-2 border-yellow-400 text-center">
-                    <div className="text-lg text-yellow-200">🥇 1st Place - $520</div>
+                    <div className="text-lg text-yellow-200">🥇 1st Place - ${currentPayouts.first}</div>
                     {gfWinner.name.split(' / ').map((p, i) => (
                       <div key={i} className="text-2xl font-bold text-white">{p}</div>
                     ))}
@@ -1438,16 +1638,16 @@ Matthew Chen / Johny Mario`);
 
                 {getBracketMatchLoser('gf') && (
                   <div className="bg-gradient-to-r from-gray-500 to-gray-400 p-5 rounded-lg border-2 border-gray-300 text-center">
-                    <div className="text-md text-gray-200">🥈 2nd Place - $220</div>
+                    <div className="text-md text-gray-200">🥈 2nd Place - ${currentPayouts.second}</div>
                     {getBracketMatchLoser('gf').name.split(' / ').map((p, i) => (
                       <div key={i} className="text-xl font-bold text-white">{p}</div>
                     ))}
                   </div>
                 )}
 
-                {getBracketMatchLoser('lf') && (
+                {getBracketMatchLoser('lf') && currentPayouts.third > 0 && (
                   <div className="bg-gradient-to-r from-amber-800 to-amber-700 p-4 rounded-lg border-2 border-amber-500 text-center">
-                    <div className="text-sm text-amber-200">🥉 3rd Place - $100</div>
+                    <div className="text-sm text-amber-200">🥉 3rd Place - ${currentPayouts.third}</div>
                     {getBracketMatchLoser('lf').name.split(' / ').map((p, i) => (
                       <div key={i} className="text-lg font-bold text-white">{p}</div>
                     ))}
