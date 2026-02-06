@@ -518,9 +518,10 @@ Matthew Chen / Johny Mario`);
             g3.push({ t1: pool[0], t2: pool[3] }, { t1: pool[1], t2: pool[2] });
           });
 
-          setGame1Matchups(shuffle(g1));
-          setGame2Matchups(shuffle(g2));
-          setGame3Matchups(shuffle(g3));
+          // Don't shuffle pool matchups - keep consistent order (1v3, 2v4 per pool)
+          setGame1Matchups(g1);
+          setGame2Matchups(g2);
+          setGame3Matchups(g3);
         } else {
           // 13, 14, 15 teams: 3 random RR games
           const allTeams = Array.from({ length: teamCount }, (_, i) => i);
