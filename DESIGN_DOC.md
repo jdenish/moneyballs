@@ -2,7 +2,7 @@
 
 ## Overview
 
-A 16-team doubles pickleball tournament with a seeding round robin followed by double elimination bracket.
+A 12-16 team doubles pickleball tournament with a seeding round robin followed by double elimination bracket. Supports variable team counts with automatic payout adjustments.
 
 ---
 
@@ -24,16 +24,26 @@ A 16-team doubles pickleball tournament with a seeding round robin followed by d
 
 ---
 
-## Tournament Format: 8/8 Split Bracket
+## Tournament Format
 
-### Phase 1: Seeding Games (2 games per team)
+### Supported Team Counts: 12-16
+
+| Teams | RR Format | Games | Winners | Losers |
+|-------|-----------|-------|---------|--------|
+| 12 | 3 pools of 4 (snake draft) | 3 | 6 | 6 |
+| 13 | 3 random games | 3 | 7 | 6 |
+| 14 | 3 random games | 3 | 7 | 7 |
+| 15 | 3 random games | 3 | 8 | 7 |
+| 16 | 4 pools of 4 (snake draft) | 3 | 8 | 8 |
+
+### Phase 1: Seeding Games (3 games per team)
 - **Format:** Games to 11
 - **Duration:** ~20 minutes per game
 - **Purpose:** Determine bracket seeding based on record + point differential
 
 After seeding:
-- **Top 8 teams** → Winners Bracket
-- **Bottom 8 teams** → Losers Bracket
+- **Top half** → Winners Bracket
+- **Bottom half** → Losers Bracket
 
 ### Phase 2: Double Elimination Bracket
 - **Format:** Games to 15
@@ -42,29 +52,37 @@ After seeding:
 
 ---
 
-## Pod System (Balanced Scheduling)
+## Pool System (12 and 16 teams)
 
-Teams are seeded 1-16 and divided into 4 pots:
+For 12 and 16 teams, players are placed into pools using **snake draft seeding**:
 
-| Pod A (1-4) | Pod B (5-8) | Pod C (9-12) | Pod D (13-16) |
-|-------------|-------------|--------------|---------------|
-| Seed 1      | Seed 5      | Seed 9       | Seed 13       |
-| Seed 2      | Seed 6      | Seed 10      | Seed 14       |
-| Seed 3      | Seed 7      | Seed 11      | Seed 15       |
-| Seed 4      | Seed 8      | Seed 12      | Seed 16       |
+### 16 Teams (4 pools of 4)
 
-### Matchup Rules (Balanced Strength of Schedule)
+| Pool A | Pool B | Pool C | Pool D |
+|--------|--------|--------|--------|
+| 1      | 2      | 3      | 4      |
+| 8      | 7      | 6      | 5      |
+| 9      | 10     | 11     | 12     |
+| 16     | 15     | 14     | 13     |
 
-| Game   | Matchups      | Result                           |
-|--------|---------------|----------------------------------|
-| Game 1 | A vs B, C vs D | Each pot plays adjacent pot     |
-| Game 2 | A vs C, B vs D | Cross-matchup for balance       |
+### 12 Teams (3 pools of 4)
 
-**Why this works:**
-- A & D: Play 2 mid-tier opponents (B+C or C+B)
-- B & C: Play 1 hard + 1 easy (A+D or D+A)
-- No pot plays itself
-- Strength of schedule is roughly equal for all teams
+| Pool A | Pool B | Pool C |
+|--------|--------|--------|
+| 1      | 2      | 3      |
+| 6      | 5      | 4      |
+| 7      | 8      | 9      |
+| 12     | 11     | 10     |
+
+### Pool Game Order (within each pool)
+- **Game 1:** 1v3, 2v4
+- **Game 2:** 1v2, 3v4
+- **Game 3:** 1v4, 2v3
+
+Each team plays every other team in their pool exactly once.
+
+### No-Repeat Constraint
+Teams that played each other in pools will not face each other in **Round 1** of the bracket. If a conflict is detected, lower seeds are swapped (seed 1 is never moved). The app shows a notification when swaps occur.
 
 ### Randomization
 Within these rules, matchups are randomized (shuffle within pots) for variety and drama.
@@ -105,15 +123,17 @@ Within these rules, matchups are randomized (shuffle within pots) for variety an
 |-----------|------------|----------|
 | Entry     | $30        | $60      |
 
-| Place | Payout | Per Player |
-|-------|--------|------------|
-| 1st   | $520   | $260       |
-| 2nd   | $220   | $110       |
-| 3rd   | $100   | $50        |
-| Organizer | $120 | —        |
-| **Total** | **$960** | |
+### Payouts by Team Count
 
-**Math:** 16 teams × 2 players × $30 = $960
+| Teams | Total | Prize Pool | 1st | 2nd | 3rd |
+|-------|-------|------------|-----|-----|-----|
+| 12 | $720 | $600 | $420 | $120 | $60 |
+| 13 | $780 | $660 | $440 | $160 | $60 |
+| 14 | $840 | $720 | $480 | $160 | $80 |
+| 15 | $900 | $780 | $500 | $200 | $80 |
+| 16 | $960 | $840 | $520 | $220 | $100 |
+
+**Math:** Teams × 2 players × $30 = Total
 
 ---
 
