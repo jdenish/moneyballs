@@ -27,11 +27,11 @@ A tournament management app for 12-16 team doubles pickleball tournaments.
 
 | Teams | RR Format | Default Winners | Payouts |
 |-------|-----------|-----------------|---------|
-| 12 | 3 pools of 4 | 12 (all) | $360 / $180 / $60 |
-| 13 | 3 random games | 8 | $400 / $200 / $60 |
-| 14 | 3 random games | 8 | $440 / $200 / $80 |
-| 15 | 3 random games | 8 | $480 / $220 / $80 |
-| 16 | 4 pools of 4 | 8 | $500 / $240 / $100 |
+| 12 | 3 pools of 4 | 12 (all) | $360 / $160 / $60 |
+| 13 | 3 random games | 8 | $400 / $180 / $60 |
+| 14 | 3 random games | 8 | $440 / $200 / $60 |
+| 15 | 3 random games | 8 | $480 / $200 / $80 |
+| 16 | 4 pools of 4 | 8 | $500 / $220 / $100 |
 
 - **Entry:** $30/player ($60/team)
 - **Seeding games:** To 11, win by 2
