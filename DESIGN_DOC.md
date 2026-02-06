@@ -233,7 +233,7 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 - **🎲 Test Scores** - Generate fake scores based on seeding for testing (higher seeds favored ~3% per seed difference)
 - **Drag & Drop Seeding** - Reorder teams on Setup page by dragging (☰ handle)
 - **🔗 Share Link** - Compressed URL for spectators to view live bracket
-- **Spectator Mode** - Read-only view when opening shared link (no editing controls)
+- **Spectator Mode** - Clean read-only view when opening shared link (hides all configuration, editing, and admin controls)
 - **Placement Highlights** - 🥇 Gold, 🥈 Silver, 🥉 Bronze highlighting in bracket and Results tab
 
 ### How Share Link Works
