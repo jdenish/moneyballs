@@ -28,18 +28,23 @@ A 12-16 team doubles pickleball tournament with a seeding round robin followed b
 
 ### Supported Team Counts: 12-16
 
-| Teams | RR Format | Games | Default Winners | Default Losers |
-|-------|-----------|-------|-----------------|----------------|
-| 12 | 3 pools of 4 (snake draft) | 3 | 12 (all) | 0 |
-| 13 | 3 random games | 3 | 8 | 5 |
-| 14 | 3 random games | 3 | 8 | 6 |
-| 15 | 3 random games | 3 | 8 | 7 |
-| 16 | 4 pools of 4 (snake draft) | 3 | 8 | 8 |
+| Teams | 3 RR Games | 2 RR Games | Default Winners | Default Losers |
+|-------|------------|------------|-----------------|----------------|
+| 12 | 3 pools of 4 (snake draft) | Seed-balanced | 12 (all) | 0 |
+| 13 | 3 random games | Seed-balanced | 8 | 5 |
+| 14 | 3 random games | Seed-balanced | 8 | 6 |
+| 15 | 3 random games | Seed-balanced | 8 | 7 |
+| 16 | 4 pools of 4 (snake draft) | Seed-balanced | 8 | 8 |
+
+### Configurable RR Games (2 or 3)
+On the Setup page, you can choose between **2 or 3 RR games**:
+- **3 games:** Pools for 12/16 teams (snake draft seeding), random for 13-15 teams
+- **2 games:** Seed-balanced matchups for all team counts (pairs nearby seeds: 1v2, 3v4, etc.)
 
 ### Configurable Winners Bracket Size
 The number of teams starting in the Winners Bracket is **configurable** on the Setup page. Defaults are shown above but can be adjusted (e.g., set to "all" so everyone starts in Winners and losers drop to Losers Bracket after their first loss).
 
-### Phase 1: Seeding Games (3 games per team)
+### Phase 1: Seeding Games (2 or 3 games per team)
 - **Format:** Games to 11
 - **Duration:** ~20 minutes per game
 - **Purpose:** Determine bracket seeding based on record + point differential
@@ -211,17 +216,19 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 - `Jordan_Moneyball_offline.html` - Fully offline, no internet needed
 
 ### Tabs/Phases
-1. **Import** - Paste team list (12-16 teams), auto-detects count and sets defaults
-2. **Setup** - Edit teams, configure winners bracket size, drag to reorder seeding, randomize matchups
-3. **Round Robin** - Enter scores for 3 seeding games, shows pool assignments for 12/16 teams
+1. **Import** - Select team count (12-16), paste team list, validates count on import
+2. **Setup** - Edit teams, configure RR games (2 or 3), configure winners bracket size, drag to reorder seeding, randomize matchups
+3. **Round Robin** - Enter scores for seeding games (2 or 3), shows pool assignments for 12/16 teams with 3 games
 4. **Standings** - Live rankings with W-L, PF, PA, PD, pool indicator
 5. **Bracket** - Double elimination with score entry, Grand Final positioned to the right of W-Final
 6. **Results** - Final standings with 🥇🥈🥉 gold/silver/bronze highlighting and download button (unlocks when Grand Final is complete)
 
 ### Key Features
 - **12-16 Team Support** - Automatic payout adjustments based on team count
-- **Pool System** - Snake draft pools for 12/16 teams, 3 RR games within pool
-- **Random Matchups** - 3 random RR games for 13/14/15 teams
+- **Team Count Selector** - Select expected teams on Import page, auto-detects from paste, validates on import
+- **Configurable RR Games** - Choose 2 (seed-balanced) or 3 games on Setup page
+- **Pool System** - Snake draft pools for 12/16 teams with 3 RR games
+- **Seed-Balanced Matchups** - For 2 RR games, pairs nearby seeds (1v2, 3v4, etc.)
 - **Configurable Bracket Split** - Choose how many teams go to Winners vs Losers (default: 12 all winners, 13-16 gets 8)
 - **No-Repeat Constraint** - Teams from same pool won't face each other in bracket R1, swaps shown in UI
 - **DUPR Tracking** - Optional player ratings (placeholder "4.5"), shows combined team DUPR
@@ -459,7 +466,10 @@ Current tournament app already exports compatible JSON via **💾 Save** button.
 ### Phase 1: Current App ✅
 - [x] Tournament manager app
 - [x] Import teams, DUPR tracking
+- [x] Team count selector with validation
+- [x] Configurable RR games (2 or 3)
 - [x] Pod system with balanced scheduling
+- [x] Seed-balanced matchups (2 RR games option)
 - [x] Round robin scoring
 - [x] Double elimination bracket
 - [x] Save/Load progress (JSON)
