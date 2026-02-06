@@ -28,13 +28,16 @@ A 12-16 team doubles pickleball tournament with a seeding round robin followed b
 
 ### Supported Team Counts: 12-16
 
-| Teams | RR Format | Games | Winners | Losers |
-|-------|-----------|-------|---------|--------|
-| 12 | 3 pools of 4 (snake draft) | 3 | 6 | 6 |
-| 13 | 3 random games | 3 | 7 | 6 |
-| 14 | 3 random games | 3 | 7 | 7 |
+| Teams | RR Format | Games | Default Winners | Default Losers |
+|-------|-----------|-------|-----------------|----------------|
+| 12 | 3 pools of 4 (snake draft) | 3 | 12 (all) | 0 |
+| 13 | 3 random games | 3 | 8 | 5 |
+| 14 | 3 random games | 3 | 8 | 6 |
 | 15 | 3 random games | 3 | 8 | 7 |
 | 16 | 4 pools of 4 (snake draft) | 3 | 8 | 8 |
+
+### Configurable Winners Bracket Size
+The number of teams starting in the Winners Bracket is **configurable** on the Setup page. Defaults are shown above but can be adjusted (e.g., set to "all" so everyone starts in Winners and losers drop to Losers Bracket after their first loss).
 
 ### Phase 1: Seeding Games (3 games per team)
 - **Format:** Games to 11
@@ -42,8 +45,8 @@ A 12-16 team doubles pickleball tournament with a seeding round robin followed b
 - **Purpose:** Determine bracket seeding based on record + point differential
 
 After seeding:
-- **Top half** → Winners Bracket
-- **Bottom half** → Losers Bracket
+- **Top N teams** → Winners Bracket (configurable)
+- **Remaining teams** → Losers Bracket
 
 ### Phase 2: Double Elimination Bracket
 - **Format:** Games to 15
