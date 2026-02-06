@@ -1385,14 +1385,16 @@ Matthew Chen / Johny Mario`);
               {Object.keys(pools).length > 0 && (
                 <div className="mb-4 bg-gray-800 rounded p-3">
                   <div className="text-sm font-semibold mb-2">Pool Assignments (Snake Draft)</div>
-                  <div className="grid grid-cols-3 md:grid-cols-4 gap-2 text-xs">
+                  <div className={`grid ${teamCount === 12 ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-2 text-xs`}>
                     {Array.from({ length: teamCount === 12 ? 3 : 4 }, (_, poolIdx) => (
                       <div key={poolIdx} className="bg-gray-700 rounded p-2">
                         <div className="font-semibold text-center mb-1" style={{ color: ['#facc15', '#60a5fa', '#4ade80', '#f87171'][poolIdx] }}>
                           Pool {String.fromCharCode(65 + poolIdx)}
                         </div>
                         {Object.entries(pools).filter(([_, p]) => p === poolIdx).map(([teamIdx]) => (
-                          <div key={teamIdx} className="truncate text-gray-300">{parseInt(teamIdx) + 1}. {teams[teamIdx]?.p1Name?.split(' ')[0]}</div>
+                          <div key={teamIdx} className="text-gray-300 mb-1">
+                            <span className="font-mono">{parseInt(teamIdx) + 1}.</span> {teams[teamIdx]?.p1Name?.split(' ')[0]} / {teams[teamIdx]?.p2Name?.split(' ')[0]}
+                          </div>
                         ))}
                       </div>
                     ))}
@@ -1400,44 +1402,47 @@ Matthew Chen / Johny Mario`);
                 </div>
               )}
 
-              <div className={`grid ${seedingMatches.game3.length > 0 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
-                <div>
-                  <h3 className="text-blue-400 font-semibold mb-2 text-center">Game 1</h3>
-                  <div className="space-y-2">
-                    {seedingMatches.game1.map(m => (
-                      <SeedingMatch
-                        key={m.id}
-                        match={m}
-                        score={seedingScores[m.id] || {}}
-                        isOnCourt={onCourt[m.id]}
-                        onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
-                        onToggleCourt={() => toggleOnCourt(m.id)}
-                        readOnly={spectatorMode}
-                      />
-                    ))}
-                  </div>
+              {/* Pool-based layout for 12/16 teams with 3 games */}
+              {Object.keys(pools).length > 0 ? (
+                <div className={`grid ${teamCount === 12 ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-4`}>
+                  {Array.from({ length: teamCount === 12 ? 3 : 4 }, (_, poolIdx) => {
+                    const poolColor = ['#facc15', '#60a5fa', '#4ade80', '#f87171'][poolIdx];
+                    const poolMatches = (game, gameNum) => game.filter(m => pools[m.t1.seed - 1] === poolIdx);
+                    return (
+                      <div key={poolIdx}>
+                        <h3 className="font-semibold mb-2 text-center" style={{ color: poolColor }}>
+                          Pool {String.fromCharCode(65 + poolIdx)}
+                        </h3>
+                        <div className="space-y-2">
+                          {[
+                            { matches: poolMatches(seedingMatches.game1), label: 'Game 1' },
+                            { matches: poolMatches(seedingMatches.game2), label: 'Game 2' },
+                            { matches: poolMatches(seedingMatches.game3), label: 'Game 3' }
+                          ].map(({ matches, label }) => matches.map(m => (
+                            <div key={m.id}>
+                              <div className="text-xs text-gray-500 mb-1">{label}</div>
+                              <SeedingMatch
+                                match={m}
+                                score={seedingScores[m.id] || {}}
+                                isOnCourt={onCourt[m.id]}
+                                onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
+                                onToggleCourt={() => toggleOnCourt(m.id)}
+                                readOnly={spectatorMode}
+                              />
+                            </div>
+                          )))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div>
-                  <h3 className="text-green-400 font-semibold mb-2 text-center">Game 2</h3>
-                  <div className="space-y-2">
-                    {seedingMatches.game2.map(m => (
-                      <SeedingMatch
-                        key={m.id}
-                        match={m}
-                        score={seedingScores[m.id] || {}}
-                        isOnCourt={onCourt[m.id]}
-                        onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
-                        onToggleCourt={() => toggleOnCourt(m.id)}
-                        readOnly={spectatorMode}
-                      />
-                    ))}
-                  </div>
-                </div>
-                {seedingMatches.game3.length > 0 && (
+              ) : (
+                /* Game-based layout for seed-balanced or random matchups */
+                <div className={`grid ${seedingMatches.game3.length > 0 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
                   <div>
-                    <h3 className="text-yellow-400 font-semibold mb-2 text-center">Game 3</h3>
+                    <h3 className="text-blue-400 font-semibold mb-2 text-center">Game 1</h3>
                     <div className="space-y-2">
-                      {seedingMatches.game3.map(m => (
+                      {seedingMatches.game1.map(m => (
                         <SeedingMatch
                           key={m.id}
                           match={m}
@@ -1450,8 +1455,42 @@ Matthew Chen / Johny Mario`);
                       ))}
                     </div>
                   </div>
-                )}
-              </div>
+                  <div>
+                    <h3 className="text-green-400 font-semibold mb-2 text-center">Game 2</h3>
+                    <div className="space-y-2">
+                      {seedingMatches.game2.map(m => (
+                        <SeedingMatch
+                          key={m.id}
+                          match={m}
+                          score={seedingScores[m.id] || {}}
+                          isOnCourt={onCourt[m.id]}
+                          onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
+                          onToggleCourt={() => toggleOnCourt(m.id)}
+                          readOnly={spectatorMode}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  {seedingMatches.game3.length > 0 && (
+                    <div>
+                      <h3 className="text-yellow-400 font-semibold mb-2 text-center">Game 3</h3>
+                      <div className="space-y-2">
+                        {seedingMatches.game3.map(m => (
+                          <SeedingMatch
+                            key={m.id}
+                            match={m}
+                            score={seedingScores[m.id] || {}}
+                            isOnCourt={onCourt[m.id]}
+                            onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
+                            onToggleCourt={() => toggleOnCourt(m.id)}
+                            readOnly={spectatorMode}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               {allSeedingComplete && (
                 <button onClick={() => setPhase('bracket')} className="w-full mt-4 bg-green-600 py-2 rounded font-semibold">
                   Start Bracket →
