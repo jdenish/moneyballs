@@ -336,41 +336,51 @@ Matthew Chen / Johny Mario`);
       // Default winners count based on team count
       const defaultWinnersCount = { 12: 12, 13: 8, 14: 8, 15: 8, 16: 8 };
 
-      // Load shared state from URL
-      const loadSharedState = (decoded) => {
-        if (decoded.teamCount) setTeamCount(decoded.teamCount);
-        if (decoded.rrGames) setRrGames(decoded.rrGames);
-        if (decoded.rrPointTarget) setRrPointTarget(decoded.rrPointTarget);
-        if (decoded.winnersCount) setWinnersCount(decoded.winnersCount);
-        if (decoded.teams) setTeams(decoded.teams);
-        if (decoded.seedingScores) setSeedingScores(decoded.seedingScores);
-        if (decoded.bracketScores) setBracketScores(decoded.bracketScores);
-        if (decoded.bracketOverrides) setBracketOverrides(decoded.bracketOverrides);
-        if (decoded.game1Matchups) setGame1Matchups(decoded.game1Matchups);
-        if (decoded.game2Matchups) setGame2Matchups(decoded.game2Matchups);
-        if (decoded.game3Matchups) setGame3Matchups(decoded.game3Matchups);
-        if (decoded.pools) setPools(decoded.pools);
-        if (decoded.matchupsGenerated) setMatchupsGenerated(decoded.matchupsGenerated);
-        if (decoded.onCourt) setOnCourt(decoded.onCourt);
-        if (decoded.bracketSeedOverride) setBracketSeedOverride(decoded.bracketSeedOverride);
+      // Load shared state from URL (handles both old and slim formats)
+      const loadSharedState = (d) => {
+        // Support both old keys (teamCount) and slim keys (tc)
+        const v = (old, slim) => d[old] || d[slim];
+        if (v('teamCount', 'tc')) setTeamCount(v('teamCount', 'tc'));
+        if (v('rrGames', 'rg')) setRrGames(v('rrGames', 'rg'));
+        if (v('rrPointTarget', 'rp')) setRrPointTarget(v('rrPointTarget', 'rp'));
+        if (v('winnersCount', 'wc')) setWinnersCount(v('winnersCount', 'wc'));
+        if (v('teams', 't')) setTeams(v('teams', 't'));
+        if (v('seedingScores', 'ss')) setSeedingScores(v('seedingScores', 'ss'));
+        if (v('bracketOverrides', 'bo')) setBracketOverrides(v('bracketOverrides', 'bo'));
+        if (v('game1Matchups', 'g1')) setGame1Matchups(v('game1Matchups', 'g1'));
+        if (v('game2Matchups', 'g2')) setGame2Matchups(v('game2Matchups', 'g2'));
+        if (v('game3Matchups', 'g3')) setGame3Matchups(v('game3Matchups', 'g3'));
+        if (v('pools', 'p')) setPools(v('pools', 'p'));
+        if (v('matchupsGenerated', 'mg')) setMatchupsGenerated(v('matchupsGenerated', 'mg'));
+        if (v('onCourt', 'oc')) setOnCourt(v('onCourt', 'oc'));
+        if (v('bracketSeedOverride', 'bso')) setBracketSeedOverride(v('bracketSeedOverride', 'bso'));
+        // Restore bracket scores: expand slim format back to full team objects
+        if (d.bracketScores) {
+          setBracketScores(d.bracketScores);
+        } else if (d.bs) {
+          const teams = v('teams', 't') || [];
+          const getTeam = (seed) => {
+            if (!seed) return null;
+            const idx = seed - 1;
+            const t = teams[idx];
+            return t ? { seed, name: `${t.p1Name} / ${t.p2Name}` } : null;
+          };
+          const full = {};
+          Object.entries(d.bs).forEach(([id, s]) => {
+            if (s.g) {
+              full[id] = { t1: getTeam(s.a), t2: getTeam(s.b), games: s.g };
+            } else {
+              full[id] = { t1: getTeam(s.a), t2: getTeam(s.b), s1: s.s1, s2: s.s2 };
+            }
+          });
+          setBracketScores(full);
+        }
         setSpectatorMode(true);
-        setPhase(decoded.phase || 'bracket');
+        setPhase(v('phase', 'ph') || 'bracket');
       };
 
       React.useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-
-        // Short URL: ?b=<jsonblob_id>
-        const blobId = params.get('b');
-        if (blobId) {
-          fetch(`https://jsonblob.com/api/jsonBlob/${blobId}`)
-            .then(r => r.json())
-            .then(decoded => loadSharedState(decoded))
-            .catch(e => console.error('Failed to load shared state from blob', e));
-          return;
-        }
-
-        // Legacy long URL: ?s=<compressed_base64>
         const sharedState = params.get('s');
         if (sharedState) {
           try {
@@ -393,51 +403,38 @@ Matthew Chen / Johny Mario`);
         }
       }, []);
 
-      const shareLink = useCallback(async () => {
+      const shareLink = useCallback(() => {
+        // Build slim state for sharing (strip redundant team objects from bracket scores)
         const state = {
-          teamCount,
-          rrGames,
-          rrPointTarget,
-          winnersCount,
-          teams,
-          seedingScores,
-          bracketScores,
-          bracketOverrides,
-          game1Matchups,
-          game2Matchups,
-          game3Matchups,
-          pools,
-          matchupsGenerated,
-          onCourt,
-          bracketSeedOverride,
-          phase
+          tc: teamCount, rg: rrGames, rp: rrPointTarget, wc: winnersCount,
+          t: teams, ss: seedingScores, bo: bracketOverrides,
+          g1: game1Matchups, g2: game2Matchups, g3: game3Matchups,
+          p: pools, mg: matchupsGenerated, oc: onCourt, bso: bracketSeedOverride, ph: phase
         };
-        try {
-          // Upload state to jsonblob.com for a short URL
-          const resp = await fetch('https://jsonblob.com/api/jsonBlob', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify(state)
+        // Slim bracket scores: store only seeds + scores (no full team objects)
+        if (Object.keys(bracketScores).length > 0) {
+          const slim = {};
+          Object.entries(bracketScores).forEach(([id, s]) => {
+            if (s.games) {
+              slim[id] = { a: s.t1?.seed, b: s.t2?.seed, g: s.games };
+            } else {
+              slim[id] = { a: s.t1?.seed, b: s.t2?.seed, s1: s.s1, s2: s.s2 };
+            }
           });
-          const location = resp.headers.get('Location') || resp.headers.get('location');
-          if (location) {
-            const blobId = location.split('/').pop();
-            const shortUrl = `${window.location.origin}${window.location.pathname}?b=${blobId}`;
-            await navigator.clipboard.writeText(shortUrl);
-          } else {
-            throw new Error('No location header');
-          }
-        } catch (e) {
-          // Fallback: use compressed URL-encoded state
-          const jsonStr = JSON.stringify(state);
-          const compressed = pako.deflate(jsonStr);
-          const base64 = btoa(String.fromCharCode.apply(null, compressed));
-          const urlSafe = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-          const url = `${window.location.origin}${window.location.pathname}?s=${urlSafe}`;
-          await navigator.clipboard.writeText(url);
+          state.bs = slim;
         }
-        setLinkCopied(true);
-        setTimeout(() => setLinkCopied(false), 2000);
+        const jsonStr = JSON.stringify(state);
+        const compressed = pako.deflate(jsonStr);
+        // Chunked base64 to avoid call stack overflow
+        let binary = '';
+        for (let i = 0; i < compressed.length; i++) binary += String.fromCharCode(compressed[i]);
+        const base64 = btoa(binary);
+        const urlSafe = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        const url = `${window.location.origin}${window.location.pathname}?s=${urlSafe}`;
+        navigator.clipboard.writeText(url).then(() => {
+          setLinkCopied(true);
+          setTimeout(() => setLinkCopied(false), 2000);
+        });
       }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, game1Matchups, game2Matchups, game3Matchups, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase]);
 
       const handleDragStart = useCallback((e, index) => {
