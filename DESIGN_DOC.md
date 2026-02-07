@@ -2,7 +2,7 @@
 
 ## Overview
 
-A 12-16 team doubles pickleball tournament with a seeding round robin followed by double elimination bracket. Supports variable team counts with automatic payout adjustments.
+A 12-16 team doubles pickleball tournament with a seeding round robin followed by double elimination bracket. Supports variable team counts.
 
 ---
 
@@ -99,49 +99,67 @@ Within these rules, matchups are randomized (shuffle within pots) for variety an
 
 ## Standings Tiebreakers
 
-1. **Wins** (most wins first)
-2. **Head-to-Head** (if teams played each other)
-3. **Point Differential** (PF - PA)
+Teams are sorted by wins first, then ties are resolved in groups:
+
+### Same-Pool Ties (all tied teams played each other)
+1. **Group H2H Wins** — within the tied group only
+2. **Group Point Differential** — PF - PA from games between tied teams only
+3. **Overall Point Differential** — total PF - PA across all games
+4. **Recursive sub-groups** — if a subset is still tied after step 1-3, re-apply the algorithm to just that subset
+
+### Cross-Pool Ties (tied teams did NOT all play each other)
+1. **Overall Point Differential** — total PF - PA (H2H is unfair when not all teams played each other)
+
+### Example: 3-Way Tie in a Pool
+Seeds 2, 7, 10 all go 2-1 in Pool B. They all played each other, so use group H2H:
+- Seed 2 beat 7, lost to 10 → 1 group win
+- Seed 7 beat 10, lost to 2 → 1 group win
+- Seed 10 beat 2, lost to 7 → 1 group win
+- All tied at 1 group win → fall to group PD → then overall PD
+
+### Lesson Learned (Tournament #1)
+The original tiebreaker used H2H for ALL tied teams regardless of whether they played each other. With 6 teams tied at 2-1 across different pools, Pool B teams (who had intra-pool H2H data) were unfairly ranked above other-pool teams. **Fix:** Only use H2H when ALL teams in the tied group have played each other.
+
+### Manual Override
+If the tiebreaker still produces wrong results, the Standings page supports **drag-and-drop reordering**. Drag any team to manually set their bracket position.
 
 ---
 
 ## Schedule (8 courts, starting 6:30 PM)
 
+### With 3 RR Games (16 teams, pools)
+
 | Time     | Round              | Duration | Matches |
 |----------|--------------------|----------|---------|
 | 6:30 PM  | Seeding Game 1     | 20 min   | 8       |
 | 6:50 PM  | Seeding Game 2     | 20 min   | 8       |
-| 7:10 PM  | Break (standings)  | 5 min    | —       |
-| 7:15 PM  | W-QF + L-R1        | 30 min   | 8       |
-| 7:45 PM  | W-SF + L-R2        | 30 min   | 6       |
-| 8:15 PM  | W-Final (Bo3) + L-R3 | 50 min | 3       |
-| 8:45 PM  | L-R4               | 30 min   | 2       |
-| 9:15 PM  | L-Semi             | 30 min   | 1       |
-| 9:45 PM  | L-Final            | 30 min   | 1       |
-| 10:15 PM | Grand Final (Bo3)  | 50 min   | 1       |
-| **11:05 PM** | **Done**       |          |         |
+| 7:10 PM  | Seeding Game 3     | 20 min   | 8       |
+| 7:30 PM  | Break (standings)  | 5 min    | —       |
+| 7:35 PM  | W-QF + L-R1        | 30 min   | 8       |
+| 8:05 PM  | W-SF + L-R2        | 30 min   | 6       |
+| 8:35 PM  | W-Final (Bo3) + L-R3 | 50 min | 3       |
+| 9:25 PM  | L-R4               | 30 min   | 2       |
+| 9:55 PM  | L-Semi             | 30 min   | 1       |
+| 10:25 PM | L-Final            | 30 min   | 1       |
+| 10:55 PM | Grand Final (Bo3)  | 50 min   | 1       |
+| **11:45 PM** | **Done**       |          |         |
 
-**Total Duration:** ~4 hours 35 minutes
+**Total Duration:** ~5 hours 15 minutes
+
+### With 2 RR Games (any team count)
+Same as above but skip Game 3, saving ~25 minutes. Total ~4 hours 50 minutes.
 
 ---
 
-## Payout Structure
+## Entry & Payouts
 
-| Entry Fee | Per Player | Per Team |
-|-----------|------------|----------|
-| Entry     | $30        | $60      |
+Payouts are handled offline (Venmo/cash) and **not shown in the app** to keep the public-facing site clean.
 
-### Payouts by Team Count
+| Entry Fee | Per Player |
+|-----------|------------|
+| Entry     | $30        |
 
-| Teams | Total | Prize Pool | 1st | 2nd | 3rd | Organizer |
-|-------|-------|------------|-----|-----|-----|-----------|
-| 12 | $720 | $580 | $360 | $160 | $60 | $140 |
-| 13 | $780 | $640 | $400 | $180 | $60 | $140 |
-| 14 | $840 | $700 | $440 | $200 | $60 | $140 |
-| 15 | $900 | $760 | $480 | $200 | $80 | $140 |
-| 16 | $960 | $820 | $500 | $220 | $100 | $140 |
-
-**Math:** Teams × 2 players × $30 = Total, $140 organizer fee
+The app tracks who has paid via **$ buttons** on the Setup page (green = paid, gray = unpaid). This is private — spectators cannot see paid status.
 
 ---
 
@@ -217,49 +235,56 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 
 ### Tabs/Phases
 1. **Import** - Select team count (12-16), paste team list, validates count on import
-2. **Setup** - Edit teams, configure RR games (2 or 3), configure winners bracket size, drag to reorder seeding, randomize matchups
+2. **Setup** - Edit teams, configure RR games (2 or 3), configure winners bracket size, drag to reorder seeding, paid tracking, randomize matchups
 3. **Round Robin** - Enter scores for seeding games (2 or 3), shows pool assignments for 12/16 teams with 3 games
-4. **Standings** - Live rankings with W-L, PF, PA, PD, pool indicator
-5. **Bracket** - Double elimination with score entry, Grand Final positioned to the right of W-Final
+4. **Standings** - Live rankings with W-L, PF, PA, PD, pool indicator, drag-and-drop manual reorder
+5. **Bracket** - Double elimination with score entry, Bo3 for W-Final and Grand Final, bracket seed swap panel
 6. **Results** - Final standings with 🥇🥈🥉 gold/silver/bronze highlighting and download button (unlocks when Grand Final is complete)
 
 ### Key Features
-- **12-16 Team Support** - Automatic payout adjustments based on team count
+- **12-16 Team Support** - Variable team counts with automatic format adjustments
 - **Team Count Selector** - Select expected teams on Import page, auto-detects from paste, validates on import
 - **Configurable RR Games** - Choose 2 (seed-balanced) or 3 games on Setup page
 - **Pool System** - Snake draft pools for 12/16 teams with 3 RR games
 - **Seed-Balanced Matchups** - For 2 RR games, pairs nearby seeds (1v2, 3v4, etc.)
 - **Configurable Bracket Split** - Choose how many teams go to Winners vs Losers (default: 12 all winners, 13-16 gets 8)
 - **No-Repeat Constraint** - Teams from same pool won't face each other in bracket R1, swaps shown in UI
+- **3-Way Tiebreaker** - Group H2H → Group PD → Overall PD (only when all tied teams played each other, otherwise overall PD)
+- **Drag & Drop Standings** - Manually reorder standings on Standings page if tiebreaker produces wrong results
+- **Bo3 Score Entry** - Winners Final and Grand Final support game-by-game score input (progressive: G1 first, G2 after G1 done, G3 if 1-1)
+- **Bracket Seed Swap** - Override panel lets you click two teams to swap their bracket positions (clears bracket scores on swap)
+- **Paid Tracking** - $ toggle button per player on Setup page (green/gray), counter shows X/32 paid, hidden from spectators
 - **DUPR Tracking** - Optional player ratings (placeholder "4.5"), shows combined team DUPR
 - **On Court Tracking** - Mark matches as "on court" (orange highlight)
 - **Next Up Queue** - Shows ready matches not yet on court
 - **Manual Override** - Force winner without entering scores (checkbox reveals "W" buttons)
-- **Save/Load Progress** - Export/import JSON file
+- **Save/Load Progress** - Export/import JSON file, standings always recalculate fresh on load
+- **Smart Phase Detection** - Loading a JSON auto-detects the correct phase (setup/roundrobin/bracket) based on data
 - **Download Results** - Comprehensive .txt file with all RR scores, bracket scores, and final standings
-- **🎲 Test Scores** - Generate fake scores based on seeding for testing (higher seeds favored ~3% per seed difference)
+- **Test Scores** - Generate fake scores based on seeding for testing (higher seeds favored ~3% per seed difference)
 - **Drag & Drop Seeding** - Reorder teams on Setup page by dragging (☰ handle)
-- **🔗 Share Link** - Compressed URL for spectators to view live bracket
-- **Spectator Mode** - Clean read-only view when opening shared link (hides all configuration, editing, and admin controls)
+- **Share Link** - Compressed URL for spectators (optimized: slim keys, stripped team objects from bracket scores)
+- **Spectator Mode** - Clean read-only view when opening shared link (hides paid status, admin controls, override panels)
 - **Placement Highlights** - 🥇 Gold, 🥈 Silver, 🥉 Bronze highlighting in bracket and Results tab
 
 ### How Share Link Works
-The **🔗 Share Link** button encodes the entire tournament state (teams, scores, bracket) into the URL after `?s=`.
+The **Share Link** button encodes tournament state into the URL after `?s=`.
 
 **Technical details:**
 - State is compressed using pako (zlib) before encoding
 - Uses URL-safe base64 (replaces `+` with `-`, `/` with `_`)
-- Compression reduces URL length by ~50-60% for better text message compatibility
+- Data is optimized for size: slim JSON keys, bracket scores store only seed numbers (not full team objects)
+- Paid status (`p1Paid`/`p2Paid`) is stripped from shared data for privacy
 - Backwards compatible with old uncompressed links
 
 **Tournament day workflow:**
 1. Enter scores as games finish
-2. Click **🔗 Share Link** → URL copied to clipboard
+2. Click **Share Link** → URL copied to clipboard
 3. Paste new link in group chat / text message
 4. Spectators open link to see current bracket (read-only)
 5. Repeat after each round of updates
 
-**Note:** Each click generates a NEW URL because the state changes. Spectators need the latest link to see latest scores (no auto-refresh).
+**Note:** Each click generates a NEW URL because the state changes. Spectators need the latest link to see latest scores (no auto-refresh). URLs are long due to encoded state — use any URL shortener (bit.ly, etc.) if needed.
 
 ### Color Coding
 - **Gray border** - Waiting for teams
@@ -347,6 +372,11 @@ Supported formats:
 1. **TextEdit HTML corruption** - Mac TextEdit saves as "Cocoa HTML Writer" with escaped code. Files must be created programmatically or via plain text editor.
 2. **Input focus loss** - React components defined inside `App` get recreated each render, losing focus. Fixed by moving components outside and using `memo()`.
 3. **Test scores button not working** - `generateFakeSeedingScores` and `generateFakeBracketScores` were defined before their dependencies (`seedingMatches` and `bracketTeams`). React `useCallback` captures values at creation time, so they were undefined. Fixed by moving these functions after their dependencies are defined.
+4. **Cross-pool tiebreaker bug** - Original tiebreaker used H2H for all tied teams, but cross-pool teams haven't played each other. Pool B teams with intra-pool H2H data ranked above non-Pool B teams regardless of PD. Fixed by checking if all tied teams played each other before using H2H.
+5. **Bo3 completion detection** - `nextUpMatches` only checked `s1`/`s2` for completion, missing Bo3 matches that use `games` array. Fixed to check both formats.
+6. **Share link call stack overflow** - `String.fromCharCode.apply(null, compressed)` can crash with large state arrays. Fixed with chunked loop approach.
+7. **Share link async clipboard** - jsonblob.com CORS was blocked in browser, and async fallback lost user gesture context for clipboard write. Reverted to synchronous approach.
+8. **Stale standings on load** - `bracketSeedOverride` was loaded from JSON, bypassing fresh standings calculation. Fixed by clearing overrides on load so standings always recalculate from seeding scores.
 
 ### UI Improvements
 - **Bracket shows both partners** - Each team displays both player names stacked vertically with smaller text (`text-xs`) instead of truncated single line
@@ -472,14 +502,20 @@ Current tournament app already exports compatible JSON via **💾 Save** button.
 - [x] Seed-balanced matchups (2 RR games option)
 - [x] Round robin scoring
 - [x] Double elimination bracket
-- [x] Save/Load progress (JSON)
+- [x] Save/Load progress (JSON) with smart phase detection
 - [x] Download results (TXT)
 - [x] Test scores generator
 - [x] Focus preservation fix
 - [x] Drag & drop seeding reorder
-- [x] Share link for spectators
+- [x] Share link for spectators (optimized data)
 - [x] Spectator mode (read-only view)
-- [x] Bo3 individual game score display
+- [x] Bo3 game-by-game score entry (W-Final, Grand Final)
+- [x] 3-way tiebreaker (group H2H → group PD → overall PD)
+- [x] Drag & drop standings manual reorder
+- [x] Bracket seed swap/flip (Override panel)
+- [x] Paid tracking (private, hidden from spectators)
+- [x] Standings recalculate on JSON load
+- [x] Payouts removed from public-facing app
 
 ### Phase 2: Master Site Foundation
 - [x] Set up GitHub repository (https://github.com/jdenish/moneyballs)
@@ -500,6 +536,40 @@ Current tournament app already exports compatible JSON via **💾 Save** button.
 - [ ] Score validation (must reach 11 or 15)
 - [ ] Mobile-responsive improvements
 - [ ] Social sharing (share tournament results to Twitter/Instagram)
+
+---
+
+## Lessons Learned — Tournament #1 (Feb 2026, 16 teams)
+
+### What Worked
+- **Pool system (4 pools of 4)** was easy to explain and run — everyone plays 3 games against their pool
+- **On Court tracking** was essential — knowing which courts were active and which matches were next kept things moving
+- **Share link** was popular — players loved checking the bracket from their phones between games
+- **Save/load JSON** saved us when we needed to reload mid-tournament
+- **Override button** was a lifesaver for one match with a scoring dispute — just forced the winner
+
+### What Didn't Work / Needed Fixing
+- **Tiebreaker was wrong** — 6 teams tied at 2-1 across pools, the H2H tiebreaker unfairly boosted same-pool teams. Had to manually reorder standings. **Fixed:** now only uses H2H when all tied teams played each other
+- **No way to manually reorder standings** — when the tiebreaker produced wrong results, there was no way to fix it in the app. **Fixed:** added drag-and-drop on standings page
+- **Standings didn't recalculate on load** — loading a saved JSON kept stale bracket seed overrides. **Fixed:** overrides cleared on load
+- **Bo3 finals were slow to enter** — had to enter game-by-game but the UI wasn't showing games progressively. **Fixed:** progressive game display (G1 first, G2 after G1 done, G3 if 1-1)
+- **Payouts on the public site** — players didn't want prize amounts visible to everyone watching the share link. **Fixed:** removed payouts from app entirely, handle offline
+- **Paid tracking was needed** — collecting $30 from 32 people is chaotic. Needed a way to track who paid. **Fixed:** added $ toggle per player, private to organizer
+
+### Timing Notes (actual)
+- 3 RR games took ~1 hour (20 min each with transition time)
+- Bracket rounds averaged ~35 min each (game to 15 + transitions)
+- Bo3 finals took ~45-50 min each
+- **Total:** started 6:30, finished ~11:30 PM (~5 hours)
+- **Suggestion:** consider 2 RR games instead of 3 to save 20-25 min, or start earlier
+
+### Operational Tips
+- Have someone dedicated to entering scores — don't try to play AND manage the bracket
+- Send the share link to the group chat after EVERY round update, not just once
+- Print the pool assignments on paper as backup
+- Collect payment BEFORE the tournament starts (use the paid tracking feature)
+- Have a plan for no-shows: who replaces them, how to adjust team count
+- Keep a phone charger nearby — the tournament app drains battery over 5 hours
 
 ---
 
