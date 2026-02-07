@@ -336,26 +336,46 @@ Matthew Chen / Johny Mario`);
       // Default winners count based on team count
       const defaultWinnersCount = { 12: 12, 13: 8, 14: 8, 15: 8, 16: 8 };
 
-      // Payouts based on team count (prize pool only, $140 organizer fee)
-      const payouts = {
-        12: { first: 360, second: 160, third: 60, total: 580 },
-        13: { first: 400, second: 180, third: 60, total: 640 },
-        14: { first: 440, second: 200, third: 60, total: 700 },
-        15: { first: 480, second: 200, third: 80, total: 760 },
-        16: { first: 500, second: 220, third: 100, total: 820 }
+      // Load shared state from URL
+      const loadSharedState = (decoded) => {
+        if (decoded.teamCount) setTeamCount(decoded.teamCount);
+        if (decoded.rrGames) setRrGames(decoded.rrGames);
+        if (decoded.rrPointTarget) setRrPointTarget(decoded.rrPointTarget);
+        if (decoded.winnersCount) setWinnersCount(decoded.winnersCount);
+        if (decoded.teams) setTeams(decoded.teams);
+        if (decoded.seedingScores) setSeedingScores(decoded.seedingScores);
+        if (decoded.bracketScores) setBracketScores(decoded.bracketScores);
+        if (decoded.bracketOverrides) setBracketOverrides(decoded.bracketOverrides);
+        if (decoded.game1Matchups) setGame1Matchups(decoded.game1Matchups);
+        if (decoded.game2Matchups) setGame2Matchups(decoded.game2Matchups);
+        if (decoded.game3Matchups) setGame3Matchups(decoded.game3Matchups);
+        if (decoded.pools) setPools(decoded.pools);
+        if (decoded.matchupsGenerated) setMatchupsGenerated(decoded.matchupsGenerated);
+        if (decoded.onCourt) setOnCourt(decoded.onCourt);
+        if (decoded.bracketSeedOverride) setBracketSeedOverride(decoded.bracketSeedOverride);
+        setSpectatorMode(true);
+        setPhase(decoded.phase || 'bracket');
       };
-      const currentPayouts = payouts[teamCount] || payouts[16];
 
-      // Check URL for shared state on load
       React.useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+
+        // Short URL: ?b=<jsonblob_id>
+        const blobId = params.get('b');
+        if (blobId) {
+          fetch(`https://jsonblob.com/api/jsonBlob/${blobId}`)
+            .then(r => r.json())
+            .then(decoded => loadSharedState(decoded))
+            .catch(e => console.error('Failed to load shared state from blob', e));
+          return;
+        }
+
+        // Legacy long URL: ?s=<compressed_base64>
         const sharedState = params.get('s');
         if (sharedState) {
           try {
             let decoded;
-            // Try compressed format first (URL-safe base64 + pako)
             try {
-              // Restore URL-safe base64: - to +, _ to /, add padding
               let base64 = sharedState.replace(/-/g, '+').replace(/_/g, '/');
               while (base64.length % 4) base64 += '=';
               const binary = atob(base64);
@@ -364,33 +384,16 @@ Matthew Chen / Johny Mario`);
               const decompressed = pako.inflate(bytes, { to: 'string' });
               decoded = JSON.parse(decompressed);
             } catch (compressError) {
-              // Fall back to old uncompressed format
               decoded = JSON.parse(atob(sharedState));
             }
-            if (decoded.teamCount) setTeamCount(decoded.teamCount);
-            if (decoded.rrGames) setRrGames(decoded.rrGames);
-            if (decoded.rrPointTarget) setRrPointTarget(decoded.rrPointTarget);
-            if (decoded.winnersCount) setWinnersCount(decoded.winnersCount);
-            if (decoded.teams) setTeams(decoded.teams);
-            if (decoded.seedingScores) setSeedingScores(decoded.seedingScores);
-            if (decoded.bracketScores) setBracketScores(decoded.bracketScores);
-            if (decoded.bracketOverrides) setBracketOverrides(decoded.bracketOverrides);
-            if (decoded.game1Matchups) setGame1Matchups(decoded.game1Matchups);
-            if (decoded.game2Matchups) setGame2Matchups(decoded.game2Matchups);
-            if (decoded.game3Matchups) setGame3Matchups(decoded.game3Matchups);
-            if (decoded.pools) setPools(decoded.pools);
-            if (decoded.matchupsGenerated) setMatchupsGenerated(decoded.matchupsGenerated);
-            if (decoded.onCourt) setOnCourt(decoded.onCourt);
-            if (decoded.bracketSeedOverride) setBracketSeedOverride(decoded.bracketSeedOverride);
-            setSpectatorMode(true);
-            setPhase(decoded.phase || 'bracket');
+            loadSharedState(decoded);
           } catch (e) {
             console.error('Failed to load shared state', e);
           }
         }
       }, []);
 
-      const shareLink = useCallback(() => {
+      const shareLink = useCallback(async () => {
         const state = {
           teamCount,
           rrGames,
@@ -409,17 +412,32 @@ Matthew Chen / Johny Mario`);
           bracketSeedOverride,
           phase
         };
-        // Compress with pako, then URL-safe base64
-        const jsonStr = JSON.stringify(state);
-        const compressed = pako.deflate(jsonStr);
-        const base64 = btoa(String.fromCharCode.apply(null, compressed));
-        // Make URL-safe: replace + with -, / with _, remove padding =
-        const urlSafe = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-        const url = `${window.location.origin}${window.location.pathname}?s=${urlSafe}`;
-        navigator.clipboard.writeText(url).then(() => {
-          setLinkCopied(true);
-          setTimeout(() => setLinkCopied(false), 2000);
-        });
+        try {
+          // Upload state to jsonblob.com for a short URL
+          const resp = await fetch('https://jsonblob.com/api/jsonBlob', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(state)
+          });
+          const location = resp.headers.get('Location') || resp.headers.get('location');
+          if (location) {
+            const blobId = location.split('/').pop();
+            const shortUrl = `${window.location.origin}${window.location.pathname}?b=${blobId}`;
+            await navigator.clipboard.writeText(shortUrl);
+          } else {
+            throw new Error('No location header');
+          }
+        } catch (e) {
+          // Fallback: use compressed URL-encoded state
+          const jsonStr = JSON.stringify(state);
+          const compressed = pako.deflate(jsonStr);
+          const base64 = btoa(String.fromCharCode.apply(null, compressed));
+          const urlSafe = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+          const url = `${window.location.origin}${window.location.pathname}?s=${urlSafe}`;
+          await navigator.clipboard.writeText(url);
+        }
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
       }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, game1Matchups, game2Matchups, game3Matchups, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase]);
 
       const handleDragStart = useCallback((e, index) => {
@@ -1177,7 +1195,13 @@ Matthew Chen / Johny Mario`);
             const m = bracketMatches[id];
             const s = bracketScores[id];
             const o = bracketOverrides[id];
-            const complete = o || (s && s.s1 !== '' && s.s2 !== '' && s.s1 !== undefined && s.s2 !== undefined);
+            let complete = o || (s && s.s1 !== '' && s.s2 !== '' && s.s1 !== undefined && s.s2 !== undefined);
+            // Check Bo3 completion
+            if (!complete && s && s.games && s.games.length > 0) {
+              let t1w = 0, t2w = 0;
+              s.games.forEach(g => { const a = parseInt(g.s1), b = parseInt(g.s2); if (!isNaN(a) && !isNaN(b)) { if (a > b) t1w++; else if (b > a) t2w++; } });
+              complete = t1w >= 2 || t2w >= 2;
+            }
             if (m && m.t1 && m.t2 && !complete && !onCourt[id]) {
               next.push({ ...m, type: 'bracket' });
             }
@@ -1276,9 +1300,9 @@ Matthew Chen / Johny Mario`);
         results += `==================================================\n\n`;
         results += `🏆 FINAL STANDINGS (BRACKET)\n`;
         results += `------------------------------\n`;
-        results += `🥇 1st ($${currentPayouts.first}): ${winner ? winner.name : 'TBD'}\n`;
-        results += `🥈 2nd ($${currentPayouts.second}): ${second ? second.name : 'TBD'}\n`;
-        results += `🥉 3rd ($${currentPayouts.third}): ${third ? third.name : 'TBD'}\n\n`;
+        results += `🥇 1st: ${winner ? winner.name : 'TBD'}\n`;
+        results += `🥈 2nd: ${second ? second.name : 'TBD'}\n`;
+        results += `🥉 3rd: ${third ? third.name : 'TBD'}\n\n`;
 
         results += `TEAMS (INITIAL SEEDING)\n`;
         results += `------------------------------\n`;
@@ -1384,8 +1408,7 @@ Matthew Chen / Johny Mario`);
 
       return (
         <div className="bg-gray-900 text-white p-4 min-h-screen">
-          <h1 className="text-2xl font-bold text-center mb-1">🏓 Jordan's Moneyballs</h1>
-          <p className="text-center text-gray-400 text-sm mb-2">$30/player • ${currentPayouts.first}/${currentPayouts.second}/${currentPayouts.third}</p>
+          <h1 className="text-2xl font-bold text-center mb-2">🏓 Jordan's Moneyballs</h1>
 
           {spectatorMode && (
             <div className="bg-blue-900 border border-blue-500 text-blue-200 text-center py-2 px-4 rounded mb-3 max-w-md mx-auto">
@@ -1964,7 +1987,7 @@ Matthew Chen / Johny Mario`);
                   />
                   {gfWinner && (
                     <div className="mt-3 bg-gradient-to-r from-yellow-700 to-yellow-600 p-3 rounded text-center border-2 border-yellow-400">
-                      <div className="text-xs text-yellow-200">🥇 CHAMPION (${currentPayouts.first})</div>
+                      <div className="text-xs text-yellow-200">🥇 CHAMPION</div>
                       {gfWinner.name.split(' / ').map((p, i) => (
                         <div key={i} className="text-sm font-bold text-white">{p}</div>
                       ))}
@@ -1972,7 +1995,7 @@ Matthew Chen / Johny Mario`);
                   )}
                   {getBracketMatchLoser('gf') && (
                     <div className="mt-2 bg-gradient-to-r from-gray-500 to-gray-400 p-2 rounded text-center border border-gray-300">
-                      <div className="text-xs text-gray-200">🥈 2nd (${currentPayouts.second})</div>
+                      <div className="text-xs text-gray-200">🥈 2nd Place</div>
                       {getBracketMatchLoser('gf').name.split(' / ').map((p, i) => (
                         <div key={i} className="text-xs font-semibold text-white">{p}</div>
                       ))}
@@ -2101,7 +2124,7 @@ Matthew Chen / Johny Mario`);
                   )}
                   {getBracketMatchLoser('lf') && (
                     <div className="mt-2 bg-gradient-to-r from-amber-800 to-amber-700 p-2 rounded text-center border border-amber-500">
-                      <div className="text-xs text-amber-200">🥉 3rd Place (${currentPayouts.third})</div>
+                      <div className="text-xs text-amber-200">🥉 3rd Place</div>
                       {getBracketMatchLoser('lf').name.split(' / ').map((p, i) => (
                         <div key={i} className="text-xs font-semibold text-white">{p}</div>
                       ))}
@@ -2119,7 +2142,7 @@ Matthew Chen / Johny Mario`);
               <div className="space-y-4">
                 {gfWinner && (
                   <div className="bg-gradient-to-r from-yellow-700 to-yellow-600 p-6 rounded-lg border-2 border-yellow-400 text-center">
-                    <div className="text-lg text-yellow-200">🥇 1st Place - ${currentPayouts.first}</div>
+                    <div className="text-lg text-yellow-200">🥇 1st Place</div>
                     {gfWinner.name.split(' / ').map((p, i) => (
                       <div key={i} className="text-2xl font-bold text-white">{p}</div>
                     ))}
@@ -2128,16 +2151,16 @@ Matthew Chen / Johny Mario`);
 
                 {getBracketMatchLoser('gf') && (
                   <div className="bg-gradient-to-r from-gray-500 to-gray-400 p-5 rounded-lg border-2 border-gray-300 text-center">
-                    <div className="text-md text-gray-200">🥈 2nd Place - ${currentPayouts.second}</div>
+                    <div className="text-md text-gray-200">🥈 2nd Place</div>
                     {getBracketMatchLoser('gf').name.split(' / ').map((p, i) => (
                       <div key={i} className="text-xl font-bold text-white">{p}</div>
                     ))}
                   </div>
                 )}
 
-                {getBracketMatchLoser('lf') && currentPayouts.third > 0 && (
+                {getBracketMatchLoser('lf') && (
                   <div className="bg-gradient-to-r from-amber-800 to-amber-700 p-4 rounded-lg border-2 border-amber-500 text-center">
-                    <div className="text-sm text-amber-200">🥉 3rd Place - ${currentPayouts.third}</div>
+                    <div className="text-sm text-amber-200">🥉 3rd Place</div>
                     {getBracketMatchLoser('lf').name.split(' / ').map((p, i) => (
                       <div key={i} className="text-lg font-bold text-white">{p}</div>
                     ))}
