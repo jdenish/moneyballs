@@ -207,7 +207,14 @@
             <span className="text-gray-500 text-xs">☰</span>
           </div>
           <div className="flex-1 flex flex-col gap-1">
-            <div className="flex gap-1">
+            <div className="flex gap-1 items-center">
+              <button
+                onClick={(e) => { e.stopPropagation(); onChange('p1Paid', !team.p1Paid); }}
+                onDragStart={(e) => e.stopPropagation()}
+                draggable={false}
+                className={`w-6 h-6 rounded text-xs font-bold flex-shrink-0 ${team.p1Paid ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-500 border border-gray-600'}`}
+                title={team.p1Paid ? 'Paid' : 'Not paid'}
+              >$</button>
               <input
                 className="flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm"
                 placeholder="Player 1"
@@ -227,7 +234,14 @@
                 draggable={false}
               />
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-1 items-center">
+              <button
+                onClick={(e) => { e.stopPropagation(); onChange('p2Paid', !team.p2Paid); }}
+                onDragStart={(e) => e.stopPropagation()}
+                draggable={false}
+                className={`w-6 h-6 rounded text-xs font-bold flex-shrink-0 ${team.p2Paid ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-500 border border-gray-600'}`}
+                title={team.p2Paid ? 'Paid' : 'Not paid'}
+              >$</button>
               <input
                 className="flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm"
                 placeholder="Player 2"
@@ -1477,7 +1491,12 @@ Matthew Chen / Johny Mario`);
           {phase === 'setup' && (
             <div className="max-w-4xl mx-auto">
               <h2 className="text-xl font-semibold mb-2 text-center">Teams ({teamCount})</h2>
-              <p className="text-gray-400 text-xs text-center mb-4">Drag teams to reorder seeding</p>
+              <p className="text-gray-400 text-xs text-center mb-1">Drag teams to reorder seeding</p>
+              <p className="text-xs text-center mb-4">
+                <span className={teams.filter(t => t.p1Paid && t.p2Paid).length === teamCount ? 'text-green-400' : 'text-yellow-400'}>
+                  {teams.reduce((n, t) => n + (t.p1Paid ? 1 : 0) + (t.p2Paid ? 1 : 0), 0)}/{teamCount * 2} paid
+                </span>
+              </p>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-yellow-400 font-semibold mb-2">Seeds 1-4</h3>
