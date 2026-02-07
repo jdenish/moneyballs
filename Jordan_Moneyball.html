@@ -67,15 +67,38 @@
       );
     });
 
-    const BracketMatch = memo(({ match, score, override, isOnCourt, showOverride, onScoreChange, onToggleCourt, onOverride, onClearOverride, winner, readOnly }) => {
+    const BracketMatch = memo(({ match, score, override, isOnCourt, showOverride, onScoreChange, onBo3ScoreChange, onToggleCourt, onOverride, onClearOverride, winner, readOnly }) => {
       if (!match) return null;
       const t1 = match.t1;
       const t2 = match.t2;
       const isReady = t1 && t2;
       const hasBo3Games = score.games && score.games.length > 0;
+
+      // Bo3 completion logic
+      let bo3T1Wins = 0, bo3T2Wins = 0;
+      if (hasBo3Games) {
+        score.games.forEach(g => {
+          const s1v = parseInt(g.s1), s2v = parseInt(g.s2);
+          if (!isNaN(s1v) && !isNaN(s2v)) { if (s1v > s2v) bo3T1Wins++; else if (s2v > s1v) bo3T2Wins++; }
+        });
+      }
+      const bo3Complete = bo3T1Wins >= 2 || bo3T2Wins >= 2;
+
+      // How many game inputs to show for Bo3
+      const numBo3Games = (() => {
+        if (!match.bo3 || readOnly || override || !isReady) return 0;
+        const games = score.games || [];
+        if (bo3Complete) return games.length;
+        if (games.length === 0) return 1;
+        const allDone = games.every(g => g.s1 !== '' && g.s2 !== '' && g.s1 !== undefined && g.s2 !== undefined && parseInt(g.s1) !== parseInt(g.s2));
+        if (allDone) return Math.min(games.length + 1, 3);
+        return games.length;
+      })();
+      const isBo3Input = match.bo3 && !readOnly && isReady && !override;
+
       const isComplete = override || (isReady && (
-        hasBo3Games ||
-        (score.s1 !== undefined && score.s2 !== undefined && score.s1 !== '' && score.s2 !== '')
+        (match.bo3 ? bo3Complete : false) ||
+        (!match.bo3 && score.s1 !== undefined && score.s2 !== undefined && score.s1 !== '' && score.s2 !== '')
       ));
       const t1Won = winner && t1 && winner.seed === t1.seed;
       const t2Won = winner && t2 && winner.seed === t2.seed;
@@ -103,7 +126,14 @@
                 <div key={i} className="text-xs leading-tight truncate">{p}</div>
               )) : <div className="text-xs">TBD</div>}
             </div>
-            {hasBo3Games ? (
+            {isBo3Input ? (
+              <div className="flex gap-1 flex-shrink-0">
+                {Array.from({ length: numBo3Games }, (_, gi) => {
+                  const g = (score.games || [])[gi] || { s1: '', s2: '' };
+                  return <input key={gi} type="number" className="w-8 bg-gray-700 text-center rounded text-sm" value={g.s1 || ''} onChange={(e) => onBo3ScoreChange(gi, 's1', e.target.value)} />;
+                })}
+              </div>
+            ) : hasBo3Games ? (
               <div className="flex gap-1 flex-shrink-0">
                 {score.games.map((g, i) => (
                   <span key={i} className="w-7 bg-gray-700 text-center rounded text-sm">{g.s1}</span>
@@ -119,7 +149,7 @@
                 onChange={(e) => onScoreChange('s1', e.target.value)}
               />
             )}
-            {showOverride && isReady && !override && !hasBo3Games && !readOnly && (
+            {showOverride && isReady && !override && !isBo3Input && !hasBo3Games && !readOnly && (
               <button className="text-xs bg-gray-700 px-1 rounded hover:bg-green-700 flex-shrink-0" onClick={() => onOverride(t1)}>W</button>
             )}
           </div>
@@ -129,7 +159,14 @@
                 <div key={i} className="text-xs leading-tight truncate">{p}</div>
               )) : <div className="text-xs">TBD</div>}
             </div>
-            {hasBo3Games ? (
+            {isBo3Input ? (
+              <div className="flex gap-1 flex-shrink-0">
+                {Array.from({ length: numBo3Games }, (_, gi) => {
+                  const g = (score.games || [])[gi] || { s1: '', s2: '' };
+                  return <input key={gi} type="number" className="w-8 bg-gray-700 text-center rounded text-sm" value={g.s2 || ''} onChange={(e) => onBo3ScoreChange(gi, 's2', e.target.value)} />;
+                })}
+              </div>
+            ) : hasBo3Games ? (
               <div className="flex gap-1 flex-shrink-0">
                 {score.games.map((g, i) => (
                   <span key={i} className="w-7 bg-gray-700 text-center rounded text-sm">{g.s2}</span>
@@ -145,7 +182,7 @@
                 onChange={(e) => onScoreChange('s2', e.target.value)}
               />
             )}
-            {showOverride && isReady && !override && !hasBo3Games && !readOnly && (
+            {showOverride && isReady && !override && !isBo3Input && !hasBo3Games && !readOnly && (
               <button className="text-xs bg-gray-700 px-1 rounded hover:bg-green-700 flex-shrink-0" onClick={() => onOverride(t2)}>W</button>
             )}
           </div>
@@ -286,6 +323,11 @@ Matthew Chen / Johny Mario`);
       const [bracketSwaps, setBracketSwaps] = useState([]);
       const [onCourt, setOnCourt] = useState({});
       const [showOverride, setShowOverride] = useState(false);
+      const [bracketSeedOverride, setBracketSeedOverride] = useState(null);
+      const [selectedSwapTeam, setSelectedSwapTeam] = useState(null);
+      const [standingsOverride, setStandingsOverride] = useState(null); // Array of seed numbers for manual reorder
+      const [standingsDragIndex, setStandingsDragIndex] = useState(null);
+      const [standingsDragOverIndex, setStandingsDragOverIndex] = useState(null);
       const [dragIndex, setDragIndex] = useState(null);
       const [dragOverIndex, setDragOverIndex] = useState(null);
       const [spectatorMode, setSpectatorMode] = useState(false);
@@ -339,6 +381,7 @@ Matthew Chen / Johny Mario`);
             if (decoded.pools) setPools(decoded.pools);
             if (decoded.matchupsGenerated) setMatchupsGenerated(decoded.matchupsGenerated);
             if (decoded.onCourt) setOnCourt(decoded.onCourt);
+            if (decoded.bracketSeedOverride) setBracketSeedOverride(decoded.bracketSeedOverride);
             setSpectatorMode(true);
             setPhase(decoded.phase || 'bracket');
           } catch (e) {
@@ -363,6 +406,7 @@ Matthew Chen / Johny Mario`);
           pools,
           matchupsGenerated,
           onCourt,
+          bracketSeedOverride,
           phase
         };
         // Compress with pako, then URL-safe base64
@@ -376,7 +420,7 @@ Matthew Chen / Johny Mario`);
           setLinkCopied(true);
           setTimeout(() => setLinkCopied(false), 2000);
         });
-      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, game1Matchups, game2Matchups, game3Matchups, pools, matchupsGenerated, onCourt, phase]);
+      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, game1Matchups, game2Matchups, game3Matchups, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase]);
 
       const handleDragStart = useCallback((e, index) => {
         setDragIndex(index);
@@ -404,6 +448,33 @@ Matthew Chen / Johny Mario`);
         setDragIndex(null);
         setDragOverIndex(null);
       }, [dragIndex]);
+
+      const handleStandingsDragStart = useCallback((e, index) => {
+        setStandingsDragIndex(index);
+        e.dataTransfer.effectAllowed = 'move';
+      }, []);
+
+      const handleStandingsDragOver = useCallback((e, index) => {
+        e.preventDefault();
+        setStandingsDragOverIndex(index);
+      }, []);
+
+      const handleStandingsDrop = useCallback((e, dropIndex) => {
+        e.preventDefault();
+        if (standingsDragIndex === null || standingsDragIndex === dropIndex) {
+          setStandingsDragIndex(null);
+          setStandingsDragOverIndex(null);
+          return;
+        }
+        const current = standingsOverride || standings.map(t => t.seed);
+        const newOrder = [...current];
+        const [dragged] = newOrder.splice(standingsDragIndex, 1);
+        newOrder.splice(dropIndex, 0, dragged);
+        setStandingsOverride(newOrder);
+        setBracketSeedOverride(null); // Clear bracket override when standings change
+        setStandingsDragIndex(null);
+        setStandingsDragOverIndex(null);
+      }, [standingsDragIndex, standingsOverride, standings]);
 
       const getTeamDupr = useCallback((team) => {
         const p1 = parseFloat(team.p1Dupr) || 0;
@@ -613,33 +684,107 @@ Matthew Chen / Johny Mario`);
               if (s1 > s2) {
                 stats[m.t1.seed].wins++;
                 stats[m.t2.seed].losses++;
-                stats[m.t1.seed].h2h[m.t2.seed] = 1;
-                stats[m.t2.seed].h2h[m.t1.seed] = -1;
+                stats[m.t1.seed].h2h[m.t2.seed] = { result: 1, pf: s1, pa: s2 };
+                stats[m.t2.seed].h2h[m.t1.seed] = { result: -1, pf: s2, pa: s1 };
               } else if (s2 > s1) {
                 stats[m.t2.seed].wins++;
                 stats[m.t1.seed].losses++;
-                stats[m.t2.seed].h2h[m.t1.seed] = 1;
-                stats[m.t1.seed].h2h[m.t2.seed] = -1;
+                stats[m.t2.seed].h2h[m.t1.seed] = { result: 1, pf: s2, pa: s1 };
+                stats[m.t1.seed].h2h[m.t2.seed] = { result: -1, pf: s1, pa: s2 };
               }
             }
           }
         });
 
-        return Object.values(stats).sort((a, b) => {
-          if (b.wins !== a.wins) return b.wins - a.wins;
-          const h2h = a.h2h[b.seed] || 0;
-          if (h2h !== 0) return -h2h;
-          return (b.pf - b.pa) - (a.pf - a.pa);
-        });
+        // 3-way tiebreaker: group h2h within tied teams, then group PD, then overall PD
+        // Only uses H2H when ALL teams in the group played each other (same pool)
+        const resolveTiedGroup = (group) => {
+          if (group.length <= 1) return group;
+
+          // Check if all teams in the group played each other
+          let allPlayedEachOther = true;
+          for (let i = 0; i < group.length && allPlayedEachOther; i++) {
+            for (let j = i + 1; j < group.length && allPlayedEachOther; j++) {
+              if (!group[i].h2h[group[j].seed]) {
+                allPlayedEachOther = false;
+              }
+            }
+          }
+
+          if (!allPlayedEachOther) {
+            // Cross-pool tie: can't use H2H, sort by overall PD only
+            return [...group].sort((a, b) => (b.pf - b.pa) - (a.pf - a.pa));
+          }
+
+          // All played each other: use group H2H wins, then group PD, then overall PD
+          const withG = group.map(t => {
+            let gW = 0, gPf = 0, gPa = 0;
+            group.forEach(o => {
+              if (t.seed === o.seed) return;
+              const h = t.h2h[o.seed];
+              if (h) {
+                if (h.result === 1) gW++;
+                gPf += h.pf || 0;
+                gPa += h.pa || 0;
+              }
+            });
+            return { ...t, gW, gPd: gPf - gPa };
+          });
+          withG.sort((a, b) => {
+            if (b.gW !== a.gW) return b.gW - a.gW;
+            if (b.gPd !== a.gPd) return b.gPd - a.gPd;
+            return (b.pf - b.pa) - (a.pf - a.pa);
+          });
+          const result = [];
+          let si = 0;
+          while (si < withG.length) {
+            let sj = si + 1;
+            while (sj < withG.length && withG[sj].gW === withG[si].gW && withG[sj].gPd === withG[si].gPd) sj++;
+            const sub = withG.slice(si, sj);
+            if (sub.length > 1 && sub.length < group.length) {
+              result.push(...resolveTiedGroup(sub));
+            } else {
+              result.push(...sub);
+            }
+            si = sj;
+          }
+          return result;
+        };
+        const allTeams = Object.values(stats).sort((a, b) => b.wins - a.wins);
+        const resolved = [];
+        let gi = 0;
+        while (gi < allTeams.length) {
+          let gj = gi + 1;
+          while (gj < allTeams.length && allTeams[gj].wins === allTeams[gi].wins) gj++;
+          resolved.push(...resolveTiedGroup(allTeams.slice(gi, gj)));
+          gi = gj;
+        }
+        return resolved;
       }, [teamData, seedingScores, seedingMatches]);
 
+      // Apply manual standings reorder if set, keeping fresh stats from computed standings
+      const displayStandings = useMemo(() => {
+        if (!standingsOverride) return standings;
+        const ordered = standingsOverride
+          .map(seed => standings.find(t => t.seed === seed))
+          .filter(Boolean);
+        // Add any teams not in the override
+        standings.forEach(t => {
+          if (!ordered.find(o => o.seed === t.seed)) ordered.push(t);
+        });
+        return ordered;
+      }, [standingsOverride, standings]);
+
       const bracketTeams = useMemo(() => {
-        if (standings.length < teamCount) return { winners: [], losers: [], swaps: [] };
+        if (bracketSeedOverride) {
+          return { winners: bracketSeedOverride.winners, losers: bracketSeedOverride.losers, swaps: [] };
+        }
+        if (displayStandings.length < teamCount) return { winners: [], losers: [], swaps: [] };
 
         // Split into winners and losers based on configured winnersCount
         const losersCount = teamCount - winnersCount;
-        let winners = standings.slice(0, winnersCount);
-        let losers = standings.slice(winnersCount);
+        let winners = displayStandings.slice(0, winnersCount);
+        let losers = displayStandings.slice(winnersCount);
 
         const swaps = [];
 
@@ -693,7 +838,7 @@ Matthew Chen / Johny Mario`);
         setBracketSwaps(swaps);
 
         return { winners, losers, swaps };
-      }, [standings, teamCount, winnersCount]);
+      }, [displayStandings, teamCount, winnersCount, bracketSeedOverride]);
 
       const generateFakeSeedingScores = useCallback(() => {
         const fakeScores = {};
@@ -831,8 +976,11 @@ Matthew Chen / Johny Mario`);
         if (score.games && score.games.length > 0) {
           let t1Wins = 0, t2Wins = 0;
           score.games.forEach(g => {
-            if (parseInt(g.s1) > parseInt(g.s2)) t1Wins++;
-            else t2Wins++;
+            const s1v = parseInt(g.s1), s2v = parseInt(g.s2);
+            if (!isNaN(s1v) && !isNaN(s2v)) {
+              if (s1v > s2v) t1Wins++;
+              else if (s2v > s1v) t2Wins++;
+            }
           });
           if (t1Wins >= 2) return score.t1;
           if (t2Wins >= 2) return score.t2;
@@ -855,8 +1003,11 @@ Matthew Chen / Johny Mario`);
         if (score.games && score.games.length > 0) {
           let t1Wins = 0, t2Wins = 0;
           score.games.forEach(g => {
-            if (parseInt(g.s1) > parseInt(g.s2)) t1Wins++;
-            else t2Wins++;
+            const s1v = parseInt(g.s1), s2v = parseInt(g.s2);
+            if (!isNaN(s1v) && !isNaN(s2v)) {
+              if (s1v > s2v) t1Wins++;
+              else if (s2v > s1v) t2Wins++;
+            }
           });
           if (t1Wins >= 2) return score.t2;
           if (t2Wins >= 2) return score.t1;
@@ -926,6 +1077,16 @@ Matthew Chen / Johny Mario`);
         }));
       }, []);
 
+      const handleBo3Score = useCallback((matchId, t1, t2, gameIndex, field, value) => {
+        setBracketScores(prev => {
+          const existing = prev[matchId] || { t1, t2, games: [] };
+          const games = [...(existing.games || [])];
+          while (games.length <= gameIndex) games.push({ s1: '', s2: '' });
+          games[gameIndex] = { ...games[gameIndex], [field]: value };
+          return { ...prev, [matchId]: { t1, t2, games } };
+        });
+      }, []);
+
       const handleBracketOverride = useCallback((id, winner, loser) => {
         setBracketOverrides(prev => ({ ...prev, [id]: { winner, loser } }));
       }, []);
@@ -937,6 +1098,37 @@ Matthew Chen / Johny Mario`);
           return newOverrides;
         });
       }, []);
+
+      const handleSeedSwap = useCallback((side, pos) => {
+        if (!selectedSwapTeam) {
+          setSelectedSwapTeam({ side, pos });
+          return;
+        }
+        if (selectedSwapTeam.side === side && selectedSwapTeam.pos === pos) {
+          setSelectedSwapTeam(null);
+          return;
+        }
+        const current = {
+          winners: [...(bracketSeedOverride?.winners || bracketTeams.winners)],
+          losers: [...(bracketSeedOverride?.losers || bracketTeams.losers)]
+        };
+        if (selectedSwapTeam.side === side) {
+          const arr = current[side];
+          [arr[selectedSwapTeam.pos], arr[pos]] = [arr[pos], arr[selectedSwapTeam.pos]];
+        } else {
+          const w = current.winners;
+          const l = current.losers;
+          if (selectedSwapTeam.side === 'winners') {
+            [w[selectedSwapTeam.pos], l[pos]] = [l[pos], w[selectedSwapTeam.pos]];
+          } else {
+            [l[selectedSwapTeam.pos], w[pos]] = [w[pos], l[selectedSwapTeam.pos]];
+          }
+        }
+        setBracketSeedOverride(current);
+        setBracketScores({});
+        setBracketOverrides({});
+        setSelectedSwapTeam(null);
+      }, [selectedSwapTeam, bracketSeedOverride, bracketTeams]);
 
       const toggleOnCourt = useCallback((id) => {
         setOnCourt(prev => ({ ...prev, [id]: !prev[id] }));
@@ -1009,7 +1201,8 @@ Matthew Chen / Johny Mario`);
           game2Matchups,
           game3Matchups,
           pools,
-          onCourt
+          onCourt,
+          bracketSeedOverride
         };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -1018,7 +1211,7 @@ Matthew Chen / Johny Mario`);
         a.download = `moneyballs-${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
-      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, matchupsGenerated, game1Matchups, game2Matchups, game3Matchups, pools, onCourt]);
+      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, matchupsGenerated, game1Matchups, game2Matchups, game3Matchups, pools, onCourt, bracketSeedOverride]);
 
       const loadProgress = useCallback((e) => {
         const file = e.target.files[0];
@@ -1041,7 +1234,31 @@ Matthew Chen / Johny Mario`);
             if (data.pools) setPools(data.pools);
             if (data.matchupsGenerated) setMatchupsGenerated(data.matchupsGenerated);
             if (data.onCourt) setOnCourt(data.onCourt);
-            setPhase('setup');
+            // Clear overrides on load so standings recalculate from seeding scores
+            setBracketSeedOverride(null);
+            setStandingsOverride(null);
+
+            // Auto-detect the right phase
+            const hasBracketData = data.bracketScores && Object.keys(data.bracketScores).length > 0;
+            const hasBracketOverrides = data.bracketOverrides && Object.keys(data.bracketOverrides).length > 0;
+            const hasOnCourtBracket = data.onCourt && Object.keys(data.onCourt).some(k => k.startsWith('w') || k.startsWith('l') || k === 'gf');
+            if (hasBracketData || hasBracketOverrides || hasOnCourtBracket) {
+              setPhase('bracket');
+            } else if (data.seedingScores && Object.keys(data.seedingScores).length > 0) {
+              const totalExpected = (data.rrGames || 3) * Math.floor((data.teamCount || 16) / 2);
+              const totalScored = Object.values(data.seedingScores).filter(s => s.s1 !== '' && s.s2 !== '' && s.s1 !== undefined && s.s2 !== undefined).length;
+              if (totalScored >= totalExpected) {
+                setPhase('bracket');
+              } else {
+                setPhase('roundrobin');
+              }
+            } else if (data.matchupsGenerated) {
+              setPhase('roundrobin');
+            } else if (data.teams && data.teams.some(t => t.p1Name)) {
+              setPhase('setup');
+            } else {
+              setPhase('import');
+            }
           } catch (err) {
             alert('Invalid file');
           }
@@ -1107,7 +1324,7 @@ Matthew Chen / Johny Mario`);
 
         results += `\nROUND ROBIN STANDINGS\n`;
         results += `------------------------------\n`;
-        standings.forEach((t, i) => {
+        displayStandings.forEach((t, i) => {
           const bracket = i < winnersCount ? '→ Winners' : '→ Losers';
           results += `${i + 1}. ${t.name} ${t.wins}-${t.losses} (${t.pf - t.pa >= 0 ? '+' : ''}${t.pf - t.pa}) ${bracket}\n`;
         });
@@ -1161,7 +1378,7 @@ Matthew Chen / Johny Mario`);
         a.download = `moneyballs-results-${new Date().toISOString().split('T')[0]}.txt`;
         a.click();
         URL.revokeObjectURL(url);
-      }, [teams, standings, seedingMatches, seedingScores, bracketMatches, bracketScores, getTeamName, getTeamDupr, getBracketMatchTeam, getBracketMatchLoser]);
+      }, [teams, displayStandings, seedingMatches, seedingScores, bracketMatches, bracketScores, getTeamName, getTeamDupr, getBracketMatchTeam, getBracketMatchLoser]);
 
       const gfWinner = getBracketMatchTeam('gf');
 
@@ -1516,9 +1733,25 @@ Matthew Chen / Johny Mario`);
 
           {phase === 'standings' && (
             <div className="max-w-2xl mx-auto">
-              <h2 className="text-xl font-semibold mb-4 text-center">Live Standings</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-center flex-1">Live Standings</h2>
+                {!spectatorMode && (
+                  <div className="flex items-center gap-2">
+                    {standingsOverride && (
+                      <button onClick={() => { setStandingsOverride(null); setBracketSeedOverride(null); }} className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600">Reset Order</button>
+                    )}
+                  </div>
+                )}
+              </div>
+              {standingsOverride && (
+                <div className="mb-2 bg-yellow-900/30 border border-yellow-600 rounded px-3 py-1 text-xs text-yellow-300 text-center">
+                  Manual order applied — drag to reorder, or Reset to recalculate
+                </div>
+              )}
+              <p className="text-gray-500 text-xs text-center mb-2">Drag rows to manually reorder</p>
               <div className="bg-gray-800 rounded p-3">
                 <div className="text-xs text-gray-500 flex px-2 mb-2">
+                  <span className="w-6"></span>
                   <span className="w-8">Rk</span>
                   {Object.keys(pools).length > 0 && <span className="w-10">Pool</span>}
                   <span className="flex-1">Team</span>
@@ -1527,11 +1760,22 @@ Matthew Chen / Johny Mario`);
                   <span className="w-12 text-center">PA</span>
                   <span className="w-12 text-right">PD</span>
                 </div>
-                {standings.map((t, i) => {
+                {displayStandings.map((t, i) => {
                   const isWinners = i < winnersCount;
                   const poolColors = ['text-yellow-400', 'text-blue-400', 'text-green-400', 'text-red-400'];
                   return (
-                    <div key={t.seed} className={`flex items-center text-sm py-2 px-2 rounded mb-1 ${isWinners ? 'bg-blue-900/30' : 'bg-red-900/30'}`}>
+                    <div
+                      key={t.seed}
+                      draggable={!spectatorMode}
+                      onDragStart={(e) => handleStandingsDragStart(e, i)}
+                      onDragOver={(e) => handleStandingsDragOver(e, i)}
+                      onDrop={(e) => handleStandingsDrop(e, i)}
+                      onDragEnd={() => { setStandingsDragIndex(null); setStandingsDragOverIndex(null); }}
+                      className={`flex items-center text-sm py-2 px-2 rounded mb-1 transition-all ${
+                        standingsDragOverIndex === i ? 'border-2 border-yellow-400' : 'border-2 border-transparent'
+                      } ${standingsDragIndex === i ? 'opacity-50' : ''} ${isWinners ? 'bg-blue-900/30' : 'bg-red-900/30'} ${!spectatorMode ? 'cursor-move' : ''}`}
+                    >
+                      {!spectatorMode && <span className="w-6 text-gray-600 text-xs">☰</span>}
                       <span className={`w-8 font-bold ${isWinners ? 'text-blue-400' : 'text-red-400'}`}>{i + 1}</span>
                       {Object.keys(pools).length > 0 && (
                         <span className={`w-10 text-xs ${poolColors[t.pool] || 'text-gray-400'}`}>
@@ -1588,6 +1832,62 @@ Matthew Chen / Johny Mario`);
                 )}
               </div>
 
+              {showOverride && !spectatorMode && bracketTeams.winners.length > 0 && (
+                <div className="mb-3 bg-gray-800 rounded p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-semibold">Flip Bracket Seeds</span>
+                    <div className="flex gap-2">
+                      {selectedSwapTeam && <span className="text-xs text-yellow-400">Click another team to swap</span>}
+                      {bracketSeedOverride && (
+                        <button onClick={() => { setBracketSeedOverride(null); setBracketScores({}); setBracketOverrides({}); setSelectedSwapTeam(null); }} className="text-xs text-gray-400 hover:text-white bg-gray-700 px-2 py-0.5 rounded">Reset Seeds</button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs text-blue-400 mb-1 font-semibold">Winners Bracket</div>
+                      {bracketTeams.winners.map((t, i) => {
+                        const isSelected = selectedSwapTeam?.side === 'winners' && selectedSwapTeam?.pos === i;
+                        const matchups = [[0,7],[3,4],[1,6],[2,5]];
+                        const matchup = matchups.find(m => m[0] === i || m[1] === i);
+                        const oppIdx = matchup ? (matchup[0] === i ? matchup[1] : matchup[0]) : null;
+                        return (
+                          <div
+                            key={t.seed}
+                            className={`text-xs py-1 px-2 rounded cursor-pointer flex items-center gap-1 ${isSelected ? 'bg-yellow-600 text-white' : 'hover:bg-gray-700'}`}
+                            onClick={() => handleSeedSwap('winners', i)}
+                          >
+                            <span className="font-mono w-6">W{i+1}.</span>
+                            <span className="flex-1 truncate">{t.name.split(' / ').map(n => n.split(' ')[0]).join(' / ')}</span>
+                            {oppIdx !== null && <span className="text-gray-500">vs W{oppIdx+1}</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div>
+                      <div className="text-xs text-red-400 mb-1 font-semibold">Losers Bracket</div>
+                      {bracketTeams.losers.map((t, i) => {
+                        const isSelected = selectedSwapTeam?.side === 'losers' && selectedSwapTeam?.pos === i;
+                        const matchups = [[0,7],[3,4],[1,6],[2,5]];
+                        const matchup = matchups.find(m => m[0] === i || m[1] === i);
+                        const oppIdx = matchup ? (matchup[0] === i ? matchup[1] : matchup[0]) : null;
+                        return (
+                          <div
+                            key={t.seed}
+                            className={`text-xs py-1 px-2 rounded cursor-pointer flex items-center gap-1 ${isSelected ? 'bg-yellow-600 text-white' : 'hover:bg-gray-700'}`}
+                            onClick={() => handleSeedSwap('losers', i)}
+                          >
+                            <span className="font-mono w-6">L{i+1}.</span>
+                            <span className="flex-1 truncate">{t.name.split(' / ').map(n => n.split(' ')[0]).join(' / ')}</span>
+                            {oppIdx !== null && <span className="text-gray-500">vs L{oppIdx+1}</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-3 pb-4">
                 <div className="space-y-2 w-44 flex-shrink-0">
                   <div className="text-xs text-gray-500 text-center">W-QF</div>
@@ -1638,6 +1938,7 @@ Matthew Chen / Johny Mario`);
                     isOnCourt={onCourt.wf}
                     showOverride={showOverride}
                     onScoreChange={(field, value) => handleBracketScore('wf', bracketMatches.wf?.t1, bracketMatches.wf?.t2, field, value)}
+                    onBo3ScoreChange={(gi, field, value) => handleBo3Score('wf', bracketMatches.wf?.t1, bracketMatches.wf?.t2, gi, field, value)}
                     onToggleCourt={() => toggleOnCourt('wf')}
                     onOverride={(team) => handleBracketOverride('wf', team, team === bracketMatches.wf?.t1 ? bracketMatches.wf?.t2 : bracketMatches.wf?.t1)}
                     onClearOverride={() => clearBracketOverride('wf')}
@@ -1654,6 +1955,7 @@ Matthew Chen / Johny Mario`);
                     isOnCourt={onCourt.gf}
                     showOverride={showOverride}
                     onScoreChange={(field, value) => handleBracketScore('gf', bracketMatches.gf?.t1, bracketMatches.gf?.t2, field, value)}
+                    onBo3ScoreChange={(gi, field, value) => handleBo3Score('gf', bracketMatches.gf?.t1, bracketMatches.gf?.t2, gi, field, value)}
                     onToggleCourt={() => toggleOnCourt('gf')}
                     onOverride={(team) => handleBracketOverride('gf', team, team === bracketMatches.gf?.t1 ? bracketMatches.gf?.t2 : bracketMatches.gf?.t1)}
                     onClearOverride={() => clearBracketOverride('gf')}
