@@ -350,6 +350,15 @@ Matthew Chen / Johny Mario`);
       // Default winners count based on team count
       const defaultWinnersCount = { 12: 12, 13: 8, 14: 8, 15: 8, 16: 8 };
 
+      const payouts = {
+        12: { first: 360, second: 160, third: 60, total: 580 },
+        13: { first: 400, second: 180, third: 60, total: 640 },
+        14: { first: 440, second: 200, third: 60, total: 700 },
+        15: { first: 480, second: 200, third: 80, total: 760 },
+        16: { first: 500, second: 220, third: 100, total: 820 }
+      };
+      const currentPayouts = payouts[teamCount] || payouts[16];
+
       // Load shared state from URL (handles both old and slim formats)
       const loadSharedState = (d) => {
         // Support both old keys (teamCount) and slim keys (tc)
@@ -1311,9 +1320,9 @@ Matthew Chen / Johny Mario`);
         results += `==================================================\n\n`;
         results += `🏆 FINAL STANDINGS (BRACKET)\n`;
         results += `------------------------------\n`;
-        results += `🥇 1st: ${winner ? winner.name : 'TBD'}\n`;
-        results += `🥈 2nd: ${second ? second.name : 'TBD'}\n`;
-        results += `🥉 3rd: ${third ? third.name : 'TBD'}\n\n`;
+        results += `🥇 1st ($${currentPayouts.first}): ${winner ? winner.name : 'TBD'}\n`;
+        results += `🥈 2nd ($${currentPayouts.second}): ${second ? second.name : 'TBD'}\n`;
+        results += `🥉 3rd ($${currentPayouts.third}): ${third ? third.name : 'TBD'}\n\n`;
 
         results += `TEAMS (INITIAL SEEDING)\n`;
         results += `------------------------------\n`;
@@ -1419,7 +1428,8 @@ Matthew Chen / Johny Mario`);
 
       return (
         <div className="bg-gray-900 text-white p-4 min-h-screen">
-          <h1 className="text-2xl font-bold text-center mb-2">🏓 Jordan's Moneyballs</h1>
+          <h1 className="text-2xl font-bold text-center mb-1">🏓 Jordan's Moneyballs</h1>
+          <p className="text-center text-gray-400 text-xs mb-2">$45/player • 🥇 ${currentPayouts.first} 🥈 ${currentPayouts.second} 🥉 ${currentPayouts.third}</p>
 
           {spectatorMode && (
             <div className="bg-blue-900 border border-blue-500 text-blue-200 text-center py-2 px-4 rounded mb-3 max-w-md mx-auto">
@@ -2008,7 +2018,7 @@ Matthew Chen / Johny Mario`);
                   />
                   {gfWinner && (
                     <div className="mt-3 bg-gradient-to-r from-yellow-700 to-yellow-600 p-3 rounded text-center border-2 border-yellow-400">
-                      <div className="text-xs text-yellow-200">🥇 CHAMPION</div>
+                      <div className="text-xs text-yellow-200">🥇 CHAMPION — ${currentPayouts.first}</div>
                       {gfWinner.name.split(' / ').map((p, i) => (
                         <div key={i} className="text-sm font-bold text-white">{p}</div>
                       ))}
@@ -2016,7 +2026,7 @@ Matthew Chen / Johny Mario`);
                   )}
                   {getBracketMatchLoser('gf') && (
                     <div className="mt-2 bg-gradient-to-r from-gray-500 to-gray-400 p-2 rounded text-center border border-gray-300">
-                      <div className="text-xs text-gray-200">🥈 2nd Place</div>
+                      <div className="text-xs text-gray-200">🥈 2nd Place — ${currentPayouts.second}</div>
                       {getBracketMatchLoser('gf').name.split(' / ').map((p, i) => (
                         <div key={i} className="text-xs font-semibold text-white">{p}</div>
                       ))}
@@ -2145,7 +2155,7 @@ Matthew Chen / Johny Mario`);
                   )}
                   {getBracketMatchLoser('lf') && (
                     <div className="mt-2 bg-gradient-to-r from-amber-800 to-amber-700 p-2 rounded text-center border border-amber-500">
-                      <div className="text-xs text-amber-200">🥉 3rd Place</div>
+                      <div className="text-xs text-amber-200">🥉 3rd Place — ${currentPayouts.third}</div>
                       {getBracketMatchLoser('lf').name.split(' / ').map((p, i) => (
                         <div key={i} className="text-xs font-semibold text-white">{p}</div>
                       ))}
@@ -2163,7 +2173,7 @@ Matthew Chen / Johny Mario`);
               <div className="space-y-4">
                 {gfWinner && (
                   <div className="bg-gradient-to-r from-yellow-700 to-yellow-600 p-6 rounded-lg border-2 border-yellow-400 text-center">
-                    <div className="text-lg text-yellow-200">🥇 1st Place</div>
+                    <div className="text-lg text-yellow-200">🥇 1st Place — ${currentPayouts.first}</div>
                     {gfWinner.name.split(' / ').map((p, i) => (
                       <div key={i} className="text-2xl font-bold text-white">{p}</div>
                     ))}
@@ -2172,7 +2182,7 @@ Matthew Chen / Johny Mario`);
 
                 {getBracketMatchLoser('gf') && (
                   <div className="bg-gradient-to-r from-gray-500 to-gray-400 p-5 rounded-lg border-2 border-gray-300 text-center">
-                    <div className="text-md text-gray-200">🥈 2nd Place</div>
+                    <div className="text-md text-gray-200">🥈 2nd Place — ${currentPayouts.second}</div>
                     {getBracketMatchLoser('gf').name.split(' / ').map((p, i) => (
                       <div key={i} className="text-xl font-bold text-white">{p}</div>
                     ))}
@@ -2181,7 +2191,7 @@ Matthew Chen / Johny Mario`);
 
                 {getBracketMatchLoser('lf') && (
                   <div className="bg-gradient-to-r from-amber-800 to-amber-700 p-4 rounded-lg border-2 border-amber-500 text-center">
-                    <div className="text-sm text-amber-200">🥉 3rd Place</div>
+                    <div className="text-sm text-amber-200">🥉 3rd Place — ${currentPayouts.third}</div>
                     {getBracketMatchLoser('lf').name.split(' / ').map((p, i) => (
                       <div key={i} className="text-lg font-bold text-white">{p}</div>
                     ))}
