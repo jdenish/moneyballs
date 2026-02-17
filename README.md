@@ -1,6 +1,6 @@
 # Jordan's Moneyballs
 
-A tournament management app for 12-16 team doubles pickleball tournaments.
+A tournament management app for 8-16 team doubles pickleball tournaments with configurable round robin, pools, and single or double elimination brackets.
 
 ## Live Site
 
@@ -8,46 +8,50 @@ A tournament management app for 12-16 team doubles pickleball tournaments.
 
 ## Features
 
-- **12-16 team support** with automatic payout adjustments
-- **Team count selector** - select expected team count, auto-detects from pasted list, validates on import
-- **Configurable RR games** - choose 2 (seed-balanced) or 3 games
-  - 3 games: pools for 12/16 teams (snake draft), random for 13-15
-  - 2 games: seed-balanced matchups (1v2, 3v4, etc.) for all team counts
-- **Pool system** for 12/16 teams with 3 RR games (snake draft seeding)
-- **Configurable bracket split** - choose how many teams go to Winners vs Losers
-- **No-repeat constraint** - teams from same pool won't face each other in bracket R1
+- **8-16 team support** with automatic payout adjustments
+- **Configurable RR games (0-7)** - skip RR (0), seed-balanced (2), pools (3 for 12/16), or random with repeat-avoidance
+- **Configurable pool system** - pool sizes 3-6, snake draft assignment, intra-pool round robin
+- **Single or double elimination** bracket with dynamic generation
+- **Configurable finals** - Best of 3 or single game
+- **Smart court assignment** - pool-based for RR, lowest-available for bracket, manual override
+- **3rd place match** in single elimination
+- **No-repeat constraint** - pool teammates won't face each other in bracket R1
 - **Drag & drop seeding** - reorder teams on Setup page
-- **Double elimination bracket** with Bo3 finals
-- **Live score tracking** with "on court" status
+- **Live spectator link** via npoint.io - one stable URL, publish to update, spectators reload
+- **Live score tracking** with numbered court display
 - **Share link** for spectators (compressed URL, read-only view)
-- **Save/load** tournament progress
+- **Save/load** tournament progress (backwards compatible)
 - **Results tab** with gold/silver/bronze highlighting
 
 ## Tournament Format
 
-| Teams | RR Format | Default Winners | Payouts |
-|-------|-----------|-----------------|---------|
-| 12 | 3 pools of 4 | 12 (all) | $360 / $160 / $60 |
-| 13 | 3 random games | 8 | $400 / $180 / $60 |
-| 14 | 3 random games | 8 | $440 / $200 / $60 |
-| 15 | 3 random games | 8 | $480 / $200 / $80 |
-| 16 | 4 pools of 4 | 8 | $500 / $220 / $100 |
+| Teams | Default Winners | Payouts (1st / 2nd / 3rd) |
+|-------|-----------------|---------------------------|
+| 8 | 8 (all) | $200 / $100 / $40 |
+| 9 | 8 | $240 / $100 / $40 |
+| 10 | 8 | $260 / $120 / $40 |
+| 11 | 8 | $300 / $140 / $40 |
+| 12 | 12 (all) | $360 / $160 / $60 |
+| 13 | 8 | $400 / $180 / $60 |
+| 14 | 8 | $440 / $200 / $60 |
+| 15 | 8 | $480 / $200 / $80 |
+| 16 | 8 | $500 / $220 / $100 |
 
-- **Entry:** $30/player ($60/team)
+- **Entry:** $45/player (covers entry + court fees)
 - **Seeding games:** To 11, win by 2
 - **Bracket games:** To 15, win by 2
-- **Finals:** Best of 3 (games to 11)
+- **Finals:** Best of 3 or single game (configurable)
 
 ## Quick Start
 
 1. Open the [live site](https://jdenish.github.io/moneyballs/Jordan_Moneyball.html)
-2. Select team count (auto-detects when you paste)
+2. Select team count (8-16, auto-detects when you paste)
 3. Paste team list (format: `Player 1 / Player 2`)
-4. Click "Import Teams" (validates count matches selection)
-5. Configure RR games (2 or 3) and winners bracket size
-6. Click "Randomize Matchups"
-7. Enter scores as games finish
-8. Share link with spectators after each update
+4. Click "Import Teams"
+5. Configure: RR games (0-7 or Pools), bracket type (single/double), finals format, court count
+6. (Optional) Paste an [npoint.io](https://www.npoint.io) ID for live spectator link
+7. Click "Randomize Matchups" and start entering scores
+8. Click **Publish** to push state to live link, or use **Share Link** for one-off snapshots
 
 ## Documentation
 
