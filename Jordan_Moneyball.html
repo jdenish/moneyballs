@@ -17,7 +17,7 @@
 
     // Move components outside App to prevent recreation on each render
 
-    const SeedingMatch = memo(({ match, score, isOnCourt, onScoreChange, onToggleCourt, readOnly }) => {
+    const SeedingMatch = memo(({ match, score, isOnCourt, courtNum, onScoreChange, onToggleCourt, onSetCourt, courtCount, readOnly }) => {
       const isComplete = score.s1 !== undefined && score.s2 !== undefined && score.s1 !== '' && score.s2 !== '';
       const t1Won = isComplete && parseInt(score.s1) > parseInt(score.s2);
       const t2Won = isComplete && parseInt(score.s2) > parseInt(score.s1);
@@ -25,14 +25,28 @@
       return (
         <div className={`p-2 rounded border ${isComplete ? 'bg-gray-800 border-green-600' : isOnCourt ? 'bg-orange-900/50 border-orange-500' : 'bg-gray-800 border-gray-600'}`}>
           <div className="flex justify-between items-center mb-1">
-            <span className="text-gray-500 text-xs">Court {match.court}</span>
+            <span className="text-gray-500 text-xs">{isOnCourt ? `Court ${courtNum}` : `Ct ${match.court}`}</span>
             {!isComplete && !readOnly && (
-              <button
-                onClick={onToggleCourt}
-                className={`text-xs px-2 py-0.5 rounded ${isOnCourt ? 'bg-orange-600' : 'bg-gray-700 hover:bg-orange-700'}`}
-              >
-                {isOnCourt ? '🏓 On Court' : 'Send'}
-              </button>
+              <div className="flex items-center gap-1">
+                {isOnCourt && onSetCourt && (
+                  <select
+                    value={courtNum || ''}
+                    onChange={(e) => onSetCourt(parseInt(e.target.value))}
+                    className="text-xs bg-gray-700 rounded px-1 py-0.5 w-12"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {Array.from({ length: courtCount || 8 }, (_, i) => (
+                      <option key={i + 1} value={i + 1}>{i + 1}</option>
+                    ))}
+                  </select>
+                )}
+                <button
+                  onClick={onToggleCourt}
+                  className={`text-xs px-2 py-0.5 rounded ${isOnCourt ? 'bg-orange-600' : 'bg-gray-700 hover:bg-orange-700'}`}
+                >
+                  {isOnCourt ? '🏓 On Court' : 'Send'}
+                </button>
+              </div>
             )}
           </div>
           <div className={`flex items-center gap-2 ${t1Won ? 'text-green-400' : 'text-gray-300'}`}>
@@ -67,7 +81,7 @@
       );
     });
 
-    const BracketMatch = memo(({ match, score, override, isOnCourt, showOverride, onScoreChange, onBo3ScoreChange, onToggleCourt, onOverride, onClearOverride, winner, readOnly }) => {
+    const BracketMatch = memo(({ match, score, override, isOnCourt, courtNum, showOverride, onScoreChange, onBo3ScoreChange, onToggleCourt, onSetCourt, courtCount, onOverride, onClearOverride, winner, readOnly }) => {
       if (!match) return null;
       const t1 = match.t1;
       const t2 = match.t2;
@@ -106,17 +120,31 @@
       return (
         <div className={`p-2 rounded border ${isComplete ? 'bg-gray-800 border-green-600' : isOnCourt ? 'bg-orange-900/50 border-orange-500' : isReady ? 'bg-gray-800 border-yellow-500' : 'bg-gray-800 border-gray-700'} ${match.bo3 ? 'ring-2 ring-yellow-500' : ''}`}>
           <div className="text-xs text-gray-500 mb-1 flex justify-between">
-            <span>{match.round}</span>
+            <span>{match.round}{isOnCourt ? ` · Ct ${courtNum}` : ''}</span>
             <div className="flex gap-1 items-center">
               {match.bo3 && <span className="text-yellow-400">Bo3</span>}
               {override && !readOnly && <span className="text-orange-400 cursor-pointer" onClick={onClearOverride}>⟲</span>}
               {isReady && !isComplete && !readOnly && (
-                <button
-                  onClick={onToggleCourt}
-                  className={`text-xs px-1 py-0.5 rounded ${isOnCourt ? 'bg-orange-600' : 'bg-gray-700 hover:bg-orange-700'}`}
-                >
-                  {isOnCourt ? '🏓' : 'Send'}
-                </button>
+                <>
+                  {isOnCourt && onSetCourt && (
+                    <select
+                      value={courtNum || ''}
+                      onChange={(e) => onSetCourt(parseInt(e.target.value))}
+                      className="text-xs bg-gray-700 rounded px-1 py-0.5 w-10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {Array.from({ length: courtCount || 8 }, (_, i) => (
+                        <option key={i + 1} value={i + 1}>{i + 1}</option>
+                      ))}
+                    </select>
+                  )}
+                  <button
+                    onClick={onToggleCourt}
+                    className={`text-xs px-1 py-0.5 rounded ${isOnCourt ? 'bg-orange-600' : 'bg-gray-700 hover:bg-orange-700'}`}
+                  >
+                    {isOnCourt ? '🏓' : 'Send'}
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -269,7 +297,7 @@
       );
     });
 
-    const CourtStatus = memo(({ onCourtMatches, nextUpMatches, onToggleCourt }) => (
+    const CourtStatus = memo(({ onCourtMatches, nextUpMatches, onToggleCourt, onCourt }) => (
       <div className="mb-4 grid md:grid-cols-2 gap-2">
         <div className="bg-orange-900/30 border border-orange-500 rounded p-2">
           <div className="text-orange-400 text-xs font-semibold mb-1">🏓 On Court ({onCourtMatches.length})</div>
@@ -277,9 +305,9 @@
             <div className="text-gray-500 text-xs">No matches on court</div>
           ) : (
             <div className="space-y-1">
-              {onCourtMatches.map(m => (
+              {onCourtMatches.sort((a, b) => (onCourt[a.id] || 99) - (onCourt[b.id] || 99)).map(m => (
                 <div key={m.id} className="text-xs text-orange-300">
-                  {m.round || `Ct${m.court}`}: {m.t1?.name?.split('/')[0]} vs {m.t2?.name?.split('/')[0]}
+                  <span className="font-mono text-orange-400">Ct{onCourt[m.id]}</span> {m.round || ''}: {m.t1?.name?.split('/')[0]} vs {m.t2?.name?.split('/')[0]}
                 </div>
               ))}
             </div>
@@ -291,7 +319,7 @@
             <div className="text-gray-500 text-xs">All done!</div>
           ) : (
             <div className="space-y-1">
-              {nextUpMatches.slice(0, 4).map(m => (
+              {nextUpMatches.slice(0, 6).map(m => (
                 <div key={m.id} className="text-xs text-gray-300 flex justify-between">
                   <span>{m.round || `Ct${m.court}`}: {m.t1?.name?.split('/')[0]} vs {m.t2?.name?.split('/')[0]}</span>
                   <button onClick={() => onToggleCourt(m.id)} className="text-orange-400 hover:text-orange-300">Send→</button>
@@ -330,12 +358,14 @@ Matthew Chen / Johny Mario`);
       const [bracketScores, setBracketScores] = useState({});
       const [bracketOverrides, setBracketOverrides] = useState({});
       const [matchupsGenerated, setMatchupsGenerated] = useState(false);
-      const [game1Matchups, setGame1Matchups] = useState([]);
-      const [game2Matchups, setGame2Matchups] = useState([]);
-      const [game3Matchups, setGame3Matchups] = useState([]);
+      const [rrMatchups, setRrMatchups] = useState([]); // rrMatchups[0] = game 1, etc.
       const [pools, setPools] = useState({});
+      const [bracketType, setBracketType] = useState('double'); // 'double' or 'single'
+      const [bo3Finals, setBo3Finals] = useState(true);
+      const [poolSize, setPoolSize] = useState(0); // 0 = no pools, 3-6 = pool size
       const [bracketSwaps, setBracketSwaps] = useState([]);
-      const [onCourt, setOnCourt] = useState({});
+      const [onCourt, setOnCourt] = useState({}); // { matchId: courtNumber } (0 or absent = not on court)
+      const [courtCount, setCourtCount] = useState(8);
       const [showOverride, setShowOverride] = useState(false);
       const [bracketSeedOverride, setBracketSeedOverride] = useState(null);
       const [selectedSwapTeam, setSelectedSwapTeam] = useState(null);
@@ -346,11 +376,18 @@ Matthew Chen / Johny Mario`);
       const [dragOverIndex, setDragOverIndex] = useState(null);
       const [spectatorMode, setSpectatorMode] = useState(false);
       const [linkCopied, setLinkCopied] = useState(false);
+      const [npointId, setNpointId] = useState('');
+      const [publishStatus, setPublishStatus] = useState(''); // '', 'publishing', 'published', 'error'
+      const [liveMode, setLiveMode] = useState(false); // true when loaded via ?live= param
 
       // Default winners count based on team count
-      const defaultWinnersCount = { 12: 12, 13: 8, 14: 8, 15: 8, 16: 8 };
+      const defaultWinnersCount = { 8: 8, 9: 8, 10: 8, 11: 8, 12: 12, 13: 8, 14: 8, 15: 8, 16: 8 };
 
       const payouts = {
+        8: { first: 200, second: 100, third: 40, total: 340 },
+        9: { first: 240, second: 100, third: 40, total: 380 },
+        10: { first: 260, second: 120, third: 40, total: 420 },
+        11: { first: 300, second: 140, third: 40, total: 480 },
         12: { first: 360, second: 160, third: 60, total: 580 },
         13: { first: 400, second: 180, third: 60, total: 640 },
         14: { first: 440, second: 200, third: 60, total: 700 },
@@ -370,9 +407,21 @@ Matthew Chen / Johny Mario`);
         if (v('teams', 't')) setTeams(v('teams', 't'));
         if (v('seedingScores', 'ss')) setSeedingScores(v('seedingScores', 'ss'));
         if (v('bracketOverrides', 'bo')) setBracketOverrides(v('bracketOverrides', 'bo'));
-        if (v('game1Matchups', 'g1')) setGame1Matchups(v('game1Matchups', 'g1'));
-        if (v('game2Matchups', 'g2')) setGame2Matchups(v('game2Matchups', 'g2'));
-        if (v('game3Matchups', 'g3')) setGame3Matchups(v('game3Matchups', 'g3'));
+        // Handle both old (g1/g2/g3) and new (rm) matchup formats
+        if (v('rrMatchups', 'rm')) {
+          setRrMatchups(v('rrMatchups', 'rm'));
+        } else {
+          const g1 = v('game1Matchups', 'g1'), g2 = v('game2Matchups', 'g2'), g3 = v('game3Matchups', 'g3');
+          const reconstructed = [];
+          if (g1 && g1.length) reconstructed.push(g1);
+          if (g2 && g2.length) reconstructed.push(g2);
+          if (g3 && g3.length) reconstructed.push(g3);
+          if (reconstructed.length) setRrMatchups(reconstructed);
+        }
+        if (v('bracketType', 'bt')) setBracketType(v('bracketType', 'bt'));
+        if (v('bo3Finals', 'b3') !== undefined) setBo3Finals(v('bo3Finals', 'b3'));
+        if (v('poolSize', 'ps')) setPoolSize(v('poolSize', 'ps'));
+        if (v('courtCount', 'cc')) setCourtCount(v('courtCount', 'cc'));
         if (v('pools', 'p')) setPools(v('pools', 'p'));
         if (v('matchupsGenerated', 'mg')) setMatchupsGenerated(v('matchupsGenerated', 'mg'));
         if (v('onCourt', 'oc')) setOnCourt(v('onCourt', 'oc'));
@@ -405,7 +454,18 @@ Matthew Chen / Johny Mario`);
       React.useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const sharedState = params.get('s');
-        if (sharedState) {
+        const liveId = params.get('live');
+        if (liveId) {
+          // Live mode: fetch state from npoint
+          setLiveMode(true);
+          fetch(`https://api.npoint.io/${liveId}`)
+            .then(r => r.json())
+            .then(data => {
+              if (data && Object.keys(data).length > 0) loadSharedState(data);
+              else { setSpectatorMode(true); setPhase('import'); }
+            })
+            .catch(e => { console.error('Failed to load live state', e); setSpectatorMode(true); });
+        } else if (sharedState) {
           try {
             let decoded;
             try {
@@ -431,7 +491,7 @@ Matthew Chen / Johny Mario`);
         const state = {
           tc: teamCount, rg: rrGames, rp: rrPointTarget, wc: winnersCount,
           t: teams.map(({ p1Paid, p2Paid, ...rest }) => rest), ss: seedingScores, bo: bracketOverrides,
-          g1: game1Matchups, g2: game2Matchups, g3: game3Matchups,
+          rm: rrMatchups, bt: bracketType, b3: bo3Finals, ps: poolSize, cc: courtCount,
           p: pools, mg: matchupsGenerated, oc: onCourt, bso: bracketSeedOverride, ph: phase
         };
         // Slim bracket scores: store only seeds + scores (no full team objects)
@@ -458,7 +518,54 @@ Matthew Chen / Johny Mario`);
           setLinkCopied(true);
           setTimeout(() => setLinkCopied(false), 2000);
         });
-      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, game1Matchups, game2Matchups, game3Matchups, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase]);
+      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, rrMatchups, bracketType, bo3Finals, poolSize, courtCount, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase]);
+
+      const publishToNpoint = useCallback(() => {
+        if (!npointId) return;
+        setPublishStatus('publishing');
+        // Build the same slim state as share link
+        const state = {
+          tc: teamCount, rg: rrGames, rp: rrPointTarget, wc: winnersCount,
+          t: teams.map(({ p1Paid, p2Paid, ...rest }) => rest), ss: seedingScores, bo: bracketOverrides,
+          rm: rrMatchups, bt: bracketType, b3: bo3Finals, ps: poolSize, cc: courtCount,
+          p: pools, mg: matchupsGenerated, oc: onCourt, bso: bracketSeedOverride, ph: phase
+        };
+        if (Object.keys(bracketScores).length > 0) {
+          const slim = {};
+          Object.entries(bracketScores).forEach(([id, s]) => {
+            if (s.games) {
+              slim[id] = { a: s.t1?.seed, b: s.t2?.seed, g: s.games };
+            } else {
+              slim[id] = { a: s.t1?.seed, b: s.t2?.seed, s1: s.s1, s2: s.s2 };
+            }
+          });
+          state.bs = slim;
+        }
+        fetch(`https://api.npoint.io/${npointId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state)
+        })
+          .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            setPublishStatus('published');
+            setTimeout(() => setPublishStatus(''), 2000);
+          })
+          .catch(e => {
+            console.error('Publish failed', e);
+            setPublishStatus('error');
+            setTimeout(() => setPublishStatus(''), 3000);
+          });
+      }, [npointId, teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, rrMatchups, bracketType, bo3Finals, poolSize, courtCount, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase]);
+
+      const copyLiveLink = useCallback(() => {
+        if (!npointId) return;
+        const url = `${window.location.origin}${window.location.pathname}?live=${npointId}`;
+        navigator.clipboard.writeText(url).then(() => {
+          setLinkCopied(true);
+          setTimeout(() => setLinkCopied(false), 2000);
+        });
+      }, [npointId]);
 
       const handleDragStart = useCallback((e, index) => {
         setDragIndex(index);
@@ -560,93 +667,129 @@ Matthew Chen / Johny Mario`);
           return a;
         };
 
-        // 2 RR games: seed-balanced random for all team counts
-        if (rrGames === 2) {
-          const allTeams = Array.from({ length: teamCount }, (_, i) => i);
+        // Generate round-robin schedule for a group of team indices
+        const generatePoolRR = (poolTeamsList) => {
+          const n = poolTeamsList.length;
+          if (n < 2) return [];
+          const rounds = [];
+          // Circle method for round-robin scheduling
+          const teams = [...poolTeamsList];
+          const numRounds = n % 2 === 0 ? n - 1 : n;
+          const half = Math.floor(n / 2);
+          // If odd, add a dummy
+          if (n % 2 === 1) teams.push(-1);
+          const fixed = teams[0];
+          const rotating = teams.slice(1);
+          for (let r = 0; r < numRounds; r++) {
+            const roundMatches = [];
+            const current = [fixed, ...rotating];
+            for (let i = 0; i < current.length / 2; i++) {
+              const t1 = current[i];
+              const t2 = current[current.length - 1 - i];
+              if (t1 !== -1 && t2 !== -1) {
+                roundMatches.push({ t1, t2 });
+              }
+            }
+            rounds.push(roundMatches);
+            // Rotate: move last to front of rotating array
+            rotating.unshift(rotating.pop());
+          }
+          return rounds;
+        };
 
-          // Round 1: pair nearby seeds (0v1, 2v3, 4v5, etc.)
+        // 0 RR games: skip directly to bracket
+        if (rrGames === 0) {
+          setRrMatchups([]);
+          setPools({});
+          setMatchupsGenerated(true);
+          setSeedingScores({});
+          return;
+        }
+
+        // Pool-based matchups (poolSize 3-6)
+        if (poolSize >= 3) {
+          const numPools = Math.round(teamCount / poolSize);
+          const poolAssignments = {};
+          const poolTeamsList = Array.from({ length: numPools }, () => []);
+
+          // Snake draft
+          for (let i = 0; i < teamCount; i++) {
+            const row = Math.floor(i / numPools);
+            let poolIdx = i % numPools;
+            if (row % 2 === 1) poolIdx = numPools - 1 - poolIdx;
+            poolTeamsList[poolIdx].push(i);
+            poolAssignments[i] = poolIdx;
+          }
+
+          setPools(poolAssignments);
+
+          // Generate full round-robin within each pool
+          const allPoolRounds = poolTeamsList.map(pt => generatePoolRR(pt));
+          const maxRounds = Math.max(...allPoolRounds.map(r => r.length));
+
+          const rounds = [];
+          for (let r = 0; r < maxRounds; r++) {
+            const roundMatches = [];
+            allPoolRounds.forEach(poolRounds => {
+              if (r < poolRounds.length) {
+                roundMatches.push(...poolRounds[r]);
+              }
+            });
+            rounds.push(roundMatches);
+          }
+
+          setRrMatchups(rounds);
+          setMatchupsGenerated(true);
+          setSeedingScores({});
+          return;
+        }
+
+        // No pools: generate matchups based on rrGames count
+        setPools({});
+
+        if (rrGames === 1) {
+          // 1 game: random pairs
+          const allTeams = shuffle(Array.from({ length: teamCount }, (_, i) => i));
+          const matches = [];
+          for (let i = 0; i < allTeams.length - 1; i += 2) {
+            matches.push({ t1: allTeams[i], t2: allTeams[i + 1] });
+          }
+          setRrMatchups([matches]);
+        } else if (rrGames === 2) {
+          // 2 games: seed-balanced
+          const allTeams = Array.from({ length: teamCount }, (_, i) => i);
           const g1 = [];
           for (let i = 0; i < teamCount - 1; i += 2) {
             g1.push({ t1: allTeams[i], t2: allTeams[i + 1] });
           }
-
-          // Round 2: shift pairing (0v2, 1v3, 4v6, 5v7, etc.)
           const g2 = [];
-          for (let i = 0; i < teamCount - 1; i += 2) {
-            const t1 = allTeams[i];
-            const t2 = allTeams[Math.min(i + 2, teamCount - 1)];
-            // Avoid same matchup as round 1
-            if (t2 === allTeams[i + 1]) {
-              g2.push({ t1, t2: allTeams[Math.min(i + 3, teamCount - 1)] });
-            } else {
-              g2.push({ t1, t2 });
-            }
-          }
-          // Better approach: interleave for round 2 (0v2, 1v3, 4v6, 5v7...)
-          const g2Better = [];
           const used = new Set();
           for (let i = 0; i < teamCount; i++) {
             if (used.has(i)) continue;
             const opponent = i + 2 < teamCount && !used.has(i + 2) ? i + 2 :
                             (i + 1 < teamCount && !used.has(i + 1) ? i + 1 : null);
             if (opponent !== null) {
-              g2Better.push({ t1: i, t2: opponent });
+              g2.push({ t1: i, t2: opponent });
               used.add(i);
               used.add(opponent);
             }
           }
-
-          setGame1Matchups(shuffle(g1));
-          setGame2Matchups(shuffle(g2Better.length >= g1.length ? g2Better : g2));
-          setGame3Matchups([]);
-          setPools({});
-        }
-        // 3 RR games: pools for 12/16, random for 13-15
-        else if (teamCount === 12 || teamCount === 16) {
-          const numPools = teamCount === 12 ? 3 : 4;
-
-          // Snake draft: 1,2,3,4 then 8,7,6,5 then 9,10,11,12...
-          const poolAssignments = {};
-          const poolTeams = Array.from({ length: numPools }, () => []);
-
-          for (let i = 0; i < teamCount; i++) {
-            const row = Math.floor(i / numPools);
-            let poolIdx = i % numPools;
-            if (row % 2 === 1) poolIdx = numPools - 1 - poolIdx; // Snake
-            poolTeams[poolIdx].push(i);
-            poolAssignments[i] = poolIdx;
-          }
-
-          setPools(poolAssignments);
-
-          // Within each pool: Game 1: 1v3, 2v4; Game 2: 1v2, 3v4; Game 3: 1v4, 2v3
-          const g1 = [], g2 = [], g3 = [];
-          poolTeams.forEach(pool => {
-            g1.push({ t1: pool[0], t2: pool[2] }, { t1: pool[1], t2: pool[3] });
-            g2.push({ t1: pool[0], t2: pool[1] }, { t1: pool[2], t2: pool[3] });
-            g3.push({ t1: pool[0], t2: pool[3] }, { t1: pool[1], t2: pool[2] });
-          });
-
-          // Don't shuffle pool matchups - keep consistent order (1v3, 2v4 per pool)
-          setGame1Matchups(g1);
-          setGame2Matchups(g2);
-          setGame3Matchups(g3);
+          setRrMatchups([shuffle(g1), shuffle(g2)]);
         } else {
-          // 13, 14, 15 teams: 3 random RR games
+          // 3-7 games: random with repeat-avoidance
           const allTeams = Array.from({ length: teamCount }, (_, i) => i);
           const opponents = {};
           allTeams.forEach(t => opponents[t] = []);
+          const rounds = [];
 
-          const g1 = [], g2 = [], g3 = [];
-
-          for (let round = 0; round < 3; round++) {
-            const available = [...allTeams];
+          for (let round = 0; round < rrGames; round++) {
+            const available = shuffle([...allTeams]);
             const roundMatches = [];
 
             while (available.length >= 2) {
               const t1 = available.shift();
               let t2Idx = available.findIndex(t => !opponents[t1].includes(t));
-              if (t2Idx === -1) t2Idx = 0;
+              if (t2Idx === -1) t2Idx = 0; // Allow repeat if no fresh opponent
               const t2 = available.splice(t2Idx, 1)[0];
 
               opponents[t1].push(t2);
@@ -654,17 +797,15 @@ Matthew Chen / Johny Mario`);
               roundMatches.push({ t1, t2 });
             }
 
-            if (round === 0) setGame1Matchups(shuffle(roundMatches));
-            else if (round === 1) setGame2Matchups(shuffle(roundMatches));
-            else setGame3Matchups(shuffle(roundMatches));
+            rounds.push(roundMatches);
           }
 
-          setPools({});
+          setRrMatchups(rounds);
         }
 
         setMatchupsGenerated(true);
         setSeedingScores({});
-      }, [teamCount, rrGames]);
+      }, [teamCount, rrGames, poolSize]);
 
       const teamData = useMemo(() => {
         return teams.map((t, i) => ({
@@ -674,33 +815,21 @@ Matthew Chen / Johny Mario`);
         }));
       }, [teams, getTeamName, getTeamDupr]);
 
+      // seedingMatches is now an array of arrays: seedingMatches[roundIdx] = [match, match, ...]
       const seedingMatches = useMemo(() => {
         const t = teamData;
-        if (matchupsGenerated && game1Matchups.length && game2Matchups.length) {
-          const result = {
-            game1: game1Matchups.map((m, i) => ({
-              id: `g1m${i}`,
-              t1: t[m.t1],
-              t2: t[m.t2],
-              court: i + 1
-            })),
-            game2: game2Matchups.map((m, i) => ({
-              id: `g2m${i}`,
-              t1: t[m.t1],
-              t2: t[m.t2],
-              court: i + 1
-            })),
-            game3: game3Matchups.map((m, i) => ({
-              id: `g3m${i}`,
+        if (matchupsGenerated && rrMatchups.length > 0) {
+          return rrMatchups.map((roundMatchups, roundIdx) =>
+            roundMatchups.map((m, i) => ({
+              id: `g${roundIdx + 1}m${i}`,
               t1: t[m.t1],
               t2: t[m.t2],
               court: i + 1
             }))
-          };
-          return result;
+          );
         }
-        return { game1: [], game2: [], game3: [] };
-      }, [teamData, matchupsGenerated, game1Matchups, game2Matchups, game3Matchups]);
+        return [];
+      }, [teamData, matchupsGenerated, rrMatchups]);
 
       const standings = useMemo(() => {
         const stats = {};
@@ -708,7 +837,12 @@ Matthew Chen / Johny Mario`);
           stats[t.seed] = { ...t, wins: 0, losses: 0, pf: 0, pa: 0, h2h: {}, pool: pools[t.seed - 1] };
         });
 
-        [...seedingMatches.game1, ...seedingMatches.game2, ...seedingMatches.game3].forEach(m => {
+        // 0 RR games: return teams in import order
+        if (rrGames === 0) {
+          return Object.values(stats);
+        }
+
+        seedingMatches.flat().forEach(m => {
           const score = seedingScores[m.id];
           if (score && score.s1 !== '' && score.s2 !== '' && score.s1 !== undefined && score.s2 !== undefined) {
             const s1 = parseInt(score.s1);
@@ -750,8 +884,8 @@ Matthew Chen / Johny Mario`);
           }
 
           if (!allPlayedEachOther) {
-            // Cross-pool tie: can't use H2H, sort by overall PD only
-            return [...group].sort((a, b) => (b.pf - b.pa) - (a.pf - a.pa));
+            // Cross-pool tie: can't use H2H, sort by overall PD then original seed
+            return [...group].sort((a, b) => ((b.pf - b.pa) - (a.pf - a.pa)) || (a.seed - b.seed));
           }
 
           // All played each other: use group H2H wins, then group PD, then overall PD
@@ -771,7 +905,8 @@ Matthew Chen / Johny Mario`);
           withG.sort((a, b) => {
             if (b.gW !== a.gW) return b.gW - a.gW;
             if (b.gPd !== a.gPd) return b.gPd - a.gPd;
-            return (b.pf - b.pa) - (a.pf - a.pa);
+            if ((b.pf - b.pa) !== (a.pf - a.pa)) return (b.pf - b.pa) - (a.pf - a.pa);
+            return a.seed - b.seed; // Original seed as final tiebreaker
           });
           const result = [];
           let si = 0;
@@ -798,7 +933,7 @@ Matthew Chen / Johny Mario`);
           gi = gj;
         }
         return resolved;
-      }, [teamData, seedingScores, seedingMatches]);
+      }, [teamData, seedingScores, seedingMatches, rrGames]);
 
       // Apply manual standings reorder if set, keeping fresh stats from computed standings
       const displayStandings = useMemo(() => {
@@ -880,7 +1015,7 @@ Matthew Chen / Johny Mario`);
 
       const generateFakeSeedingScores = useCallback(() => {
         const fakeScores = {};
-        [...seedingMatches.game1, ...seedingMatches.game2, ...seedingMatches.game3].forEach(m => {
+        seedingMatches.flat().forEach(m => {
           const seedDiff = m.t2.seed - m.t1.seed; // positive = t1 is better seed
           const t1WinProb = 0.5 + (seedDiff * 0.03); // 3% advantage per seed difference
           const t1Wins = Math.random() < t1WinProb;
@@ -896,112 +1031,71 @@ Matthew Chen / Johny Mario`);
 
       const generateFakeBracketScores = useCallback(() => {
         const fakeScores = {};
-
-        // We need to simulate in order since later matches depend on earlier results
         const getWinner = (id) => {
           const s = fakeScores[id];
           if (!s) return null;
-          // Handle Bo3 with games array
           if (s.games) {
-            let t1Wins = 0, t2Wins = 0;
-            s.games.forEach(g => { if (g.s1 > g.s2) t1Wins++; else t2Wins++; });
-            return t1Wins > t2Wins ? s.t1 : s.t2;
+            let t1W = 0, t2W = 0;
+            s.games.forEach(g => { if (g.s1 > g.s2) t1W++; else t2W++; });
+            return t1W > t2W ? s.t1 : s.t2;
           }
           return parseInt(s.s1) > parseInt(s.s2) ? s.t1 : s.t2;
         };
         const getLoser = (id) => {
           const s = fakeScores[id];
           if (!s) return null;
-          // Handle Bo3 with games array
           if (s.games) {
-            let t1Wins = 0, t2Wins = 0;
-            s.games.forEach(g => { if (g.s1 > g.s2) t1Wins++; else t2Wins++; });
-            return t1Wins > t2Wins ? s.t2 : s.t1;
+            let t1W = 0, t2W = 0;
+            s.games.forEach(g => { if (g.s1 > g.s2) t1W++; else t2W++; });
+            return t1W > t2W ? s.t2 : s.t1;
           }
           return parseInt(s.s1) > parseInt(s.s2) ? s.t2 : s.t1;
         };
-
-        const w = bracketTeams.winners;
-        const l = bracketTeams.losers;
-        if (w.length < 8) return;
-
         const simulateMatch = (t1, t2) => {
           if (!t1 || !t2) return null;
           const seedDiff = t2.seed - t1.seed;
           const t1WinProb = 0.5 + (seedDiff * 0.025);
           const t1Wins = Math.random() < t1WinProb;
-          const winScore = 15;
-          const loseScore = Math.floor(Math.random() * 10) + 4; // 4-13
-          return { t1, t2, s1: t1Wins ? winScore : loseScore, s2: t1Wins ? loseScore : winScore };
+          return { t1, t2, s1: t1Wins ? 15 : Math.floor(Math.random() * 10) + 4, s2: t1Wins ? Math.floor(Math.random() * 10) + 4 : 15 };
         };
-
-        // Bo3 matches store individual game scores to 11
-        const simulateBo3Match = (t1, t2) => {
+        const simulateBo3 = (t1, t2) => {
           if (!t1 || !t2) return null;
           const seedDiff = t2.seed - t1.seed;
           const t1WinProb = 0.5 + (seedDiff * 0.025);
-
-          const games = [];
-          let t1Wins = 0, t2Wins = 0;
-
-          while (t1Wins < 2 && t2Wins < 2) {
-            const t1WinsGame = Math.random() < t1WinProb;
-            const winScore = 11;
-            const loseScore = Math.floor(Math.random() * 8) + 2; // 2-9
-            games.push({
-              s1: t1WinsGame ? winScore : loseScore,
-              s2: t1WinsGame ? loseScore : winScore
-            });
-            if (t1WinsGame) t1Wins++; else t2Wins++;
+          const games = []; let t1W = 0, t2W = 0;
+          while (t1W < 2 && t2W < 2) {
+            const w = Math.random() < t1WinProb;
+            games.push({ s1: w ? 11 : Math.floor(Math.random() * 8) + 2, s2: w ? Math.floor(Math.random() * 8) + 2 : 11 });
+            if (w) t1W++; else t2W++;
           }
-
           return { t1, t2, games };
         };
 
-        // Winners QF
-        fakeScores.wqf1 = simulateMatch(w[0], w[7]);
-        fakeScores.wqf2 = simulateMatch(w[3], w[4]);
-        fakeScores.wqf3 = simulateMatch(w[1], w[6]);
-        fakeScores.wqf4 = simulateMatch(w[2], w[5]);
+        // Simulate all bracket matches in topological order
+        // Build dependency graph from bracketMatches
+        const matchOrder = bracketType === 'single'
+          ? ['se_r1m1','se_r1m2','se_r1m3','se_r1m4','se_qf1','se_qf2','se_qf3','se_qf4','se_sf1','se_sf2','se_f','se_3rd']
+          : ['wqf1','wqf2','wqf3','wqf4','lr1m1','lr1m2','lr1m3','lr1m4','wsf1','wsf2','lr2m1','lr2m2','lr2m3','lr2m4','lr3m1','lr3m2','wf','lr4m1','lr4m2','lsf','lf','gf'];
 
-        // Losers R1
-        fakeScores.lr1m1 = simulateMatch(l[0], l[7]);
-        fakeScores.lr1m2 = simulateMatch(l[3], l[4]);
-        fakeScores.lr1m3 = simulateMatch(l[1], l[6]);
-        fakeScores.lr1m4 = simulateMatch(l[2], l[5]);
-
-        // Winners SF
-        fakeScores.wsf1 = simulateMatch(getWinner('wqf1'), getWinner('wqf2'));
-        fakeScores.wsf2 = simulateMatch(getWinner('wqf3'), getWinner('wqf4'));
-
-        // Losers R2
-        fakeScores.lr2m1 = simulateMatch(getWinner('lr1m1'), getLoser('wqf1'));
-        fakeScores.lr2m2 = simulateMatch(getWinner('lr1m2'), getLoser('wqf2'));
-        fakeScores.lr2m3 = simulateMatch(getWinner('lr1m3'), getLoser('wqf3'));
-        fakeScores.lr2m4 = simulateMatch(getWinner('lr1m4'), getLoser('wqf4'));
-
-        // Losers R3
-        fakeScores.lr3m1 = simulateMatch(getWinner('lr2m1'), getWinner('lr2m2'));
-        fakeScores.lr3m2 = simulateMatch(getWinner('lr2m3'), getWinner('lr2m4'));
-
-        // Winners Final (Bo3)
-        fakeScores.wf = simulateBo3Match(getWinner('wsf1'), getWinner('wsf2'));
-
-        // Losers R4
-        fakeScores.lr4m1 = simulateMatch(getWinner('lr3m1'), getLoser('wsf1'));
-        fakeScores.lr4m2 = simulateMatch(getWinner('lr3m2'), getLoser('wsf2'));
-
-        // Losers Semi
-        fakeScores.lsf = simulateMatch(getWinner('lr4m1'), getWinner('lr4m2'));
-
-        // Losers Final
-        fakeScores.lf = simulateMatch(getWinner('lsf'), getLoser('wf'));
-
-        // Grand Final (Bo3)
-        fakeScores.gf = simulateBo3Match(getWinner('wf'), getWinner('lf'));
+        matchOrder.forEach(id => {
+          const m = bracketMatches[id];
+          if (!m || m.bye) return;
+          // Resolve teams: use fakeScores winners where bracket feeds in
+          let t1 = m.t1, t2 = m.t2;
+          // For fed-in teams, check if they come from previous matches
+          const resolveTeam = (team, matchId) => {
+            if (team) return team;
+            // Try to find from bracket structure
+            return null;
+          };
+          t1 = resolveTeam(t1, id);
+          t2 = resolveTeam(t2, id);
+          if (!t1 || !t2) return;
+          fakeScores[id] = m.bo3 ? simulateBo3(t1, t2) : simulateMatch(t1, t2);
+        });
 
         setBracketScores(fakeScores);
-      }, [bracketTeams]);
+      }, [bracketMatches, bracketType]);
 
       const getBracketMatchTeam = useCallback((id) => {
         if (bracketOverrides[id] && bracketOverrides[id].winner) {
@@ -1060,37 +1154,152 @@ Matthew Chen / Johny Mario`);
       const bracketMatches = useMemo(() => {
         const w = bracketTeams.winners || [];
         const l = bracketTeams.losers || [];
-        if (w.length < 6 || teamCount < 12) return {}; // Need at least 6 winners for a meaningful bracket
 
-        // For now, support 16-team bracket (8v8) fully
-        // TODO: Add byes for 12-15 teams
-        if (w.length < 8 || l.length < 8) return {};
+        // ========= SINGLE ELIMINATION =========
+        if (bracketType === 'single') {
+          const seTeams = displayStandings.slice(0, teamCount);
+          if (seTeams.length < 2) return {};
+          const matches = {};
+          const n = seTeams.length;
 
-        return {
-          wqf1: { id: 'wqf1', t1: w[0], t2: w[7], round: 'W-QF', court: 1 },
-          wqf2: { id: 'wqf2', t1: w[3], t2: w[4], round: 'W-QF', court: 2 },
-          wqf3: { id: 'wqf3', t1: w[1], t2: w[6], round: 'W-QF', court: 3 },
-          wqf4: { id: 'wqf4', t1: w[2], t2: w[5], round: 'W-QF', court: 4 },
-          wsf1: { id: 'wsf1', t1: getBracketMatchTeam('wqf1'), t2: getBracketMatchTeam('wqf2'), round: 'W-SF' },
-          wsf2: { id: 'wsf2', t1: getBracketMatchTeam('wqf3'), t2: getBracketMatchTeam('wqf4'), round: 'W-SF' },
-          wf: { id: 'wf', t1: getBracketMatchTeam('wsf1'), t2: getBracketMatchTeam('wsf2'), round: 'W-Final', bo3: true },
-          lr1m1: { id: 'lr1m1', t1: l[0], t2: l[7], round: 'L-R1', court: 5 },
-          lr1m2: { id: 'lr1m2', t1: l[3], t2: l[4], round: 'L-R1', court: 6 },
-          lr1m3: { id: 'lr1m3', t1: l[1], t2: l[6], round: 'L-R1', court: 7 },
-          lr1m4: { id: 'lr1m4', t1: l[2], t2: l[5], round: 'L-R1', court: 8 },
-          lr2m1: { id: 'lr2m1', t1: getBracketMatchTeam('lr1m1'), t2: getBracketMatchLoser('wqf1'), round: 'L-R2' },
-          lr2m2: { id: 'lr2m2', t1: getBracketMatchTeam('lr1m2'), t2: getBracketMatchLoser('wqf2'), round: 'L-R2' },
-          lr2m3: { id: 'lr2m3', t1: getBracketMatchTeam('lr1m3'), t2: getBracketMatchLoser('wqf3'), round: 'L-R2' },
-          lr2m4: { id: 'lr2m4', t1: getBracketMatchTeam('lr1m4'), t2: getBracketMatchLoser('wqf4'), round: 'L-R2' },
-          lr3m1: { id: 'lr3m1', t1: getBracketMatchTeam('lr2m1'), t2: getBracketMatchTeam('lr2m2'), round: 'L-R3' },
-          lr3m2: { id: 'lr3m2', t1: getBracketMatchTeam('lr2m3'), t2: getBracketMatchTeam('lr2m4'), round: 'L-R3' },
-          lr4m1: { id: 'lr4m1', t1: getBracketMatchTeam('lr3m1'), t2: getBracketMatchLoser('wsf1'), round: 'L-R4' },
-          lr4m2: { id: 'lr4m2', t1: getBracketMatchTeam('lr3m2'), t2: getBracketMatchLoser('wsf2'), round: 'L-R4' },
-          lsf: { id: 'lsf', t1: getBracketMatchTeam('lr4m1'), t2: getBracketMatchTeam('lr4m2'), round: 'L-Semi' },
-          lf: { id: 'lf', t1: getBracketMatchTeam('lsf'), t2: getBracketMatchLoser('wf'), round: 'L-Final' },
-          gf: { id: 'gf', t1: getBracketMatchTeam('wf'), t2: getBracketMatchTeam('lf'), round: 'Grand Final', bo3: true }
-        };
-      }, [bracketTeams, getBracketMatchTeam, getBracketMatchLoser]);
+          // Standard 8-slot bracket with seeding: 1v8, 4v5, 2v7, 3v6
+          const qfSeeds = [[0,7],[3,4],[1,6],[2,5]];
+
+          if (n > 8) {
+            // Play-in round for seeds 9+
+            // Seeds 9-16 play in, winners face seeds 1-8 in QF
+            // Play-in matchups mirror QF seeding: 9v16, 12v13, 10v15, 11v14
+            const piSeeds = [[8,15],[11,12],[9,14],[10,13]];
+            piSeeds.forEach((pair, i) => {
+              const t1 = pair[0] < n ? seTeams[pair[0]] : null;
+              const t2 = pair[1] < n ? seTeams[pair[1]] : null;
+              if (t1 && t2) {
+                matches[`se_r1m${i+1}`] = { id: `se_r1m${i+1}`, t1, t2, round: 'R1', court: i + 1 };
+              } else if (t1) {
+                matches[`se_r1m${i+1}`] = { id: `se_r1m${i+1}`, t1, t2: null, round: 'R1 (bye)', bye: true };
+              }
+            });
+            // QF: top 8 seeds vs play-in winners
+            qfSeeds.forEach((pair, i) => {
+              const topSeed = seTeams[pair[0]];
+              const piId = `se_r1m${i+1}`;
+              const piMatch = matches[piId];
+              const opponent = pair[1] < 8 ? seTeams[pair[1]] : (piMatch?.bye ? piMatch?.t1 : getBracketMatchTeam(piId));
+              matches[`se_qf${i+1}`] = { id: `se_qf${i+1}`, t1: topSeed, t2: opponent, round: 'QF' };
+            });
+          } else {
+            // 8 or fewer teams: direct QF with byes
+            qfSeeds.forEach((pair, i) => {
+              const t1 = pair[0] < n ? seTeams[pair[0]] : null;
+              const t2 = pair[1] < n ? seTeams[pair[1]] : null;
+              if (t1 && t2) {
+                matches[`se_qf${i+1}`] = { id: `se_qf${i+1}`, t1, t2, round: 'QF', court: i + 1 };
+              } else if (t1) {
+                matches[`se_qf${i+1}`] = { id: `se_qf${i+1}`, t1, t2: null, round: 'QF (bye)', bye: true };
+              }
+            });
+          }
+
+          // SF
+          const getQfWinner = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
+          matches.se_sf1 = { id: 'se_sf1', t1: getQfWinner('se_qf1'), t2: getQfWinner('se_qf2'), round: 'SF' };
+          matches.se_sf2 = { id: 'se_sf2', t1: getQfWinner('se_qf3'), t2: getQfWinner('se_qf4'), round: 'SF' };
+
+          // Final
+          matches.se_f = { id: 'se_f', t1: getBracketMatchTeam('se_sf1'), t2: getBracketMatchTeam('se_sf2'), round: 'Final', bo3: bo3Finals };
+
+          // 3rd place match
+          matches.se_3rd = { id: 'se_3rd', t1: getBracketMatchLoser('se_sf1'), t2: getBracketMatchLoser('se_sf2'), round: '3rd Place' };
+
+          return matches;
+        }
+
+        // ========= DOUBLE ELIMINATION =========
+        if (w.length < 4) return {};
+        const matches = {};
+
+        // Winners bracket
+        if (w.length >= 8) {
+          matches.wqf1 = { id: 'wqf1', t1: w[0], t2: w[7], round: 'W-QF', court: 1 };
+          matches.wqf2 = { id: 'wqf2', t1: w[3], t2: w[4], round: 'W-QF', court: 2 };
+          matches.wqf3 = { id: 'wqf3', t1: w[1], t2: w[6], round: 'W-QF', court: 3 };
+          matches.wqf4 = { id: 'wqf4', t1: w[2], t2: w[5], round: 'W-QF', court: 4 };
+        } else if (w.length >= 6) {
+          matches.wqf1 = { id: 'wqf1', t1: w[0], t2: w.length > 7 ? w[7] : null, round: w.length > 7 ? 'W-QF' : 'W-QF (bye)', bye: w.length <= 7 };
+          matches.wqf2 = { id: 'wqf2', t1: w[3], t2: w[4], round: 'W-QF', court: 2 };
+          matches.wqf3 = { id: 'wqf3', t1: w[1], t2: w.length > 6 ? w[6] : null, round: w.length > 6 ? 'W-QF' : 'W-QF (bye)', bye: w.length <= 6 };
+          matches.wqf4 = { id: 'wqf4', t1: w[2], t2: w[5], round: 'W-QF', court: 4 };
+        } else {
+          // 4-5 winners
+          matches.wqf1 = { id: 'wqf1', t1: w[0], t2: w.length > 3 ? w[3] : null, round: w.length > 3 ? 'W-QF' : 'W-QF (bye)', bye: w.length <= 3, court: 1 };
+          matches.wqf2 = { id: 'wqf2', t1: w[1], t2: w[2], round: 'W-QF', court: 2 };
+          matches.wqf3 = { id: 'wqf3', t1: w.length > 4 ? w[4] : null, t2: null, round: 'W-QF (bye)', bye: true };
+          matches.wqf4 = { id: 'wqf4', t1: null, t2: null, round: 'W-QF (bye)', bye: true };
+        }
+
+        const getWqfWinner = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
+        matches.wsf1 = { id: 'wsf1', t1: getWqfWinner('wqf1'), t2: getWqfWinner('wqf2'), round: 'W-SF' };
+        matches.wsf2 = { id: 'wsf2', t1: getWqfWinner('wqf3'), t2: getWqfWinner('wqf4'), round: 'W-SF' };
+        matches.wf = { id: 'wf', t1: getBracketMatchTeam('wsf1'), t2: getBracketMatchTeam('wsf2'), round: 'W-Final', bo3: bo3Finals };
+
+        // Losers bracket
+        if (l.length >= 8) {
+          matches.lr1m1 = { id: 'lr1m1', t1: l[0], t2: l[7], round: 'L-R1', court: 5 };
+          matches.lr1m2 = { id: 'lr1m2', t1: l[3], t2: l[4], round: 'L-R1', court: 6 };
+          matches.lr1m3 = { id: 'lr1m3', t1: l[1], t2: l[6], round: 'L-R1', court: 7 };
+          matches.lr1m4 = { id: 'lr1m4', t1: l[2], t2: l[5], round: 'L-R1', court: 8 };
+          matches.lr2m1 = { id: 'lr2m1', t1: getBracketMatchTeam('lr1m1'), t2: getBracketMatchLoser('wqf1'), round: 'L-R2' };
+          matches.lr2m2 = { id: 'lr2m2', t1: getBracketMatchTeam('lr1m2'), t2: getBracketMatchLoser('wqf2'), round: 'L-R2' };
+          matches.lr2m3 = { id: 'lr2m3', t1: getBracketMatchTeam('lr1m3'), t2: getBracketMatchLoser('wqf3'), round: 'L-R2' };
+          matches.lr2m4 = { id: 'lr2m4', t1: getBracketMatchTeam('lr1m4'), t2: getBracketMatchLoser('wqf4'), round: 'L-R2' };
+          matches.lr3m1 = { id: 'lr3m1', t1: getBracketMatchTeam('lr2m1'), t2: getBracketMatchTeam('lr2m2'), round: 'L-R3' };
+          matches.lr3m2 = { id: 'lr3m2', t1: getBracketMatchTeam('lr2m3'), t2: getBracketMatchTeam('lr2m4'), round: 'L-R3' };
+          matches.lr4m1 = { id: 'lr4m1', t1: getBracketMatchTeam('lr3m1'), t2: getBracketMatchLoser('wsf1'), round: 'L-R4' };
+          matches.lr4m2 = { id: 'lr4m2', t1: getBracketMatchTeam('lr3m2'), t2: getBracketMatchLoser('wsf2'), round: 'L-R4' };
+          matches.lsf = { id: 'lsf', t1: getBracketMatchTeam('lr4m1'), t2: getBracketMatchTeam('lr4m2'), round: 'L-Semi' };
+          matches.lf = { id: 'lf', t1: getBracketMatchTeam('lsf'), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
+        } else if (l.length === 0) {
+          // All teams in winners — losers bracket from W-QF drops
+          matches.lr2m1 = { id: 'lr2m1', t1: getBracketMatchLoser('wqf1'), t2: getBracketMatchLoser('wqf2'), round: 'L-R2' };
+          matches.lr2m2 = { id: 'lr2m2', t1: getBracketMatchLoser('wqf3'), t2: getBracketMatchLoser('wqf4'), round: 'L-R2' };
+          matches.lr3m1 = { id: 'lr3m1', t1: getBracketMatchTeam('lr2m1'), t2: getBracketMatchLoser('wsf1'), round: 'L-R3' };
+          matches.lr3m2 = { id: 'lr3m2', t1: getBracketMatchTeam('lr2m2'), t2: getBracketMatchLoser('wsf2'), round: 'L-R3' };
+          matches.lsf = { id: 'lsf', t1: getBracketMatchTeam('lr3m1'), t2: getBracketMatchTeam('lr3m2'), round: 'L-Semi' };
+          matches.lf = { id: 'lf', t1: getBracketMatchTeam('lsf'), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
+        } else if (l.length >= 4) {
+          matches.lr1m1 = { id: 'lr1m1', t1: l[0], t2: l.length > 3 ? l[3] : null, round: l.length > 3 ? 'L-R1' : 'L-R1 (bye)', court: 5, bye: l.length <= 3 };
+          matches.lr1m2 = { id: 'lr1m2', t1: l[1], t2: l[2], round: 'L-R1', court: 6 };
+          if (l.length > 4) {
+            matches.lr1m3 = { id: 'lr1m3', t1: l[4], t2: l.length > 5 ? l[5] : null, round: l.length > 5 ? 'L-R1' : 'L-R1 (bye)', court: 7, bye: l.length <= 5 };
+          }
+          if (l.length > 6) {
+            matches.lr1m4 = { id: 'lr1m4', t1: l[6], t2: l.length > 7 ? l[7] : null, round: l.length > 7 ? 'L-R1' : 'L-R1 (bye)', court: 8, bye: l.length <= 7 };
+          }
+          const getLr1Win = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
+          const getWqfLos = (id) => matches[id]?.bye ? null : getBracketMatchLoser(id);
+          matches.lr2m1 = { id: 'lr2m1', t1: getLr1Win('lr1m1'), t2: getWqfLos('wqf1'), round: 'L-R2' };
+          matches.lr2m2 = { id: 'lr2m2', t1: getLr1Win('lr1m2'), t2: getWqfLos('wqf2'), round: 'L-R2' };
+          if (matches.lr1m3) matches.lr2m3 = { id: 'lr2m3', t1: getLr1Win('lr1m3'), t2: getWqfLos('wqf3'), round: 'L-R2' };
+          if (matches.lr1m4) matches.lr2m4 = { id: 'lr2m4', t1: getLr1Win('lr1m4'), t2: getWqfLos('wqf4'), round: 'L-R2' };
+          matches.lr3m1 = { id: 'lr3m1', t1: getBracketMatchTeam('lr2m1'), t2: getBracketMatchTeam('lr2m2'), round: 'L-R3' };
+          if (matches.lr2m3 && matches.lr2m4) matches.lr3m2 = { id: 'lr3m2', t1: getBracketMatchTeam('lr2m3'), t2: getBracketMatchTeam('lr2m4'), round: 'L-R3' };
+          if (matches.lr3m2) {
+            matches.lr4m1 = { id: 'lr4m1', t1: getBracketMatchTeam('lr3m1'), t2: getBracketMatchLoser('wsf1'), round: 'L-R4' };
+            matches.lr4m2 = { id: 'lr4m2', t1: getBracketMatchTeam('lr3m2'), t2: getBracketMatchLoser('wsf2'), round: 'L-R4' };
+            matches.lsf = { id: 'lsf', t1: getBracketMatchTeam('lr4m1'), t2: getBracketMatchTeam('lr4m2'), round: 'L-Semi' };
+          } else {
+            matches.lr4m1 = { id: 'lr4m1', t1: getBracketMatchTeam('lr3m1'), t2: getBracketMatchLoser('wsf1'), round: 'L-R4' };
+            matches.lsf = { id: 'lsf', t1: getBracketMatchTeam('lr4m1'), t2: getBracketMatchLoser('wsf2'), round: 'L-Semi' };
+          }
+          matches.lf = { id: 'lf', t1: getBracketMatchTeam('lsf'), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
+        } else {
+          // < 4 losers
+          matches.lf = { id: 'lf', t1: getBracketMatchLoser('wsf1'), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
+        }
+
+        matches.gf = { id: 'gf', t1: getBracketMatchTeam('wf'), t2: getBracketMatchTeam('lf'), round: 'Grand Final', bo3: bo3Finals };
+        return matches;
+      }, [bracketTeams, displayStandings, bracketType, teamCount, bo3Finals, getBracketMatchTeam, getBracketMatchLoser]);
 
       const handleTeamChange = useCallback((index, field, value) => {
         setTeams(prev => prev.map((t, i) => i === index ? { ...t, [field]: value } : t));
@@ -1169,23 +1378,63 @@ Matthew Chen / Johny Mario`);
       }, [selectedSwapTeam, bracketSeedOverride, bracketTeams]);
 
       const toggleOnCourt = useCallback((id) => {
-        setOnCourt(prev => ({ ...prev, [id]: !prev[id] }));
+        setOnCourt(prev => {
+          if (prev[id]) {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+          }
+          const usedCourts = new Set(Object.values(prev).filter(Boolean));
+
+          // Smart court assignment for pool-based RR matches
+          const seedMatch = seedingMatches.flat().find(m => m.id === id);
+          if (seedMatch && Object.keys(pools).length > 0) {
+            const poolIdx = pools[seedMatch.t1.seed - 1];
+            const numPools = Math.max(...Object.values(pools)) + 1;
+            const courtsPerPool = Math.max(1, Math.floor(courtCount / numPools));
+            const poolStart = poolIdx * courtsPerPool + 1;
+            const poolEnd = poolIdx === numPools - 1 ? courtCount : poolStart + courtsPerPool - 1;
+            for (let c = poolStart; c <= poolEnd; c++) {
+              if (!usedCourts.has(c)) return { ...prev, [id]: c };
+            }
+            // Pool courts full — fall through to lowest available
+          }
+
+          // Default: lowest available court
+          let court = 1;
+          while (usedCourts.has(court) && court <= courtCount) court++;
+          if (court > courtCount) court = courtCount;
+          return { ...prev, [id]: court };
+        });
+      }, [courtCount, seedingMatches, pools]);
+
+      const setMatchCourt = useCallback((id, courtNum) => {
+        setOnCourt(prev => {
+          if (courtNum === 0 || courtNum === null) {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+          }
+          return { ...prev, [id]: courtNum };
+        });
       }, []);
 
       const allSeedingComplete = useMemo(() => {
-        const allMatches = [...seedingMatches.game1, ...seedingMatches.game2, ...seedingMatches.game3];
+        // 0 RR games: always complete (skip to bracket)
+        if (rrGames === 0 && matchupsGenerated) return true;
+        const allMatches = seedingMatches.flat();
         if (!allMatches.length) return false;
         return allMatches.every(m => {
           const s = seedingScores[m.id];
           return s && s.s1 !== '' && s.s2 !== '' && s.s1 !== undefined && s.s2 !== undefined;
         });
-      }, [seedingMatches, seedingScores]);
+      }, [seedingMatches, seedingScores, rrGames, matchupsGenerated]);
 
       const onCourtMatches = useMemo(() => {
         const matches = [];
         Object.keys(onCourt).forEach(id => {
           if (onCourt[id]) {
-            const seedMatch = [...seedingMatches.game1, ...seedingMatches.game2, ...seedingMatches.game3].find(m => m.id === id);
+            const seedMatch = seedingMatches.flat().find(m => m.id === id);
             if (seedMatch) {
               matches.push({ ...seedMatch, type: 'seeding' });
               return;
@@ -1201,7 +1450,7 @@ Matthew Chen / Johny Mario`);
       const nextUpMatches = useMemo(() => {
         const next = [];
         if (phase === 'roundrobin') {
-          [...seedingMatches.game1, ...seedingMatches.game2].forEach(m => {
+          seedingMatches.flat().forEach(m => {
             const s = seedingScores[m.id];
             const complete = s && s.s1 !== '' && s.s2 !== '' && s.s1 !== undefined && s.s2 !== undefined;
             if (!complete && !onCourt[m.id]) {
@@ -1210,7 +1459,9 @@ Matthew Chen / Johny Mario`);
           });
         }
         if (phase === 'bracket') {
-          const order = ['wqf1','wqf2','wqf3','wqf4','lr1m1','lr1m2','lr1m3','lr1m4','wsf1','wsf2','lr2m1','lr2m2','lr2m3','lr2m4','lr3m1','lr3m2','lr4m1','lr4m2','lsf','wf','lf','gf'];
+          const order = bracketType === 'single'
+            ? ['se_r1m1','se_r1m2','se_r1m3','se_r1m4','se_qf1','se_qf2','se_qf3','se_qf4','se_sf1','se_sf2','se_3rd','se_f']
+            : ['wqf1','wqf2','wqf3','wqf4','lr1m1','lr1m2','lr1m3','lr1m4','wsf1','wsf2','lr2m1','lr2m2','lr2m3','lr2m4','lr3m1','lr3m2','lr4m1','lr4m2','lsf','wf','lf','gf'];
           order.forEach(id => {
             const m = bracketMatches[id];
             const s = bracketScores[id];
@@ -1228,7 +1479,7 @@ Matthew Chen / Johny Mario`);
           });
         }
         return next;
-      }, [phase, seedingMatches, seedingScores, bracketMatches, bracketScores, bracketOverrides, onCourt]);
+      }, [phase, seedingMatches, seedingScores, bracketMatches, bracketScores, bracketOverrides, onCourt, bracketType]);
 
       const saveProgress = useCallback(() => {
         const data = {
@@ -1241,12 +1492,15 @@ Matthew Chen / Johny Mario`);
           bracketScores,
           bracketOverrides,
           matchupsGenerated,
-          game1Matchups,
-          game2Matchups,
-          game3Matchups,
+          rrMatchups,
           pools,
           onCourt,
-          bracketSeedOverride
+          bracketSeedOverride,
+          bracketType,
+          bo3Finals,
+          poolSize,
+          courtCount,
+          npointId
         };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -1255,7 +1509,7 @@ Matthew Chen / Johny Mario`);
         a.download = `moneyballs-${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
-      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, matchupsGenerated, game1Matchups, game2Matchups, game3Matchups, pools, onCourt, bracketSeedOverride]);
+      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, matchupsGenerated, rrMatchups, pools, onCourt, bracketSeedOverride, bracketType, bo3Finals, poolSize, courtCount, npointId]);
 
       const loadProgress = useCallback((e) => {
         const file = e.target.files[0];
@@ -1272,9 +1526,21 @@ Matthew Chen / Johny Mario`);
             if (data.seedingScores) setSeedingScores(data.seedingScores);
             if (data.bracketScores) setBracketScores(data.bracketScores);
             if (data.bracketOverrides) setBracketOverrides(data.bracketOverrides);
-            if (data.game1Matchups) setGame1Matchups(data.game1Matchups);
-            if (data.game2Matchups) setGame2Matchups(data.game2Matchups);
-            if (data.game3Matchups) setGame3Matchups(data.game3Matchups);
+            // Handle both old (game1/2/3Matchups) and new (rrMatchups) formats
+            if (data.rrMatchups) {
+              setRrMatchups(data.rrMatchups);
+            } else {
+              const reconstructed = [];
+              if (data.game1Matchups && data.game1Matchups.length) reconstructed.push(data.game1Matchups);
+              if (data.game2Matchups && data.game2Matchups.length) reconstructed.push(data.game2Matchups);
+              if (data.game3Matchups && data.game3Matchups.length) reconstructed.push(data.game3Matchups);
+              if (reconstructed.length) setRrMatchups(reconstructed);
+            }
+            if (data.bracketType) setBracketType(data.bracketType);
+            if (data.bo3Finals !== undefined) setBo3Finals(data.bo3Finals);
+            if (data.poolSize) setPoolSize(data.poolSize);
+            if (data.courtCount) setCourtCount(data.courtCount);
+            if (data.npointId) setNpointId(data.npointId);
             if (data.pools) setPools(data.pools);
             if (data.matchupsGenerated) setMatchupsGenerated(data.matchupsGenerated);
             if (data.onCourt) setOnCourt(data.onCourt);
@@ -1311,9 +1577,12 @@ Matthew Chen / Johny Mario`);
       }, []);
 
       const downloadResults = useCallback(() => {
-        const winner = getBracketMatchTeam('gf');
-        const second = getBracketMatchLoser('gf');
-        const third = getBracketMatchLoser('lf');
+        // Determine final match IDs based on bracket type
+        const finalId = bracketType === 'single' ? 'se_f' : 'gf';
+        const thirdId = bracketType === 'single' ? 'se_3rd' : 'lf';
+        const winner = getBracketMatchTeam(finalId);
+        const second = getBracketMatchLoser(finalId);
+        const third = bracketType === 'single' ? getBracketMatchTeam(thirdId) : getBracketMatchLoser(thirdId);
         const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
         let results = `JORDAN'S MONEYBALLS - ${date}\n`;
@@ -1334,42 +1603,23 @@ Matthew Chen / Johny Mario`);
         results += `ROUND ROBIN SCORES\n`;
         results += `==================================================\n\n`;
 
-        results += `GAME 1\n`;
-        results += `------------------------------\n`;
-        seedingMatches.game1.forEach(m => {
-          const score = seedingScores[m.id];
-          if (score && score.s1 !== undefined && score.s2 !== undefined) {
-            const s1Won = parseInt(score.s1) > parseInt(score.s2);
-            results += `${s1Won ? '✓' : ' '} ${m.t1.name} ${score.s1}-${score.s2} ${m.t2.name} ${!s1Won ? '✓' : ''}\n`;
-          }
-        });
-
-        results += `\nGAME 2\n`;
-        results += `------------------------------\n`;
-        seedingMatches.game2.forEach(m => {
-          const score = seedingScores[m.id];
-          if (score && score.s1 !== undefined && score.s2 !== undefined) {
-            const s1Won = parseInt(score.s1) > parseInt(score.s2);
-            results += `${s1Won ? '✓' : ' '} ${m.t1.name} ${score.s1}-${score.s2} ${m.t2.name} ${!s1Won ? '✓' : ''}\n`;
-          }
-        });
-
-        if (seedingMatches.game3.length > 0) {
-          results += `\nGAME 3\n`;
+        seedingMatches.forEach((roundMatches, roundIdx) => {
+          if (roundIdx > 0) results += '\n';
+          results += `GAME ${roundIdx + 1}\n`;
           results += `------------------------------\n`;
-          seedingMatches.game3.forEach(m => {
+          roundMatches.forEach(m => {
             const score = seedingScores[m.id];
             if (score && score.s1 !== undefined && score.s2 !== undefined) {
               const s1Won = parseInt(score.s1) > parseInt(score.s2);
               results += `${s1Won ? '✓' : ' '} ${m.t1.name} ${score.s1}-${score.s2} ${m.t2.name} ${!s1Won ? '✓' : ''}\n`;
             }
           });
-        }
+        });
 
         results += `\nROUND ROBIN STANDINGS\n`;
         results += `------------------------------\n`;
         displayStandings.forEach((t, i) => {
-          const bracket = i < winnersCount ? '→ Winners' : '→ Losers';
+          const bracket = bracketType === 'single' ? '' : (i < winnersCount ? '→ Winners' : '→ Losers');
           results += `${i + 1}. ${t.name} ${t.wins}-${t.losses} (${t.pf - t.pa >= 0 ? '+' : ''}${t.pf - t.pa}) ${bracket}\n`;
         });
 
@@ -1396,24 +1646,32 @@ Matthew Chen / Johny Mario`);
           return '';
         };
 
-        results += `WINNERS BRACKET\n`;
-        results += `------------------------------\n`;
-        ['wqf1', 'wqf2', 'wqf3', 'wqf4'].forEach(id => results += formatBracketMatch(id, 'W-QF'));
-        ['wsf1', 'wsf2'].forEach(id => results += formatBracketMatch(id, 'W-SF'));
-        results += formatBracketMatch('wf', 'W-Final (Bo3)');
-
-        results += `\nLOSERS BRACKET\n`;
-        results += `------------------------------\n`;
-        ['lr1m1', 'lr1m2', 'lr1m3', 'lr1m4'].forEach(id => results += formatBracketMatch(id, 'L-R1'));
-        ['lr2m1', 'lr2m2', 'lr2m3', 'lr2m4'].forEach(id => results += formatBracketMatch(id, 'L-R2'));
-        ['lr3m1', 'lr3m2'].forEach(id => results += formatBracketMatch(id, 'L-R3'));
-        ['lr4m1', 'lr4m2'].forEach(id => results += formatBracketMatch(id, 'L-R4'));
-        results += formatBracketMatch('lsf', 'L-Semi');
-        results += formatBracketMatch('lf', 'L-Final');
-
-        results += `\nGRAND FINAL (Bo3)\n`;
-        results += `------------------------------\n`;
-        results += formatBracketMatch('gf', 'Grand Final');
+        // Dynamic bracket results based on bracket type
+        const matchIds = Object.keys(bracketMatches).sort();
+        if (bracketType === 'single') {
+          results += `SINGLE ELIMINATION BRACKET\n`;
+          results += `------------------------------\n`;
+          matchIds.forEach(id => {
+            const m = bracketMatches[id];
+            if (m) results += formatBracketMatch(id, m.round);
+          });
+        } else {
+          results += `WINNERS BRACKET\n`;
+          results += `------------------------------\n`;
+          matchIds.filter(id => id.startsWith('w')).forEach(id => {
+            const m = bracketMatches[id];
+            if (m) results += formatBracketMatch(id, m.round + (m.bo3 ? ' (Bo3)' : ''));
+          });
+          results += `\nLOSERS BRACKET\n`;
+          results += `------------------------------\n`;
+          matchIds.filter(id => id.startsWith('l')).forEach(id => {
+            const m = bracketMatches[id];
+            if (m) results += formatBracketMatch(id, m.round);
+          });
+          results += `\nGRAND FINAL${bo3Finals ? ' (Bo3)' : ''}\n`;
+          results += `------------------------------\n`;
+          results += formatBracketMatch('gf', 'Grand Final');
+        }
 
         const blob = new Blob([results], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
@@ -1422,9 +1680,11 @@ Matthew Chen / Johny Mario`);
         a.download = `moneyballs-results-${new Date().toISOString().split('T')[0]}.txt`;
         a.click();
         URL.revokeObjectURL(url);
-      }, [teams, displayStandings, seedingMatches, seedingScores, bracketMatches, bracketScores, getTeamName, getTeamDupr, getBracketMatchTeam, getBracketMatchLoser]);
+      }, [teams, displayStandings, seedingMatches, seedingScores, bracketMatches, bracketScores, getTeamName, getTeamDupr, getBracketMatchTeam, getBracketMatchLoser, bracketType, bo3Finals]);
 
-      const gfWinner = getBracketMatchTeam('gf');
+      const finalMatchId = bracketType === 'single' ? 'se_f' : 'gf';
+      const thirdMatchId = bracketType === 'single' ? 'se_3rd' : 'lf';
+      const gfWinner = getBracketMatchTeam(finalMatchId);
 
       return (
         <div className="bg-gray-900 text-white p-4 min-h-screen">
@@ -1433,28 +1693,53 @@ Matthew Chen / Johny Mario`);
 
           {spectatorMode && (
             <div className="bg-blue-900 border border-blue-500 text-blue-200 text-center py-2 px-4 rounded mb-3 max-w-md mx-auto">
-              👁️ Spectator Mode - View Only
+              {liveMode ? '📡 Live Mode — Reload page for latest scores' : '👁️ Spectator Mode - View Only'}
             </div>
           )}
 
           {!spectatorMode && (
-            <div className="flex justify-center gap-2 mb-2">
+            <div className="flex justify-center gap-2 mb-2 flex-wrap">
               <button onClick={saveProgress} className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600">💾 Save</button>
               <label className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600 cursor-pointer">
                 📂 Load
                 <input type="file" accept=".json" className="hidden" onChange={loadProgress} />
               </label>
-              <button onClick={shareLink} className={`text-xs px-2 py-1 rounded ${linkCopied ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-500'}`}>
-                {linkCopied ? '✓ Copied!' : '🔗 Share Link'}
+              <button onClick={shareLink} className={`text-xs px-2 py-1 rounded ${linkCopied && !npointId ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-500'}`}>
+                {linkCopied && !npointId ? '✓ Copied!' : '🔗 Share Link'}
               </button>
+              {npointId && (
+                <>
+                  <button
+                    onClick={publishToNpoint}
+                    disabled={publishStatus === 'publishing'}
+                    className={`text-xs px-2 py-1 rounded ${
+                      publishStatus === 'published' ? 'bg-green-600' :
+                      publishStatus === 'error' ? 'bg-red-600' :
+                      publishStatus === 'publishing' ? 'bg-yellow-600' :
+                      'bg-emerald-600 hover:bg-emerald-500'
+                    }`}
+                  >
+                    {publishStatus === 'published' ? '✓ Published!' :
+                     publishStatus === 'error' ? '✗ Failed' :
+                     publishStatus === 'publishing' ? '...' :
+                     '📡 Publish'}
+                  </button>
+                  <button
+                    onClick={copyLiveLink}
+                    className={`text-xs px-2 py-1 rounded ${linkCopied ? 'bg-green-600' : 'bg-gray-600 hover:bg-gray-500'}`}
+                  >
+                    {linkCopied ? '✓ Copied!' : '📋 Live Link'}
+                  </button>
+                </>
+              )}
             </div>
           )}
 
           <div className="flex justify-center gap-2 mb-4 flex-wrap">
             <button onClick={() => setPhase('import')} className={`px-3 py-1 rounded text-sm ${phase === 'import' ? 'bg-orange-600' : 'bg-gray-700'}`}>Import</button>
             <button onClick={() => setPhase('setup')} className={`px-3 py-1 rounded text-sm ${phase === 'setup' ? 'bg-purple-600' : 'bg-gray-700'}`} disabled={!teamsValid}>Setup</button>
-            <button onClick={() => setPhase('roundrobin')} className={`px-3 py-1 rounded text-sm ${phase === 'roundrobin' ? 'bg-blue-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Round Robin</button>
-            <button onClick={() => setPhase('standings')} className={`px-3 py-1 rounded text-sm ${phase === 'standings' ? 'bg-cyan-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Standings</button>
+            {(rrGames > 0 || poolSize > 0) && <button onClick={() => setPhase('roundrobin')} className={`px-3 py-1 rounded text-sm ${phase === 'roundrobin' ? 'bg-blue-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Round Robin</button>}
+            {(rrGames > 0 || poolSize > 0) && <button onClick={() => setPhase('standings')} className={`px-3 py-1 rounded text-sm ${phase === 'standings' ? 'bg-cyan-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Standings</button>}
             <button onClick={() => setPhase('bracket')} className={`px-3 py-1 rounded text-sm ${phase === 'bracket' ? 'bg-green-600' : 'bg-gray-700'}`} disabled={!allSeedingComplete}>Bracket</button>
             <button onClick={() => setPhase('results')} className={`px-3 py-1 rounded text-sm ${phase === 'results' ? 'bg-yellow-600' : 'bg-gray-700'}`} disabled={!gfWinner}>Results</button>
           </div>
@@ -1473,7 +1758,7 @@ Matthew Chen / Johny Mario`);
                   }}
                   className="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-sm"
                 >
-                  {[12, 13, 14, 15, 16].map(n => (
+                  {[8, 9, 10, 11, 12, 13, 14, 15, 16].map(n => (
                     <option key={n} value={n}>{n}</option>
                   ))}
                 </select>
@@ -1486,7 +1771,7 @@ Matthew Chen / Johny Mario`);
                   setImportText(e.target.value);
                   // Auto-detect team count from pasted text
                   const lines = e.target.value.split('\n').filter(l => l.trim() && l.includes('/'));
-                  if (lines.length >= 12 && lines.length <= 16) {
+                  if (lines.length >= 8 && lines.length <= 16) {
                     setTeamCount(lines.length);
                     setWinnersCount(defaultWinnersCount[lines.length] || 8);
                   }
@@ -1593,12 +1878,27 @@ Matthew Chen / Johny Mario`);
                       <span className="text-sm">RR Games:</span>
                       <div className="flex items-center gap-2">
                         <select
-                          value={rrGames}
-                          onChange={(e) => setRrGames(parseInt(e.target.value))}
+                          value={poolSize > 0 ? 'pools' : rrGames}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === 'pools') {
+                              setPoolSize(4);
+                            } else {
+                              setPoolSize(0);
+                              setRrGames(parseInt(val));
+                            }
+                          }}
                           className="bg-gray-700 rounded px-2 py-1 text-sm"
                         >
+                          <option value={0}>0 (skip to bracket)</option>
+                          <option value={1}>1 game (random)</option>
                           <option value={2}>2 games (seed-balanced)</option>
-                          <option value={3}>3 games {teamCount === 12 || teamCount === 16 ? '(pools)' : '(random)'}</option>
+                          <option value={3}>3 games (random)</option>
+                          <option value={4}>4 games (random)</option>
+                          <option value={5}>5 games (random)</option>
+                          <option value={6}>6 games (random)</option>
+                          <option value={7}>7 games (random)</option>
+                          <option value="pools">Pools (round robin)</option>
                         </select>
                         <span className="text-gray-500">to</span>
                         <select
@@ -1611,48 +1911,159 @@ Matthew Chen / Johny Mario`);
                         </select>
                       </div>
                     </div>
+                    {poolSize > 0 && (
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-xs text-gray-400">Pool Size:</span>
+                        <select
+                          value={poolSize}
+                          onChange={(e) => setPoolSize(parseInt(e.target.value))}
+                          className="bg-gray-700 rounded px-2 py-1 text-sm"
+                        >
+                          {[3, 4, 5, 6].map(n => (
+                            <option key={n} value={n}>{n} teams/pool ({n - 1} games each)</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     <div className="text-xs text-gray-500 mt-1">
-                      {rrGames === 2
-                        ? `Each team plays 2 games to ${rrPointTarget} vs similar seeds`
-                        : teamCount === 12 || teamCount === 16
-                          ? `${teamCount === 12 ? '3' : '4'} pools of 4, games to ${rrPointTarget}`
-                          : `Each team plays 3 random opponents to ${rrPointTarget}`}
+                      {poolSize > 0
+                        ? `${Math.round(teamCount / poolSize)} pools of ~${poolSize}, ${poolSize - 1} games each to ${rrPointTarget}`
+                        : rrGames === 0
+                          ? 'Skip round robin — go directly to bracket with import seeding'
+                          : rrGames <= 2
+                            ? `Each team plays ${rrGames} game${rrGames > 1 ? 's' : ''} to ${rrPointTarget}${rrGames === 2 ? ' vs similar seeds' : ''}`
+                            : `Each team plays ${rrGames} random opponents to ${rrPointTarget}`}
                     </div>
                   </div>
                   <div className="bg-gray-800 rounded p-3 mb-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm">Winners Bracket Size:</span>
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={winnersCount}
-                          onChange={(e) => setWinnersCount(parseInt(e.target.value))}
-                          className="bg-gray-700 rounded px-2 py-1 text-sm"
-                        >
-                          {Array.from({ length: teamCount - 3 }, (_, i) => i + 4).map(n => (
-                            <option key={n} value={n}>{n} teams</option>
-                          ))}
-                          <option value={teamCount}>{teamCount} (all)</option>
-                        </select>
-                        <button
-                          onClick={() => setWinnersCount(defaultWinnersCount[teamCount] || 8)}
-                          className="text-xs text-gray-400 hover:text-white"
-                        >
-                          Reset
-                        </button>
-                      </div>
+                      <span className="text-sm">Bracket Type:</span>
+                      <select
+                        value={bracketType}
+                        onChange={(e) => setBracketType(e.target.value)}
+                        className="bg-gray-700 rounded px-2 py-1 text-sm"
+                      >
+                        <option value="double">Double Elimination</option>
+                        <option value="single">Single Elimination</option>
+                      </select>
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
-                      {winnersCount === teamCount
-                        ? 'All teams start in Winners Bracket (losers drop to Losers Bracket)'
-                        : `Top ${winnersCount} → Winners, Bottom ${teamCount - winnersCount} → Losers`}
+                      {bracketType === 'single'
+                        ? 'Single elimination with 3rd place match'
+                        : 'Double elimination — losers get a second chance'}
                     </div>
+                  </div>
+                  {bracketType === 'double' && (
+                    <div className="bg-gray-800 rounded p-3 mb-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Winners Bracket Size:</span>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={winnersCount}
+                            onChange={(e) => setWinnersCount(parseInt(e.target.value))}
+                            className="bg-gray-700 rounded px-2 py-1 text-sm"
+                          >
+                            {Array.from({ length: teamCount - 3 }, (_, i) => i + 4).map(n => (
+                              <option key={n} value={n}>{n} teams</option>
+                            ))}
+                            <option value={teamCount}>{teamCount} (all)</option>
+                          </select>
+                          <button
+                            onClick={() => setWinnersCount(defaultWinnersCount[teamCount] || 8)}
+                            className="text-xs text-gray-400 hover:text-white"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {winnersCount === teamCount
+                          ? 'All teams start in Winners Bracket (losers drop to Losers Bracket)'
+                          : `Top ${winnersCount} → Winners, Bottom ${teamCount - winnersCount} → Losers`}
+                      </div>
+                    </div>
+                  )}
+                  <div className="bg-gray-800 rounded p-3 mb-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Finals Format:</span>
+                      <select
+                        value={bo3Finals ? 'bo3' : 'single'}
+                        onChange={(e) => setBo3Finals(e.target.value === 'bo3')}
+                        className="bg-gray-700 rounded px-2 py-1 text-sm"
+                      >
+                        <option value="bo3">Best of 3</option>
+                        <option value="single">Single Game</option>
+                      </select>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {bracketType === 'single'
+                        ? bo3Finals ? 'Final match is Best of 3' : 'Final match is a single game'
+                        : bo3Finals ? 'Winners Final & Grand Final are Best of 3' : 'All matches are single games'}
+                    </div>
+                  </div>
+                  <div className="bg-gray-800 rounded p-3 mb-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Number of Courts:</span>
+                      <select
+                        value={courtCount}
+                        onChange={(e) => setCourtCount(parseInt(e.target.value))}
+                        className="bg-gray-700 rounded px-2 py-1 text-sm"
+                      >
+                        {[2, 3, 4, 5, 6, 7, 8, 9, 10, 12].map(n => (
+                          <option key={n} value={n}>{n} courts</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Courts are auto-assigned in order. Tournament runner can override any assignment.</div>
+                  </div>
+                  <div className="bg-gray-800 rounded p-3 mb-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Live Spectator Link:</span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={npointId}
+                          onChange={(e) => setNpointId(e.target.value.trim())}
+                          placeholder="npoint.io ID"
+                          className="bg-gray-700 rounded px-2 py-1 text-sm w-40 font-mono"
+                        />
+                        {npointId && (
+                          <button onClick={copyLiveLink} className="text-xs bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded">Copy</button>
+                        )}
+                      </div>
+                    </div>
+                    {npointId ? (
+                      <div className="mt-2 space-y-1">
+                        <div className="text-xs text-green-400">Live link active. Share this URL with spectators:</div>
+                        <div className="text-xs text-gray-300 font-mono bg-gray-900 rounded px-2 py-1 select-all break-all">{window.location.origin}{window.location.pathname}?live={npointId}</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          <span className="text-yellow-400">How to use:</span> Click <span className="text-emerald-400">Publish</span> in the toolbar after entering scores. Spectators reload the page to see updates.
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          Manage your bin: <a href={`https://www.npoint.io/docs/${npointId}`} target="_blank" className="text-blue-400 underline">npoint.io/docs/{npointId}</a>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-2 space-y-1">
+                        <div className="text-xs text-gray-400">
+                          <span className="text-yellow-400">Setup (one time, 30 seconds):</span>
+                        </div>
+                        <div className="text-xs text-gray-500 pl-2">
+                          1. Go to <a href="https://www.npoint.io" target="_blank" className="text-blue-400 underline">npoint.io</a> and click "Create JSON Bin"<br/>
+                          2. Leave the default content, click "Save"<br/>
+                          3. Copy the ID from the URL (the part after <span className="font-mono text-gray-400">api.npoint.io/</span>)<br/>
+                          4. Paste it in the field above
+                        </div>
+                        <div className="text-xs text-gray-500">This enables the <span className="text-emerald-400">Publish</span> button so spectators can view scores at a stable link.</div>
+                      </div>
+                    )}
                   </div>
                   <button onClick={generateRandomMatchups} className="w-full bg-yellow-600 hover:bg-yellow-500 py-2 rounded font-semibold mb-2">
                     🎲 Randomize Matchups
                   </button>
                   {matchupsGenerated && (
-                    <button onClick={() => setPhase('roundrobin')} className="w-full bg-blue-600 py-2 rounded font-semibold">
-                      Start Round Robin →
+                    <button onClick={() => setPhase(rrGames === 0 && poolSize === 0 ? 'bracket' : 'roundrobin')} className="w-full bg-blue-600 py-2 rounded font-semibold">
+                      {rrGames === 0 && poolSize === 0 ? 'Start Bracket →' : 'Start Round Robin →'}
                     </button>
                   )}
                 </div>
@@ -1663,118 +2074,101 @@ Matthew Chen / Johny Mario`);
           {phase === 'roundrobin' && (
             <div className="max-w-6xl mx-auto">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-xl font-semibold">Round Robin ({teamCount} teams, {rrGames} games to {rrPointTarget})</h2>
+                <h2 className="text-xl font-semibold">Round Robin ({teamCount} teams, {seedingMatches.length} games to {rrPointTarget})</h2>
                 {!spectatorMode && <button onClick={generateFakeSeedingScores} className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>}
               </div>
-              {!spectatorMode && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} />}
+              {!spectatorMode && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} onCourt={onCourt} />}
 
-              {Object.keys(pools).length > 0 && (
-                <div className="mb-4 bg-gray-800 rounded p-3">
-                  <div className="text-sm font-semibold mb-2">Pool Assignments (Snake Draft)</div>
-                  <div className={`grid ${teamCount === 12 ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-2 text-xs`}>
-                    {Array.from({ length: teamCount === 12 ? 3 : 4 }, (_, poolIdx) => (
-                      <div key={poolIdx} className="bg-gray-700 rounded p-2">
-                        <div className="font-semibold text-center mb-1" style={{ color: ['#facc15', '#60a5fa', '#4ade80', '#f87171'][poolIdx] }}>
-                          Pool {String.fromCharCode(65 + poolIdx)}
-                        </div>
-                        {Object.entries(pools).filter(([_, p]) => p === poolIdx).map(([teamIdx]) => (
-                          <div key={teamIdx} className="text-gray-300 mb-1">
-                            <span className="font-mono">{parseInt(teamIdx) + 1}.</span> {teams[teamIdx]?.p1Name?.split(' ')[0]} / {teams[teamIdx]?.p2Name?.split(' ')[0]}
+              {Object.keys(pools).length > 0 && (() => {
+                const numPools = Math.max(...Object.values(pools)) + 1;
+                const poolColors = ['#facc15', '#60a5fa', '#4ade80', '#f87171', '#c084fc', '#fb923c', '#22d3ee', '#f472b6'];
+                return (
+                  <div className="mb-4 bg-gray-800 rounded p-3">
+                    <div className="text-sm font-semibold mb-2">Pool Assignments (Snake Draft)</div>
+                    <div className={`grid gap-2 text-xs`} style={{ gridTemplateColumns: `repeat(${Math.min(numPools, 4)}, 1fr)` }}>
+                      {Array.from({ length: numPools }, (_, poolIdx) => (
+                        <div key={poolIdx} className="bg-gray-700 rounded p-2">
+                          <div className="font-semibold text-center mb-1" style={{ color: poolColors[poolIdx % poolColors.length] }}>
+                            Pool {String.fromCharCode(65 + poolIdx)}
                           </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Pool-based layout for 12/16 teams with 3 games */}
-              {Object.keys(pools).length > 0 ? (
-                <div className={`grid ${teamCount === 12 ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-4`}>
-                  {Array.from({ length: teamCount === 12 ? 3 : 4 }, (_, poolIdx) => {
-                    const poolColor = ['#facc15', '#60a5fa', '#4ade80', '#f87171'][poolIdx];
-                    const poolMatches = (game, gameNum) => game.filter(m => pools[m.t1.seed - 1] === poolIdx);
-                    return (
-                      <div key={poolIdx}>
-                        <h3 className="font-semibold mb-2 text-center" style={{ color: poolColor }}>
-                          Pool {String.fromCharCode(65 + poolIdx)}
-                        </h3>
-                        <div className="space-y-2">
-                          {[
-                            { matches: poolMatches(seedingMatches.game1), label: 'Game 1' },
-                            { matches: poolMatches(seedingMatches.game2), label: 'Game 2' },
-                            { matches: poolMatches(seedingMatches.game3), label: 'Game 3' }
-                          ].map(({ matches, label }) => matches.map(m => (
-                            <div key={m.id}>
-                              <div className="text-xs text-gray-500 mb-1">{label}</div>
-                              <SeedingMatch
-                                match={m}
-                                score={seedingScores[m.id] || {}}
-                                isOnCourt={onCourt[m.id]}
-                                onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
-                                onToggleCourt={() => toggleOnCourt(m.id)}
-                                readOnly={spectatorMode}
-                              />
+                          {Object.entries(pools).filter(([_, p]) => p === poolIdx).map(([teamIdx]) => (
+                            <div key={teamIdx} className="text-gray-300 mb-1">
+                              <span className="font-mono">{parseInt(teamIdx) + 1}.</span> {teams[teamIdx]?.p1Name?.split(' ')[0]} / {teams[teamIdx]?.p2Name?.split(' ')[0]}
                             </div>
-                          )))}
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Pool-based layout */}
+              {Object.keys(pools).length > 0 ? (() => {
+                const numPools = Math.max(...Object.values(pools)) + 1;
+                const poolColors = ['#facc15', '#60a5fa', '#4ade80', '#f87171', '#c084fc', '#fb923c', '#22d3ee', '#f472b6'];
+                return (
+                  <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(numPools, 4)}, 1fr)` }}>
+                    {Array.from({ length: numPools }, (_, poolIdx) => {
+                      const poolColor = poolColors[poolIdx % poolColors.length];
+                      return (
+                        <div key={poolIdx}>
+                          <h3 className="font-semibold mb-2 text-center" style={{ color: poolColor }}>
+                            Pool {String.fromCharCode(65 + poolIdx)}
+                          </h3>
+                          <div className="space-y-2">
+                            {seedingMatches.map((roundMatches, roundIdx) => {
+                              const poolMatches = roundMatches.filter(m => pools[m.t1.seed - 1] === poolIdx);
+                              return poolMatches.map(m => (
+                                <div key={m.id}>
+                                  <div className="text-xs text-gray-500 mb-1">Game {roundIdx + 1}</div>
+                                  <SeedingMatch
+                                    match={m}
+                                    score={seedingScores[m.id] || {}}
+                                    isOnCourt={!!onCourt[m.id]}
+                                    courtNum={onCourt[m.id]}
+                                    onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
+                                    onToggleCourt={() => toggleOnCourt(m.id)}
+                                    onSetCourt={(ct) => setMatchCourt(m.id, ct)}
+                                    courtCount={courtCount}
+                                    readOnly={spectatorMode}
+                                  />
+                                </div>
+                              ));
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })() : (
+                /* Game-based layout: dynamic columns */
+                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(seedingMatches.length, 4)}, 1fr)` }}>
+                  {seedingMatches.map((roundMatches, roundIdx) => {
+                    const colors = ['text-blue-400', 'text-green-400', 'text-yellow-400', 'text-red-400', 'text-purple-400', 'text-pink-400', 'text-cyan-400'];
+                    return (
+                      <div key={roundIdx}>
+                        <h3 className={`${colors[roundIdx % colors.length]} font-semibold mb-2 text-center`}>Game {roundIdx + 1}</h3>
+                        <div className="space-y-2">
+                          {roundMatches.map(m => (
+                            <SeedingMatch
+                              key={m.id}
+                              match={m}
+                              score={seedingScores[m.id] || {}}
+                              isOnCourt={!!onCourt[m.id]}
+                              courtNum={onCourt[m.id]}
+                              onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
+                              onToggleCourt={() => toggleOnCourt(m.id)}
+                              onSetCourt={(ct) => setMatchCourt(m.id, ct)}
+                              courtCount={courtCount}
+                              readOnly={spectatorMode}
+                            />
+                          ))}
                         </div>
                       </div>
                     );
                   })}
-                </div>
-              ) : (
-                /* Game-based layout for seed-balanced or random matchups */
-                <div className={`grid ${seedingMatches.game3.length > 0 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
-                  <div>
-                    <h3 className="text-blue-400 font-semibold mb-2 text-center">Game 1</h3>
-                    <div className="space-y-2">
-                      {seedingMatches.game1.map(m => (
-                        <SeedingMatch
-                          key={m.id}
-                          match={m}
-                          score={seedingScores[m.id] || {}}
-                          isOnCourt={onCourt[m.id]}
-                          onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
-                          onToggleCourt={() => toggleOnCourt(m.id)}
-                          readOnly={spectatorMode}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-green-400 font-semibold mb-2 text-center">Game 2</h3>
-                    <div className="space-y-2">
-                      {seedingMatches.game2.map(m => (
-                        <SeedingMatch
-                          key={m.id}
-                          match={m}
-                          score={seedingScores[m.id] || {}}
-                          isOnCourt={onCourt[m.id]}
-                          onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
-                          onToggleCourt={() => toggleOnCourt(m.id)}
-                          readOnly={spectatorMode}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  {seedingMatches.game3.length > 0 && (
-                    <div>
-                      <h3 className="text-yellow-400 font-semibold mb-2 text-center">Game 3</h3>
-                      <div className="space-y-2">
-                        {seedingMatches.game3.map(m => (
-                          <SeedingMatch
-                            key={m.id}
-                            match={m}
-                            score={seedingScores[m.id] || {}}
-                            isOnCourt={onCourt[m.id]}
-                            onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
-                            onToggleCourt={() => toggleOnCourt(m.id)}
-                            readOnly={spectatorMode}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
               {allSeedingComplete && (
@@ -1815,7 +2209,7 @@ Matthew Chen / Johny Mario`);
                   <span className="w-12 text-right">PD</span>
                 </div>
                 {displayStandings.map((t, i) => {
-                  const isWinners = i < winnersCount;
+                  const isWinners = bracketType === 'single' || i < winnersCount;
                   const poolColors = ['text-yellow-400', 'text-blue-400', 'text-green-400', 'text-red-400'];
                   return (
                     <div
@@ -1848,9 +2242,11 @@ Matthew Chen / Johny Mario`);
                 })}
               </div>
               <div className="mt-2 text-xs text-gray-500 text-center">
-                {winnersCount === teamCount
-                  ? `All ${teamCount} teams → Winners Bracket`
-                  : `Top ${winnersCount} → Winners Bracket | Bottom ${teamCount - winnersCount} → Losers Bracket`}
+                {bracketType === 'single'
+                  ? `All ${teamCount} teams → Single Elimination Bracket`
+                  : winnersCount === teamCount
+                    ? `All ${teamCount} teams → Winners Bracket`
+                    : `Top ${winnersCount} → Winners Bracket | Bottom ${teamCount - winnersCount} → Losers Bracket`}
               </div>
               {allSeedingComplete && (
                 <button onClick={() => setPhase('bracket')} className="w-full mt-4 bg-green-600 py-2 rounded font-semibold">
@@ -1860,9 +2256,53 @@ Matthew Chen / Johny Mario`);
             </div>
           )}
 
-          {phase === 'bracket' && (
+          {phase === 'bracket' && (() => {
+            // Helper to render a bracket match by ID
+            const renderMatch = (id) => {
+              const m = bracketMatches[id];
+              if (!m || m.bye) return null;
+              return (
+                <BracketMatch
+                  key={id}
+                  match={m}
+                  score={bracketScores[id] || {}}
+                  override={bracketOverrides[id]}
+                  isOnCourt={!!onCourt[id]}
+                  courtNum={onCourt[id]}
+                  showOverride={showOverride}
+                  onScoreChange={(field, value) => handleBracketScore(id, m?.t1, m?.t2, field, value)}
+                  onBo3ScoreChange={m?.bo3 ? (gi, field, value) => handleBo3Score(id, m?.t1, m?.t2, gi, field, value) : undefined}
+                  onToggleCourt={() => toggleOnCourt(id)}
+                  onSetCourt={(ct) => setMatchCourt(id, ct)}
+                  courtCount={courtCount}
+                  onOverride={(team) => handleBracketOverride(id, team, team === m?.t1 ? m?.t2 : m?.t1)}
+                  onClearOverride={() => clearBracketOverride(id)}
+                  winner={getBracketMatchTeam(id)}
+                  readOnly={spectatorMode}
+                />
+              );
+            };
+
+            // Column helper: renders a labeled column of matches
+            const col = (label, ids, opts = {}) => {
+              const validIds = ids.filter(id => bracketMatches[id] && !bracketMatches[id].bye);
+              if (!validIds.length) return null;
+              return (
+                <div className={`space-y-2 w-44 flex-shrink-0 ${opts.pt || ''}`}>
+                  <div className="text-xs text-gray-500 text-center">{label}</div>
+                  {validIds.map((id, idx) => (
+                    <React.Fragment key={id}>
+                      {renderMatch(id)}
+                      {opts.gap && idx < validIds.length - 1 && <div className={opts.gap}></div>}
+                    </React.Fragment>
+                  ))}
+                </div>
+              );
+            };
+
+            return (
             <div className="max-w-6xl mx-auto overflow-x-auto">
-              {!spectatorMode && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} />}
+              {!spectatorMode && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} onCourt={onCourt} />}
 
               {bracketSwaps.length > 0 && (
                 <div className="mb-3 bg-yellow-900/50 border border-yellow-600 rounded p-2 text-sm">
@@ -1874,7 +2314,7 @@ Matthew Chen / Johny Mario`);
               )}
 
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-lg font-semibold text-blue-400">Winners Bracket</h2>
+                <h2 className="text-lg font-semibold text-blue-400">{bracketType === 'single' ? 'Single Elimination' : 'Winners Bracket'}</h2>
                 {!spectatorMode && (
                   <div className="flex items-center gap-3">
                     <button onClick={generateFakeBracketScores} className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>
@@ -1886,7 +2326,7 @@ Matthew Chen / Johny Mario`);
                 )}
               </div>
 
-              {showOverride && !spectatorMode && bracketTeams.winners.length > 0 && (
+              {showOverride && !spectatorMode && bracketType === 'double' && bracketTeams.winners.length > 0 && (
                 <div className="mb-3 bg-gray-800 rounded p-3">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-semibold">Flip Bracket Seeds</span>
@@ -1902,269 +2342,136 @@ Matthew Chen / Johny Mario`);
                       <div className="text-xs text-blue-400 mb-1 font-semibold">Winners Bracket</div>
                       {bracketTeams.winners.map((t, i) => {
                         const isSelected = selectedSwapTeam?.side === 'winners' && selectedSwapTeam?.pos === i;
-                        const matchups = [[0,7],[3,4],[1,6],[2,5]];
-                        const matchup = matchups.find(m => m[0] === i || m[1] === i);
-                        const oppIdx = matchup ? (matchup[0] === i ? matchup[1] : matchup[0]) : null;
                         return (
-                          <div
-                            key={t.seed}
-                            className={`text-xs py-1 px-2 rounded cursor-pointer flex items-center gap-1 ${isSelected ? 'bg-yellow-600 text-white' : 'hover:bg-gray-700'}`}
-                            onClick={() => handleSeedSwap('winners', i)}
-                          >
+                          <div key={t.seed} className={`text-xs py-1 px-2 rounded cursor-pointer flex items-center gap-1 ${isSelected ? 'bg-yellow-600 text-white' : 'hover:bg-gray-700'}`} onClick={() => handleSeedSwap('winners', i)}>
                             <span className="font-mono w-6">W{i+1}.</span>
                             <span className="flex-1 truncate">{t.name.split(' / ').map(n => n.split(' ')[0]).join(' / ')}</span>
-                            {oppIdx !== null && <span className="text-gray-500">vs W{oppIdx+1}</span>}
                           </div>
                         );
                       })}
                     </div>
-                    <div>
+                    {bracketTeams.losers.length > 0 && <div>
                       <div className="text-xs text-red-400 mb-1 font-semibold">Losers Bracket</div>
                       {bracketTeams.losers.map((t, i) => {
                         const isSelected = selectedSwapTeam?.side === 'losers' && selectedSwapTeam?.pos === i;
-                        const matchups = [[0,7],[3,4],[1,6],[2,5]];
-                        const matchup = matchups.find(m => m[0] === i || m[1] === i);
-                        const oppIdx = matchup ? (matchup[0] === i ? matchup[1] : matchup[0]) : null;
                         return (
-                          <div
-                            key={t.seed}
-                            className={`text-xs py-1 px-2 rounded cursor-pointer flex items-center gap-1 ${isSelected ? 'bg-yellow-600 text-white' : 'hover:bg-gray-700'}`}
-                            onClick={() => handleSeedSwap('losers', i)}
-                          >
+                          <div key={t.seed} className={`text-xs py-1 px-2 rounded cursor-pointer flex items-center gap-1 ${isSelected ? 'bg-yellow-600 text-white' : 'hover:bg-gray-700'}`} onClick={() => handleSeedSwap('losers', i)}>
                             <span className="font-mono w-6">L{i+1}.</span>
                             <span className="flex-1 truncate">{t.name.split(' / ').map(n => n.split(' ')[0]).join(' / ')}</span>
-                            {oppIdx !== null && <span className="text-gray-500">vs L{oppIdx+1}</span>}
                           </div>
                         );
                       })}
+                    </div>}
+                  </div>
+                </div>
+              )}
+
+              {/* ====== SINGLE ELIMINATION LAYOUT ====== */}
+              {bracketType === 'single' && (
+                <div className="flex gap-3 pb-4">
+                  {teamCount > 8 && col('R1', ['se_r1m1','se_r1m2','se_r1m3','se_r1m4'])}
+                  {col('QF', ['se_qf1','se_qf2','se_qf3','se_qf4'])}
+                  {col('SF', ['se_sf1','se_sf2'], { pt: 'pt-10', gap: 'h-12' })}
+                  <div className="w-48 flex-shrink-0 pt-16">
+                    <div className="text-xs text-gray-500 text-center">Final</div>
+                    {renderMatch('se_f')}
+                    {getBracketMatchTeam('se_f') && (
+                      <div className="mt-3 bg-gradient-to-r from-yellow-700 to-yellow-600 p-3 rounded text-center border-2 border-yellow-400">
+                        <div className="text-xs text-yellow-200">🥇 CHAMPION — ${currentPayouts.first}</div>
+                        {getBracketMatchTeam('se_f').name.split(' / ').map((p, i) => (
+                          <div key={i} className="text-sm font-bold text-white">{p}</div>
+                        ))}
+                      </div>
+                    )}
+                    {getBracketMatchLoser('se_f') && (
+                      <div className="mt-2 bg-gradient-to-r from-gray-500 to-gray-400 p-2 rounded text-center border border-gray-300">
+                        <div className="text-xs text-gray-200">🥈 2nd Place — ${currentPayouts.second}</div>
+                        {getBracketMatchLoser('se_f').name.split(' / ').map((p, i) => (
+                          <div key={i} className="text-xs font-semibold text-white">{p}</div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="mt-4">
+                      <div className="text-xs text-gray-500 text-center mb-1">3rd Place Match</div>
+                      {renderMatch('se_3rd')}
+                      {getBracketMatchTeam('se_3rd') && (
+                        <div className="mt-2 bg-gradient-to-r from-amber-800 to-amber-700 p-2 rounded text-center border border-amber-500">
+                          <div className="text-xs text-amber-200">🥉 3rd Place — ${currentPayouts.third}</div>
+                          {getBracketMatchTeam('se_3rd').name.split(' / ').map((p, i) => (
+                            <div key={i} className="text-xs font-semibold text-white">{p}</div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="flex gap-3 pb-4">
-                <div className="space-y-2 w-44 flex-shrink-0">
-                  <div className="text-xs text-gray-500 text-center">W-QF</div>
-                  {['wqf1', 'wqf2', 'wqf3', 'wqf4'].map(id => (
-                    <BracketMatch
-                      key={id}
-                      match={bracketMatches[id]}
-                      score={bracketScores[id] || {}}
-                      override={bracketOverrides[id]}
-                      isOnCourt={onCourt[id]}
-                      showOverride={showOverride}
-                      onScoreChange={(field, value) => handleBracketScore(id, bracketMatches[id]?.t1, bracketMatches[id]?.t2, field, value)}
-                      onToggleCourt={() => toggleOnCourt(id)}
-                      onOverride={(team) => handleBracketOverride(id, team, team === bracketMatches[id]?.t1 ? bracketMatches[id]?.t2 : bracketMatches[id]?.t1)}
-                      onClearOverride={() => clearBracketOverride(id)}
-                      winner={getBracketMatchTeam(id)}
-                      readOnly={spectatorMode}
-                    />
-                  ))}
-                </div>
-                <div className="space-y-2 w-44 flex-shrink-0 pt-10">
-                  <div className="text-xs text-gray-500 text-center">W-SF</div>
-                  {['wsf1', 'wsf2'].map((id, idx) => (
-                    <React.Fragment key={id}>
-                      <BracketMatch
-                        match={bracketMatches[id]}
-                        score={bracketScores[id] || {}}
-                        override={bracketOverrides[id]}
-                        isOnCourt={onCourt[id]}
-                        showOverride={showOverride}
-                        onScoreChange={(field, value) => handleBracketScore(id, bracketMatches[id]?.t1, bracketMatches[id]?.t2, field, value)}
-                        onToggleCourt={() => toggleOnCourt(id)}
-                        onOverride={(team) => handleBracketOverride(id, team, team === bracketMatches[id]?.t1 ? bracketMatches[id]?.t2 : bracketMatches[id]?.t1)}
-                        onClearOverride={() => clearBracketOverride(id)}
-                        winner={getBracketMatchTeam(id)}
-                        readOnly={spectatorMode}
-                      />
-                      {idx === 0 && <div className="h-12"></div>}
-                    </React.Fragment>
-                  ))}
-                </div>
-                <div className="w-44 flex-shrink-0 pt-20">
-                  <div className="text-xs text-gray-500 text-center">W-Final</div>
-                  <BracketMatch
-                    match={bracketMatches.wf}
-                    score={bracketScores.wf || {}}
-                    override={bracketOverrides.wf}
-                    isOnCourt={onCourt.wf}
-                    showOverride={showOverride}
-                    onScoreChange={(field, value) => handleBracketScore('wf', bracketMatches.wf?.t1, bracketMatches.wf?.t2, field, value)}
-                    onBo3ScoreChange={(gi, field, value) => handleBo3Score('wf', bracketMatches.wf?.t1, bracketMatches.wf?.t2, gi, field, value)}
-                    onToggleCourt={() => toggleOnCourt('wf')}
-                    onOverride={(team) => handleBracketOverride('wf', team, team === bracketMatches.wf?.t1 ? bracketMatches.wf?.t2 : bracketMatches.wf?.t1)}
-                    onClearOverride={() => clearBracketOverride('wf')}
-                    winner={getBracketMatchTeam('wf')}
-                    readOnly={spectatorMode}
-                  />
-                </div>
-                <div className="w-56 flex-shrink-0 pt-16">
-                  <h3 className="text-yellow-400 font-semibold mb-2 text-center text-sm">🏆 Grand Final</h3>
-                  <BracketMatch
-                    match={bracketMatches.gf}
-                    score={bracketScores.gf || {}}
-                    override={bracketOverrides.gf}
-                    isOnCourt={onCourt.gf}
-                    showOverride={showOverride}
-                    onScoreChange={(field, value) => handleBracketScore('gf', bracketMatches.gf?.t1, bracketMatches.gf?.t2, field, value)}
-                    onBo3ScoreChange={(gi, field, value) => handleBo3Score('gf', bracketMatches.gf?.t1, bracketMatches.gf?.t2, gi, field, value)}
-                    onToggleCourt={() => toggleOnCourt('gf')}
-                    onOverride={(team) => handleBracketOverride('gf', team, team === bracketMatches.gf?.t1 ? bracketMatches.gf?.t2 : bracketMatches.gf?.t1)}
-                    onClearOverride={() => clearBracketOverride('gf')}
-                    winner={gfWinner}
-                    readOnly={spectatorMode}
-                  />
-                  {gfWinner && (
-                    <div className="mt-3 bg-gradient-to-r from-yellow-700 to-yellow-600 p-3 rounded text-center border-2 border-yellow-400">
-                      <div className="text-xs text-yellow-200">🥇 CHAMPION — ${currentPayouts.first}</div>
-                      {gfWinner.name.split(' / ').map((p, i) => (
-                        <div key={i} className="text-sm font-bold text-white">{p}</div>
-                      ))}
+              {/* ====== DOUBLE ELIMINATION LAYOUT ====== */}
+              {bracketType === 'double' && (
+                <>
+                  <div className="flex gap-3 pb-4">
+                    {col('W-QF', ['wqf1','wqf2','wqf3','wqf4'])}
+                    {col('W-SF', ['wsf1','wsf2'], { pt: 'pt-10', gap: 'h-12' })}
+                    <div className="w-44 flex-shrink-0 pt-20">
+                      <div className="text-xs text-gray-500 text-center">W-Final</div>
+                      {renderMatch('wf')}
                     </div>
-                  )}
-                  {getBracketMatchLoser('gf') && (
-                    <div className="mt-2 bg-gradient-to-r from-gray-500 to-gray-400 p-2 rounded text-center border border-gray-300">
-                      <div className="text-xs text-gray-200">🥈 2nd Place — ${currentPayouts.second}</div>
-                      {getBracketMatchLoser('gf').name.split(' / ').map((p, i) => (
-                        <div key={i} className="text-xs font-semibold text-white">{p}</div>
-                      ))}
+                    <div className="w-56 flex-shrink-0 pt-16">
+                      <h3 className="text-yellow-400 font-semibold mb-2 text-center text-sm">🏆 Grand Final</h3>
+                      {renderMatch('gf')}
+                      {gfWinner && (
+                        <div className="mt-3 bg-gradient-to-r from-yellow-700 to-yellow-600 p-3 rounded text-center border-2 border-yellow-400">
+                          <div className="text-xs text-yellow-200">🥇 CHAMPION — ${currentPayouts.first}</div>
+                          {gfWinner.name.split(' / ').map((p, i) => (
+                            <div key={i} className="text-sm font-bold text-white">{p}</div>
+                          ))}
+                        </div>
+                      )}
+                      {getBracketMatchLoser(finalMatchId) && (
+                        <div className="mt-2 bg-gradient-to-r from-gray-500 to-gray-400 p-2 rounded text-center border border-gray-300">
+                          <div className="text-xs text-gray-200">🥈 2nd Place — ${currentPayouts.second}</div>
+                          {getBracketMatchLoser(finalMatchId).name.split(' / ').map((p, i) => (
+                            <div key={i} className="text-xs font-semibold text-white">{p}</div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
 
-              <h2 className="text-lg font-semibold text-red-400 mb-2">Losers Bracket</h2>
-              <div className="flex gap-3 pb-4 overflow-x-auto">
-                <div className="space-y-2 w-44 flex-shrink-0">
-                  <div className="text-xs text-gray-500 text-center">L-R1</div>
-                  {['lr1m1', 'lr1m2', 'lr1m3', 'lr1m4'].map(id => (
-                    <BracketMatch
-                      key={id}
-                      match={bracketMatches[id]}
-                      score={bracketScores[id] || {}}
-                      override={bracketOverrides[id]}
-                      isOnCourt={onCourt[id]}
-                      showOverride={showOverride}
-                      onScoreChange={(field, value) => handleBracketScore(id, bracketMatches[id]?.t1, bracketMatches[id]?.t2, field, value)}
-                      onToggleCourt={() => toggleOnCourt(id)}
-                      onOverride={(team) => handleBracketOverride(id, team, team === bracketMatches[id]?.t1 ? bracketMatches[id]?.t2 : bracketMatches[id]?.t1)}
-                      onClearOverride={() => clearBracketOverride(id)}
-                      winner={getBracketMatchTeam(id)}
-                      readOnly={spectatorMode}
-                    />
-                  ))}
-                </div>
-                <div className="space-y-2 w-44 flex-shrink-0">
-                  <div className="text-xs text-gray-500 text-center">L-R2</div>
-                  {['lr2m1', 'lr2m2', 'lr2m3', 'lr2m4'].map(id => (
-                    <BracketMatch
-                      key={id}
-                      match={bracketMatches[id]}
-                      score={bracketScores[id] || {}}
-                      override={bracketOverrides[id]}
-                      isOnCourt={onCourt[id]}
-                      showOverride={showOverride}
-                      onScoreChange={(field, value) => handleBracketScore(id, bracketMatches[id]?.t1, bracketMatches[id]?.t2, field, value)}
-                      onToggleCourt={() => toggleOnCourt(id)}
-                      onOverride={(team) => handleBracketOverride(id, team, team === bracketMatches[id]?.t1 ? bracketMatches[id]?.t2 : bracketMatches[id]?.t1)}
-                      onClearOverride={() => clearBracketOverride(id)}
-                      winner={getBracketMatchTeam(id)}
-                      readOnly={spectatorMode}
-                    />
-                  ))}
-                </div>
-                <div className="space-y-2 w-44 flex-shrink-0 pt-10">
-                  <div className="text-xs text-gray-500 text-center">L-R3</div>
-                  {['lr3m1', 'lr3m2'].map((id, idx) => (
-                    <React.Fragment key={id}>
-                      <BracketMatch
-                        match={bracketMatches[id]}
-                        score={bracketScores[id] || {}}
-                        override={bracketOverrides[id]}
-                        isOnCourt={onCourt[id]}
-                        showOverride={showOverride}
-                        onScoreChange={(field, value) => handleBracketScore(id, bracketMatches[id]?.t1, bracketMatches[id]?.t2, field, value)}
-                        onToggleCourt={() => toggleOnCourt(id)}
-                        onOverride={(team) => handleBracketOverride(id, team, team === bracketMatches[id]?.t1 ? bracketMatches[id]?.t2 : bracketMatches[id]?.t1)}
-                        onClearOverride={() => clearBracketOverride(id)}
-                        winner={getBracketMatchTeam(id)}
-                        readOnly={spectatorMode}
-                      />
-                      {idx === 0 && <div className="h-6"></div>}
-                    </React.Fragment>
-                  ))}
-                </div>
-                <div className="space-y-2 w-44 flex-shrink-0 pt-10">
-                  <div className="text-xs text-gray-500 text-center">L-R4</div>
-                  {['lr4m1', 'lr4m2'].map((id, idx) => (
-                    <React.Fragment key={id}>
-                      <BracketMatch
-                        match={bracketMatches[id]}
-                        score={bracketScores[id] || {}}
-                        override={bracketOverrides[id]}
-                        isOnCourt={onCourt[id]}
-                        showOverride={showOverride}
-                        onScoreChange={(field, value) => handleBracketScore(id, bracketMatches[id]?.t1, bracketMatches[id]?.t2, field, value)}
-                        onToggleCourt={() => toggleOnCourt(id)}
-                        onOverride={(team) => handleBracketOverride(id, team, team === bracketMatches[id]?.t1 ? bracketMatches[id]?.t2 : bracketMatches[id]?.t1)}
-                        onClearOverride={() => clearBracketOverride(id)}
-                        winner={getBracketMatchTeam(id)}
-                        readOnly={spectatorMode}
-                      />
-                      {idx === 0 && <div className="h-6"></div>}
-                    </React.Fragment>
-                  ))}
-                </div>
-                <div className="w-44 flex-shrink-0 pt-14">
-                  <div className="text-xs text-gray-500 text-center">L-Semi</div>
-                  <BracketMatch
-                    match={bracketMatches.lsf}
-                    score={bracketScores.lsf || {}}
-                    override={bracketOverrides.lsf}
-                    isOnCourt={onCourt.lsf}
-                    showOverride={showOverride}
-                    onScoreChange={(field, value) => handleBracketScore('lsf', bracketMatches.lsf?.t1, bracketMatches.lsf?.t2, field, value)}
-                    onToggleCourt={() => toggleOnCourt('lsf')}
-                    onOverride={(team) => handleBracketOverride('lsf', team, team === bracketMatches.lsf?.t1 ? bracketMatches.lsf?.t2 : bracketMatches.lsf?.t1)}
-                    onClearOverride={() => clearBracketOverride('lsf')}
-                    winner={getBracketMatchTeam('lsf')}
-                    readOnly={spectatorMode}
-                  />
-                </div>
-                <div className="w-44 flex-shrink-0 pt-14">
-                  <div className="text-xs text-gray-500 text-center">L-Final</div>
-                  <BracketMatch
-                    match={bracketMatches.lf}
-                    score={bracketScores.lf || {}}
-                    override={bracketOverrides.lf}
-                    isOnCourt={onCourt.lf}
-                    showOverride={showOverride}
-                    onScoreChange={(field, value) => handleBracketScore('lf', bracketMatches.lf?.t1, bracketMatches.lf?.t2, field, value)}
-                    onToggleCourt={() => toggleOnCourt('lf')}
-                    onOverride={(team) => handleBracketOverride('lf', team, team === bracketMatches.lf?.t1 ? bracketMatches.lf?.t2 : bracketMatches.lf?.t1)}
-                    onClearOverride={() => clearBracketOverride('lf')}
-                    winner={getBracketMatchTeam('lf')}
-                    readOnly={spectatorMode}
-                  />
-                  {getBracketMatchTeam('lf') && (
-                    <div className="mt-2 text-center">
-                      <div className="text-xs text-yellow-400">↗ to Grand Final</div>
+                  <h2 className="text-lg font-semibold text-red-400 mb-2">Losers Bracket</h2>
+                  <div className="flex gap-3 pb-4 overflow-x-auto">
+                    {col('L-R1', ['lr1m1','lr1m2','lr1m3','lr1m4'])}
+                    {col('L-R2', ['lr2m1','lr2m2','lr2m3','lr2m4'])}
+                    {col('L-R3', ['lr3m1','lr3m2'], { pt: 'pt-10', gap: 'h-6' })}
+                    {col('L-R4', ['lr4m1','lr4m2'], { pt: 'pt-10', gap: 'h-6' })}
+                    <div className="w-44 flex-shrink-0 pt-14">
+                      <div className="text-xs text-gray-500 text-center">L-Semi</div>
+                      {renderMatch('lsf')}
                     </div>
-                  )}
-                  {getBracketMatchLoser('lf') && (
-                    <div className="mt-2 bg-gradient-to-r from-amber-800 to-amber-700 p-2 rounded text-center border border-amber-500">
-                      <div className="text-xs text-amber-200">🥉 3rd Place — ${currentPayouts.third}</div>
-                      {getBracketMatchLoser('lf').name.split(' / ').map((p, i) => (
-                        <div key={i} className="text-xs font-semibold text-white">{p}</div>
-                      ))}
+                    <div className="w-44 flex-shrink-0 pt-14">
+                      <div className="text-xs text-gray-500 text-center">L-Final</div>
+                      {renderMatch('lf')}
+                      {getBracketMatchTeam('lf') && (
+                        <div className="mt-2 text-center">
+                          <div className="text-xs text-yellow-400">↗ to Grand Final</div>
+                        </div>
+                      )}
+                      {getBracketMatchLoser('lf') && (
+                        <div className="mt-2 bg-gradient-to-r from-amber-800 to-amber-700 p-2 rounded text-center border border-amber-500">
+                          <div className="text-xs text-amber-200">🥉 3rd Place — ${currentPayouts.third}</div>
+                          {getBracketMatchLoser('lf').name.split(' / ').map((p, i) => (
+                            <div key={i} className="text-xs font-semibold text-white">{p}</div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
+                </>
+              )}
             </div>
-          )}
+            );
+          })()}
 
           {phase === 'results' && (
             <div className="max-w-2xl mx-auto">
@@ -2180,19 +2487,19 @@ Matthew Chen / Johny Mario`);
                   </div>
                 )}
 
-                {getBracketMatchLoser('gf') && (
+                {getBracketMatchLoser(finalMatchId) && (
                   <div className="bg-gradient-to-r from-gray-500 to-gray-400 p-5 rounded-lg border-2 border-gray-300 text-center">
                     <div className="text-md text-gray-200">🥈 2nd Place — ${currentPayouts.second}</div>
-                    {getBracketMatchLoser('gf').name.split(' / ').map((p, i) => (
+                    {getBracketMatchLoser(finalMatchId).name.split(' / ').map((p, i) => (
                       <div key={i} className="text-xl font-bold text-white">{p}</div>
                     ))}
                   </div>
                 )}
 
-                {getBracketMatchLoser('lf') && (
+                {(bracketType === 'single' ? getBracketMatchTeam(thirdMatchId) : getBracketMatchLoser(thirdMatchId)) && (
                   <div className="bg-gradient-to-r from-amber-800 to-amber-700 p-4 rounded-lg border-2 border-amber-500 text-center">
                     <div className="text-sm text-amber-200">🥉 3rd Place — ${currentPayouts.third}</div>
-                    {getBracketMatchLoser('lf').name.split(' / ').map((p, i) => (
+                    {(bracketType === 'single' ? getBracketMatchTeam(thirdMatchId) : getBracketMatchLoser(thirdMatchId)).name.split(' / ').map((p, i) => (
                       <div key={i} className="text-lg font-bold text-white">{p}</div>
                     ))}
                   </div>
