@@ -391,7 +391,7 @@
             <div className="space-y-1">
               {onCourtMatches.sort((a, b) => (onCourt[a.id] || 99) - (onCourt[b.id] || 99)).map(m => (
                 <div key={m.id} className="text-xs text-orange-300">
-                  <span className="font-mono text-orange-400">Ct{onCourt[m.id]}</span> {m.round || ''}: {m.t1?.name?.split('/')[0]} vs {m.t2?.name?.split('/')[0]}
+                  <span className="font-mono text-orange-400">Ct{onCourt[m.id]}</span> {m.round || ''}: {m.t1?.name?.split(' / ').map(p => p.split(' ')[0]).join(' / ')} vs {m.t2?.name?.split(' / ').map(p => p.split(' ')[0]).join(' / ')}
                 </div>
               ))}
             </div>
@@ -405,7 +405,7 @@
             <div className="space-y-1">
               {nextUpMatches.slice(0, 6).map(m => (
                 <div key={m.id} className="text-xs text-gray-300 flex justify-between">
-                  <span>{m.round || `Ct${m.court}`}: {m.t1?.name?.split('/')[0]} vs {m.t2?.name?.split('/')[0]}</span>
+                  <span>{m.round || `Ct${m.court}`}: {m.t1?.name?.split(' / ').map(p => p.split(' ')[0]).join(' / ')} vs {m.t2?.name?.split(' / ').map(p => p.split(' ')[0]).join(' / ')}</span>
                   <button onClick={() => onToggleCourt(m.id)} className="text-orange-400 hover:text-orange-300">Send→</button>
                 </div>
               ))}
