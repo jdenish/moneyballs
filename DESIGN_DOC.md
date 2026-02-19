@@ -383,8 +383,10 @@ The **Share Link** button encodes tournament state into the URL after `?s=`.
 Courts are auto-assigned when matches are sent to court, with manual override available:
 
 **RR (Pool-based):**
-- Courts are divided evenly among pools: Pool A → courts 1-2, Pool B → 3-4, etc.
-- If pool courts are full, falls back to lowest available court
+- Courts are **fixed** per pool: Pool A → Courts 1-2, Pool B → 3-4, Pool C → 5-6, Pool D → 7-8 (with 8 courts / 4 pools)
+- Court labels are shown in pool assignment box and pool column headers
+- Pool matches **never spill** to another pool's courts — if both courts are busy, the match stacks on the first pool court
+- Round robin layout uses **pool columns** (Pool A, Pool B, etc.) with all games listed vertically per pool
 
 **RR (Non-pool) & Bracket:**
 - Assigns lowest available court number (1, 2, 3, ...)
