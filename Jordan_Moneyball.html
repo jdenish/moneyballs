@@ -101,13 +101,13 @@
 
     // Move components outside App to prevent recreation on each render
 
-    const SeedingMatch = memo(({ match, score, isOnCourt, courtNum, onScoreChange, onToggleCourt, onSetCourt, courtCount, readOnly }) => {
+    const SeedingMatch = memo(({ match, score, isOnCourt, courtNum, onScoreChange, onToggleCourt, onSetCourt, courtCount, readOnly, poolColor }) => {
       const isComplete = score.s1 !== undefined && score.s2 !== undefined && score.s1 !== '' && score.s2 !== '';
       const t1Won = isComplete && parseInt(score.s1) > parseInt(score.s2);
       const t2Won = isComplete && parseInt(score.s2) > parseInt(score.s1);
 
       return (
-        <div className={`p-2 rounded border ${isComplete ? 'bg-gray-800 border-green-600' : isOnCourt ? 'bg-orange-900/50 border-orange-500' : 'bg-gray-800 border-gray-600'}`}>
+        <div className={`p-2 rounded border ${isComplete ? 'bg-gray-800 border-green-600' : isOnCourt ? 'bg-orange-900/50 border-orange-500' : 'bg-gray-800 border-gray-600'}`} style={poolColor ? { borderLeftWidth: '3px', borderLeftColor: poolColor } : undefined}>
           <div className="flex justify-between items-center mb-1">
             <span className="text-gray-500 text-xs">{isOnCourt ? `Court ${courtNum}` : `Ct ${match.court}`}</span>
             {!isComplete && !readOnly && (
@@ -2429,7 +2429,7 @@
                 return (
                   <div className="mb-4 bg-gray-800 rounded p-3">
                     <div className="text-sm font-semibold mb-2">Pool Assignments (Snake Draft)</div>
-                    <div className={`grid gap-2 text-xs`} style={{ gridTemplateColumns: `repeat(${Math.min(numPools, 4)}, 1fr)` }}>
+                    <div className="grid gap-2 text-xs grid-cols-2 sm:grid-cols-4">
                       {Array.from({ length: numPools }, (_, poolIdx) => (
                         <div key={poolIdx} className="bg-gray-700 rounded p-2">
                           <div className="font-semibold text-center mb-1" style={{ color: poolColors[poolIdx % poolColors.length] }}>
@@ -2458,15 +2458,15 @@
                   return start === end ? `Ct ${start}` : `Cts ${start}-${end}`;
                 };
                 return (
-                  <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(numPools, 4)}, 1fr)` }}>
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                     {Array.from({ length: numPools }, (_, poolIdx) => {
                       const poolColor = poolColors[poolIdx % poolColors.length];
                       return (
-                        <div key={poolIdx}>
+                        <div key={poolIdx} className="rounded-lg p-2" style={{ backgroundColor: poolColor + '10', border: `1px solid ${poolColor}33` }}>
                           <h3 className="font-semibold mb-1 text-center" style={{ color: poolColor }}>
                             Pool {String.fromCharCode(65 + poolIdx)}
                           </h3>
-                          <div className="text-xs text-gray-500 text-center mb-2">{getPoolCourts(poolIdx)}</div>
+                          <div className="text-xs text-center mb-2" style={{ color: poolColor + 'aa' }}>{getPoolCourts(poolIdx)}</div>
                           <div className="space-y-2">
                             {seedingMatches.map((roundMatches, roundIdx) => {
                               const poolMatches = roundMatches.filter(m => pools[m.t1.seed - 1] === poolIdx);
@@ -2483,6 +2483,7 @@
                                     onSetCourt={(ct) => setMatchCourt(m.id, ct)}
                                     courtCount={courtCount}
                                     readOnly={spectatorMode}
+                                    poolColor={poolColor}
                                   />
                                 </div>
                               ));
