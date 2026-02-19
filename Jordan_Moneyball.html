@@ -434,7 +434,7 @@
       const [pools, setPools] = useState({});
       const [bracketType, setBracketType] = useState('double'); // 'double' or 'single'
       const [bo3Finals, setBo3Finals] = useState(true);
-      const [poolSize, setPoolSize] = useState(0); // 0 = no pools, 3-6 = pool size
+      const [poolSize, setPoolSize] = useState(4); // 0 = no pools, 3-6 = pool size
       const [bracketSwaps, setBracketSwaps] = useState([]);
       const [onCourt, setOnCourt] = useState({}); // { matchId: courtNumber } (0 or absent = not on court)
       const [courtCount, setCourtCount] = useState(8);
@@ -605,6 +605,7 @@
           setMatchupsGenerated(false);
           setRrMatchups([]);
           setPools({});
+          setPoolSize(4);
           setOnCourt({});
           setBracketSeedOverride(null);
           setStandingsOverride(null);
