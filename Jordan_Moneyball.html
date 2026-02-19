@@ -2458,11 +2458,11 @@
                   return start === end ? `Ct ${start}` : `Cts ${start}-${end}`;
                 };
                 return (
-                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="flex gap-4 overflow-x-auto pb-2">
                     {Array.from({ length: numPools }, (_, poolIdx) => {
                       const poolColor = poolColors[poolIdx % poolColors.length];
                       return (
-                        <div key={poolIdx} className="rounded-lg p-2" style={{ backgroundColor: poolColor + '10', border: `1px solid ${poolColor}33` }}>
+                        <div key={poolIdx} className="rounded-lg p-2 flex-shrink-0" style={{ backgroundColor: poolColor + '10', border: `1px solid ${poolColor}33`, minWidth: '260px', width: `${100 / numPools}%` }}>
                           <h3 className="font-semibold mb-1 text-center" style={{ color: poolColor }}>
                             Pool {String.fromCharCode(65 + poolIdx)}
                           </h3>
