@@ -1583,7 +1583,8 @@
           }
           const usedCourts = new Set(Object.values(prev).filter(Boolean));
 
-          // Smart court assignment for pool-based RR matches
+          // Fixed court assignment for pool-based RR matches
+          // Pool A → courts 1-2, Pool B → 3-4, etc.
           const seedMatch = seedingMatches.flat().find(m => m.id === id);
           if (seedMatch && Object.keys(pools).length > 0) {
             const poolIdx = pools[seedMatch.t1.seed - 1];
@@ -1594,7 +1595,8 @@
             for (let c = poolStart; c <= poolEnd; c++) {
               if (!usedCourts.has(c)) return { ...prev, [id]: c };
             }
-            // Pool courts full — fall through to lowest available
+            // Pool courts full — stay on pool courts (use first pool court)
+            return { ...prev, [id]: poolStart };
           }
 
           // Default: lowest available court
@@ -2408,6 +2410,12 @@
               {Object.keys(pools).length > 0 && (() => {
                 const numPools = Math.max(...Object.values(pools)) + 1;
                 const poolColors = ['#facc15', '#60a5fa', '#4ade80', '#f87171', '#c084fc', '#fb923c', '#22d3ee', '#f472b6'];
+                const getPoolCourts = (poolIdx) => {
+                  const courtsPerPool = Math.max(1, Math.floor(courtCount / numPools));
+                  const start = poolIdx * courtsPerPool + 1;
+                  const end = poolIdx === numPools - 1 ? courtCount : start + courtsPerPool - 1;
+                  return start === end ? `Ct ${start}` : `Cts ${start}-${end}`;
+                };
                 return (
                   <div className="mb-4 bg-gray-800 rounded p-3">
                     <div className="text-sm font-semibold mb-2">Pool Assignments (Snake Draft)</div>
@@ -2415,7 +2423,7 @@
                       {Array.from({ length: numPools }, (_, poolIdx) => (
                         <div key={poolIdx} className="bg-gray-700 rounded p-2">
                           <div className="font-semibold text-center mb-1" style={{ color: poolColors[poolIdx % poolColors.length] }}>
-                            Pool {String.fromCharCode(65 + poolIdx)}
+                            Pool {String.fromCharCode(65 + poolIdx)} <span className="text-gray-400 font-normal">({getPoolCourts(poolIdx)})</span>
                           </div>
                           {Object.entries(pools).filter(([_, p]) => p === poolIdx).map(([teamIdx]) => (
                             <div key={teamIdx} className="text-gray-300 mb-1">
@@ -2429,19 +2437,26 @@
                 );
               })()}
 
-              {/* Pool-based layout */}
+              {/* Pool-based layout: each column = one pool with all its games */}
               {Object.keys(pools).length > 0 ? (() => {
                 const numPools = Math.max(...Object.values(pools)) + 1;
                 const poolColors = ['#facc15', '#60a5fa', '#4ade80', '#f87171', '#c084fc', '#fb923c', '#22d3ee', '#f472b6'];
+                const getPoolCourts = (poolIdx) => {
+                  const courtsPerPool = Math.max(1, Math.floor(courtCount / numPools));
+                  const start = poolIdx * courtsPerPool + 1;
+                  const end = poolIdx === numPools - 1 ? courtCount : start + courtsPerPool - 1;
+                  return start === end ? `Ct ${start}` : `Cts ${start}-${end}`;
+                };
                 return (
                   <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(numPools, 4)}, 1fr)` }}>
                     {Array.from({ length: numPools }, (_, poolIdx) => {
                       const poolColor = poolColors[poolIdx % poolColors.length];
                       return (
                         <div key={poolIdx}>
-                          <h3 className="font-semibold mb-2 text-center" style={{ color: poolColor }}>
+                          <h3 className="font-semibold mb-1 text-center" style={{ color: poolColor }}>
                             Pool {String.fromCharCode(65 + poolIdx)}
                           </h3>
+                          <div className="text-xs text-gray-500 text-center mb-2">{getPoolCourts(poolIdx)}</div>
                           <div className="space-y-2">
                             {seedingMatches.map((roundMatches, roundIdx) => {
                               const poolMatches = roundMatches.filter(m => pools[m.t1.seed - 1] === poolIdx);
