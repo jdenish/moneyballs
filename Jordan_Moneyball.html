@@ -1444,16 +1444,19 @@
         matches.wsf2 = { id: 'wsf2', t1: getWqfWinner('wqf3'), t2: getWqfWinner('wqf4'), round: 'W-SF' };
         matches.wf = { id: 'wf', t1: getBracketMatchTeam('wsf1'), t2: getBracketMatchTeam('wsf2'), round: 'W-Final', bo3: bo3Finals };
 
-        // Losers bracket
+        // Losers bracket (crossed drops to prevent rematches)
+        // W-QF losers cross to opposite half: wqf1/wqf2 (wsf1 side) → bottom, wqf3/wqf4 (wsf2 side) → top
+        // W-SF losers stay uncrossed since L-R2 crossing already prevents rematches
         if (l.length >= 8) {
           matches.lr1m1 = { id: 'lr1m1', t1: l[0], t2: l[7], round: 'L-R1', court: 5 };
           matches.lr1m2 = { id: 'lr1m2', t1: l[3], t2: l[4], round: 'L-R1', court: 6 };
           matches.lr1m3 = { id: 'lr1m3', t1: l[1], t2: l[6], round: 'L-R1', court: 7 };
           matches.lr1m4 = { id: 'lr1m4', t1: l[2], t2: l[5], round: 'L-R1', court: 8 };
-          matches.lr2m1 = { id: 'lr2m1', t1: getBracketMatchTeam('lr1m1'), t2: getBracketMatchLoser('wqf1'), round: 'L-R2' };
-          matches.lr2m2 = { id: 'lr2m2', t1: getBracketMatchTeam('lr1m2'), t2: getBracketMatchLoser('wqf2'), round: 'L-R2' };
-          matches.lr2m3 = { id: 'lr2m3', t1: getBracketMatchTeam('lr1m3'), t2: getBracketMatchLoser('wqf3'), round: 'L-R2' };
-          matches.lr2m4 = { id: 'lr2m4', t1: getBracketMatchTeam('lr1m4'), t2: getBracketMatchLoser('wqf4'), round: 'L-R2' };
+          // Crossed: wqf3/4 losers → top half, wqf1/2 losers → bottom half
+          matches.lr2m1 = { id: 'lr2m1', t1: getBracketMatchTeam('lr1m1'), t2: getBracketMatchLoser('wqf3'), round: 'L-R2' };
+          matches.lr2m2 = { id: 'lr2m2', t1: getBracketMatchTeam('lr1m2'), t2: getBracketMatchLoser('wqf4'), round: 'L-R2' };
+          matches.lr2m3 = { id: 'lr2m3', t1: getBracketMatchTeam('lr1m3'), t2: getBracketMatchLoser('wqf1'), round: 'L-R2' };
+          matches.lr2m4 = { id: 'lr2m4', t1: getBracketMatchTeam('lr1m4'), t2: getBracketMatchLoser('wqf2'), round: 'L-R2' };
           matches.lr3m1 = { id: 'lr3m1', t1: getBracketMatchTeam('lr2m1'), t2: getBracketMatchTeam('lr2m2'), round: 'L-R3' };
           matches.lr3m2 = { id: 'lr3m2', t1: getBracketMatchTeam('lr2m3'), t2: getBracketMatchTeam('lr2m4'), round: 'L-R3' };
           matches.lr4m1 = { id: 'lr4m1', t1: getBracketMatchTeam('lr3m1'), t2: getBracketMatchLoser('wsf1'), round: 'L-R4' };
@@ -1464,8 +1467,9 @@
           // All teams in winners — losers bracket from W-QF drops
           matches.lr2m1 = { id: 'lr2m1', t1: getBracketMatchLoser('wqf1'), t2: getBracketMatchLoser('wqf2'), round: 'L-R2' };
           matches.lr2m2 = { id: 'lr2m2', t1: getBracketMatchLoser('wqf3'), t2: getBracketMatchLoser('wqf4'), round: 'L-R2' };
-          matches.lr3m1 = { id: 'lr3m1', t1: getBracketMatchTeam('lr2m1'), t2: getBracketMatchLoser('wsf1'), round: 'L-R3' };
-          matches.lr3m2 = { id: 'lr3m2', t1: getBracketMatchTeam('lr2m2'), t2: getBracketMatchLoser('wsf2'), round: 'L-R3' };
+          // Crossed: wsf1 loser (wqf1/2 side) → bottom, wsf2 loser (wqf3/4 side) → top
+          matches.lr3m1 = { id: 'lr3m1', t1: getBracketMatchTeam('lr2m1'), t2: getBracketMatchLoser('wsf2'), round: 'L-R3' };
+          matches.lr3m2 = { id: 'lr3m2', t1: getBracketMatchTeam('lr2m2'), t2: getBracketMatchLoser('wsf1'), round: 'L-R3' };
           matches.lsf = { id: 'lsf', t1: getBracketMatchTeam('lr3m1'), t2: getBracketMatchTeam('lr3m2'), round: 'L-Semi' };
           matches.lf = { id: 'lf', t1: getBracketMatchTeam('lsf'), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
         } else if (l.length >= 4) {
@@ -1479,10 +1483,11 @@
           }
           const getLr1Win = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
           const getWqfLos = (id) => matches[id]?.bye ? null : getBracketMatchLoser(id);
-          matches.lr2m1 = { id: 'lr2m1', t1: getLr1Win('lr1m1'), t2: getWqfLos('wqf1'), round: 'L-R2' };
-          matches.lr2m2 = { id: 'lr2m2', t1: getLr1Win('lr1m2'), t2: getWqfLos('wqf2'), round: 'L-R2' };
-          if (matches.lr1m3) matches.lr2m3 = { id: 'lr2m3', t1: getLr1Win('lr1m3'), t2: getWqfLos('wqf3'), round: 'L-R2' };
-          if (matches.lr1m4) matches.lr2m4 = { id: 'lr2m4', t1: getLr1Win('lr1m4'), t2: getWqfLos('wqf4'), round: 'L-R2' };
+          // Crossed: wqf3/4 losers → top half, wqf1/2 losers → bottom half
+          matches.lr2m1 = { id: 'lr2m1', t1: getLr1Win('lr1m1'), t2: getWqfLos('wqf3'), round: 'L-R2' };
+          matches.lr2m2 = { id: 'lr2m2', t1: getLr1Win('lr1m2'), t2: getWqfLos('wqf4'), round: 'L-R2' };
+          if (matches.lr1m3) matches.lr2m3 = { id: 'lr2m3', t1: getLr1Win('lr1m3'), t2: getWqfLos('wqf1'), round: 'L-R2' };
+          if (matches.lr1m4) matches.lr2m4 = { id: 'lr2m4', t1: getLr1Win('lr1m4'), t2: getWqfLos('wqf2'), round: 'L-R2' };
           matches.lr3m1 = { id: 'lr3m1', t1: getBracketMatchTeam('lr2m1'), t2: getBracketMatchTeam('lr2m2'), round: 'L-R3' };
           if (matches.lr2m3 && matches.lr2m4) matches.lr3m2 = { id: 'lr3m2', t1: getBracketMatchTeam('lr2m3'), t2: getBracketMatchTeam('lr2m4'), round: 'L-R3' };
           if (matches.lr3m2) {
