@@ -1350,12 +1350,16 @@
       }, [bracketScores, bracketOverrides]);
 
       const bracketMatches = useMemo(() => {
-        const w = bracketTeams.winners || [];
-        const l = bracketTeams.losers || [];
+        // Before RR is complete, show empty bracket with seed placeholders
+        const rrIncomplete = !allSeedingComplete && matchupsGenerated && (rrGames > 0 || Object.keys(pools).length > 0);
+        const makePlaceholder = (seed) => ({ seed, name: `#${seed} Seed`, placeholder: true });
+
+        const w = rrIncomplete ? Array.from({ length: winnersCount }, (_, i) => makePlaceholder(i + 1)) : (bracketTeams.winners || []);
+        const l = rrIncomplete ? Array.from({ length: teamCount - winnersCount }, (_, i) => makePlaceholder(winnersCount + i + 1)) : (bracketTeams.losers || []);
 
         // ========= SINGLE ELIMINATION =========
         if (bracketType === 'single') {
-          const seTeams = displayStandings.slice(0, teamCount);
+          const seTeams = rrIncomplete ? Array.from({ length: teamCount }, (_, i) => makePlaceholder(i + 1)) : displayStandings.slice(0, teamCount);
           if (seTeams.length < 2) return {};
           const matches = {};
           const n = seTeams.length;
@@ -1497,7 +1501,7 @@
 
         matches.gf = { id: 'gf', t1: getBracketMatchTeam('wf'), t2: getBracketMatchTeam('lf'), round: 'Grand Final', bo3: bo3Finals };
         return matches;
-      }, [bracketTeams, displayStandings, bracketType, teamCount, bo3Finals, getBracketMatchTeam, getBracketMatchLoser]);
+      }, [bracketTeams, displayStandings, bracketType, teamCount, bo3Finals, getBracketMatchTeam, getBracketMatchLoser, allSeedingComplete, matchupsGenerated, rrGames, pools, winnersCount]);
 
       const handleTeamChange = useCallback((index, field, value) => {
         setTeams(prev => prev.map((t, i) => i === index ? { ...t, [field]: value } : t));
@@ -2599,6 +2603,7 @@
           )}
 
           {phase === 'bracket' && (() => {
+            const bracketPreview = !allSeedingComplete && matchupsGenerated;
             // Helper to render a bracket match by ID
             const renderMatch = (id) => {
               const m = bracketMatches[id];
@@ -2607,11 +2612,11 @@
                 <BracketMatch
                   key={id}
                   match={m}
-                  score={bracketScores[id] || {}}
-                  override={bracketOverrides[id]}
-                  isOnCourt={!!onCourt[id]}
-                  courtNum={onCourt[id]}
-                  showOverride={showOverride}
+                  score={bracketPreview ? {} : (bracketScores[id] || {})}
+                  override={bracketPreview ? undefined : bracketOverrides[id]}
+                  isOnCourt={bracketPreview ? false : !!onCourt[id]}
+                  courtNum={bracketPreview ? undefined : onCourt[id]}
+                  showOverride={bracketPreview ? false : showOverride}
                   onScoreChange={(field, value) => handleBracketScore(id, m?.t1, m?.t2, field, value)}
                   onBo3ScoreChange={m?.bo3 ? (gi, field, value) => handleBo3Score(id, m?.t1, m?.t2, gi, field, value) : undefined}
                   onToggleCourt={() => toggleOnCourt(id)}
@@ -2619,8 +2624,8 @@
                   courtCount={courtCount}
                   onOverride={(team) => handleBracketOverride(id, team, team === m?.t1 ? m?.t2 : m?.t1)}
                   onClearOverride={() => clearBracketOverride(id)}
-                  winner={getBracketMatchTeam(id)}
-                  readOnly={spectatorMode}
+                  winner={bracketPreview ? null : getBracketMatchTeam(id)}
+                  readOnly={spectatorMode || bracketPreview}
                 />
               );
             };
@@ -2644,9 +2649,14 @@
 
             return (
             <div className="max-w-6xl mx-auto overflow-x-auto">
-              {!spectatorMode && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} onCourt={onCourt} />}
+              {bracketPreview && (
+                <div className="mb-3 bg-blue-900/50 border border-blue-600 rounded p-2 text-sm text-center text-blue-300">
+                  Bracket Preview — seeds will be filled after round robin is complete
+                </div>
+              )}
+              {!spectatorMode && !bracketPreview && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} onCourt={onCourt} />}
 
-              {bracketSwaps.length > 0 && (
+              {bracketSwaps.length > 0 && !bracketPreview && (
                 <div className="mb-3 bg-yellow-900/50 border border-yellow-600 rounded p-2 text-sm">
                   <div className="font-semibold text-yellow-400 mb-1">🔄 Seeding Adjusted (No Pool Rematches in R1)</div>
                   {bracketSwaps.map((swap, i) => (
@@ -2657,7 +2667,7 @@
 
               <div className="flex justify-between items-center mb-2">
                 <h2 className="text-lg font-semibold text-blue-400">{bracketType === 'single' ? 'Single Elimination' : 'Winners Bracket'}</h2>
-                {!spectatorMode && (
+                {!spectatorMode && !bracketPreview && (
                   <div className="flex items-center gap-3">
                     <button onClick={generateFakeBracketScores} className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>
                     <label className="text-xs text-gray-500 flex items-center gap-1">
