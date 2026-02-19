@@ -1192,9 +1192,34 @@
         if (displayStandings.length < teamCount) return { winners: [], losers: [], swaps: [] };
 
         // Split into winners and losers based on configured winnersCount
+        // When pools are used, guarantee top N from each pool make winners bracket
         const losersCount = teamCount - winnersCount;
-        let winners = displayStandings.slice(0, winnersCount);
-        let losers = displayStandings.slice(winnersCount);
+        let winners, losers;
+        const poolNames = Object.keys(pools);
+        if (poolNames.length > 0 && winnersCount > 0) {
+          const perPool = Math.floor(winnersCount / poolNames.length);
+          const winnersSet = new Set();
+          // Take top N from each pool (by overall standings order)
+          const poolCounts = {};
+          poolNames.forEach(p => poolCounts[p] = 0);
+          for (const team of displayStandings) {
+            const p = team.pool;
+            if (p !== undefined && poolCounts[p] !== undefined && poolCounts[p] < perPool) {
+              winnersSet.add(team.seed);
+              poolCounts[p]++;
+            }
+          }
+          // If winnersCount doesn't divide evenly, fill remaining spots by overall rank
+          for (const team of displayStandings) {
+            if (winnersSet.size >= winnersCount) break;
+            if (!winnersSet.has(team.seed)) winnersSet.add(team.seed);
+          }
+          winners = displayStandings.filter(t => winnersSet.has(t.seed));
+          losers = displayStandings.filter(t => !winnersSet.has(t.seed));
+        } else {
+          winners = displayStandings.slice(0, winnersCount);
+          losers = displayStandings.slice(winnersCount);
+        }
 
         const swaps = [];
 
