@@ -419,6 +419,9 @@
       const [view, setView] = useState('home');
       const [activeTournamentId, setActiveTournamentId] = useState(null);
       const [quickSaveStatus, setQuickSaveStatus] = useState('');
+      const [authenticated, setAuthenticated] = useState(() => sessionStorage.getItem('mb_auth') === '1');
+      const [passwordInput, setPasswordInput] = useState('');
+      const [passwordError, setPasswordError] = useState(false);
       const [phase, setPhase] = useState('import');
       const [importText, setImportText] = useState('');
       const [teamCount, setTeamCount] = useState(16);
@@ -453,6 +456,17 @@
       const [liveMode, setLiveMode] = useState(false); // true when loaded via ?live= param
       const [scorekeeperMode, setScorekeeperMode] = useState(false); // true when loaded via ?live=X&score=1
       const [scoreLocked, setScoreLocked] = useState(false); // organizer can lock scoring for scorekeepers
+
+      const checkPassword = useCallback(() => {
+        if (passwordInput === 'Darwin@1234') {
+          setAuthenticated(true);
+          sessionStorage.setItem('mb_auth', '1');
+          setPasswordError(false);
+          setPasswordInput('');
+        } else {
+          setPasswordError(true);
+        }
+      }, [passwordInput]);
 
       // Default winners count based on team count
       const defaultWinnersCount = { 8: 8, 9: 8, 10: 8, 11: 8, 12: 12, 13: 8, 14: 8, 15: 8, 16: 8 };
@@ -1934,7 +1948,30 @@
         <div className="bg-gray-900 text-white p-4 min-h-screen">
 
           {/* ============ HOME PAGE ============ */}
-          {view === 'home' && (
+          {view === 'home' && !authenticated && (
+            <div className="max-w-sm mx-auto mt-20 text-center">
+              <h1 className="text-3xl font-bold mb-2">🏓 Jordan's Moneyballs</h1>
+              <p className="text-gray-400 text-sm mb-8">Organizer Access</p>
+              <div className="bg-gray-800 rounded-lg p-6">
+                <p className="text-gray-300 text-sm mb-4">Enter password to manage tournaments</p>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={e => { setPasswordInput(e.target.value); setPasswordError(false); }}
+                  onKeyDown={e => e.key === 'Enter' && checkPassword()}
+                  placeholder="Password"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-center mb-3 focus:outline-none focus:border-orange-500"
+                  autoFocus
+                />
+                {passwordError && <p className="text-red-400 text-xs mb-3">Incorrect password</p>}
+                <button onClick={checkPassword} className="w-full bg-orange-600 hover:bg-orange-500 text-white py-2 rounded font-semibold">
+                  Enter
+                </button>
+              </div>
+              <p className="text-gray-600 text-xs mt-6">Viewers and scorekeepers don't need a password — use your shared link.</p>
+            </div>
+          )}
+          {view === 'home' && authenticated && (
             <div className="max-w-3xl mx-auto">
               <h1 className="text-3xl font-bold text-center mb-2">🏓 Jordan's Moneyballs</h1>
               <p className="text-center text-gray-400 text-sm mb-8">Pickleball Tournament Manager</p>
@@ -2033,7 +2070,30 @@
           )}
 
           {/* ============ TOURNAMENT VIEW ============ */}
-          {view === 'tournament' && (
+          {view === 'tournament' && !spectatorMode && !liveMode && !scorekeeperMode && !authenticated && (
+            <div className="max-w-sm mx-auto mt-20 text-center">
+              <h1 className="text-3xl font-bold mb-2">🏓 Jordan's Moneyballs</h1>
+              <p className="text-gray-400 text-sm mb-8">Organizer Access</p>
+              <div className="bg-gray-800 rounded-lg p-6">
+                <p className="text-gray-300 text-sm mb-4">Enter password to manage tournaments</p>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={e => { setPasswordInput(e.target.value); setPasswordError(false); }}
+                  onKeyDown={e => e.key === 'Enter' && checkPassword()}
+                  placeholder="Password"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-center mb-3 focus:outline-none focus:border-orange-500"
+                  autoFocus
+                />
+                {passwordError && <p className="text-red-400 text-xs mb-3">Incorrect password</p>}
+                <button onClick={checkPassword} className="w-full bg-orange-600 hover:bg-orange-500 text-white py-2 rounded font-semibold">
+                  Enter
+                </button>
+              </div>
+              <p className="text-gray-600 text-xs mt-6">Viewers and scorekeepers don't need a password — use your shared link.</p>
+            </div>
+          )}
+          {view === 'tournament' && (spectatorMode || liveMode || scorekeeperMode || authenticated) && (
             <>
           {/* Tournament header with back button */}
           {!spectatorMode && !liveMode && !scorekeeperMode && (
