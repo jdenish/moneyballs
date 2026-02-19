@@ -110,7 +110,7 @@
         <div className={`p-2 rounded border ${isComplete ? 'bg-gray-800 border-green-600' : isOnCourt ? 'bg-orange-900/50 border-orange-500' : 'bg-gray-800 border-gray-600'}`} style={poolColor ? { borderLeftWidth: '3px', borderLeftColor: poolColor } : undefined}>
           <div className="flex justify-between items-center mb-1">
             <span className="text-gray-500 text-xs">{isOnCourt ? `Court ${courtNum}` : `Ct ${match.court}`}</span>
-            {!isComplete && !readOnly && (
+            {!isComplete && !readOnly && onToggleCourt && (
               <div className="flex items-center gap-1">
                 {isOnCourt && onSetCourt && (
                   <select
@@ -208,7 +208,7 @@
             <div className="flex gap-1 items-center">
               {match.bo3 && <span className="text-yellow-400">Bo3</span>}
               {override && !readOnly && <span className="text-orange-400 cursor-pointer" onClick={onClearOverride}>⟲</span>}
-              {isReady && !isComplete && !readOnly && (
+              {isReady && !isComplete && !readOnly && onToggleCourt && (
                 <>
                   {isOnCourt && onSetCourt && (
                     <select
@@ -451,6 +451,8 @@
       const [npointId, setNpointId] = useState('');
       const [publishStatus, setPublishStatus] = useState(''); // '', 'publishing', 'published', 'error'
       const [liveMode, setLiveMode] = useState(false); // true when loaded via ?live= param
+      const [scorekeeperMode, setScorekeeperMode] = useState(false); // true when loaded via ?live=X&score=1
+      const [scoreLocked, setScoreLocked] = useState(false); // organizer can lock scoring for scorekeepers
 
       // Default winners count based on team count
       const defaultWinnersCount = { 8: 8, 9: 8, 10: 8, 11: 8, 12: 12, 13: 8, 14: 8, 15: 8, 16: 8 };
@@ -520,6 +522,7 @@
           });
           setBracketScores(full);
         }
+        if (d.sl !== undefined) setScoreLocked(d.sl);
         if (opts.spectator !== false) setSpectatorMode(true);
         setPhase(v('phase', 'ph') || 'bracket');
       };
@@ -644,14 +647,23 @@
         const liveId = params.get('live');
         const hash = window.location.hash;
         if (liveId) {
-          // Live mode: fetch state from npoint (spectator)
+          // Live mode: fetch state from npoint
+          const isScorekeeper = params.get('score') === '1';
           setView('tournament');
           setLiveMode(true);
+          if (isScorekeeper) {
+            setScorekeeperMode(true);
+            setNpointId(liveId);
+          }
           fetch(`https://api.npoint.io/${liveId}`)
             .then(r => r.json())
             .then(data => {
-              if (data && Object.keys(data).length > 0) loadSharedState(data);
-              else { setSpectatorMode(true); setPhase('import'); }
+              if (data && Object.keys(data).length > 0) {
+                loadSharedState(data, { spectator: !isScorekeeper });
+              } else {
+                setSpectatorMode(true);
+                setPhase('import');
+              }
             })
             .catch(e => { console.error('Failed to load live state', e); setSpectatorMode(true); });
         } else if (sharedState) {
@@ -690,7 +702,8 @@
           tc: teamCount, rg: rrGames, rp: rrPointTarget, wc: winnersCount,
           t: teams.map(({ p1Paid, p2Paid, ...rest }) => rest), ss: seedingScores, bo: bracketOverrides,
           rm: rrMatchups, bt: bracketType, b3: bo3Finals, ps: poolSize, cc: courtCount,
-          p: pools, mg: matchupsGenerated, oc: onCourt, bso: bracketSeedOverride, ph: phase
+          p: pools, mg: matchupsGenerated, oc: onCourt, bso: bracketSeedOverride, ph: phase,
+          sl: scoreLocked
         };
         // Slim bracket scores: store only seeds + scores (no full team objects)
         if (Object.keys(bracketScores).length > 0) {
@@ -726,7 +739,8 @@
           tc: teamCount, rg: rrGames, rp: rrPointTarget, wc: winnersCount,
           t: teams.map(({ p1Paid, p2Paid, ...rest }) => rest), ss: seedingScores, bo: bracketOverrides,
           rm: rrMatchups, bt: bracketType, b3: bo3Finals, ps: poolSize, cc: courtCount,
-          p: pools, mg: matchupsGenerated, oc: onCourt, bso: bracketSeedOverride, ph: phase
+          p: pools, mg: matchupsGenerated, oc: onCourt, bso: bracketSeedOverride, ph: phase,
+          sl: scoreLocked
         };
         if (Object.keys(bracketScores).length > 0) {
           const slim = {};
@@ -754,7 +768,9 @@
             setPublishStatus('error');
             setTimeout(() => setPublishStatus(''), 3000);
           });
-      }, [npointId, teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, rrMatchups, bracketType, bo3Finals, poolSize, courtCount, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase]);
+      }, [npointId, teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, rrMatchups, bracketType, bo3Finals, poolSize, courtCount, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase, scoreLocked]);
+
+      const [scoreLinkCopied, setScoreLinkCopied] = useState(false);
 
       const copyLiveLink = useCallback(() => {
         if (!npointId) return;
@@ -762,6 +778,15 @@
         navigator.clipboard.writeText(url).then(() => {
           setLinkCopied(true);
           setTimeout(() => setLinkCopied(false), 2000);
+        });
+      }, [npointId]);
+
+      const copyScoreLink = useCallback(() => {
+        if (!npointId) return;
+        const url = `${window.location.origin}${window.location.pathname}?live=${npointId}&score=1`;
+        navigator.clipboard.writeText(url).then(() => {
+          setScoreLinkCopied(true);
+          setTimeout(() => setScoreLinkCopied(false), 2000);
         });
       }, [npointId]);
 
@@ -2003,7 +2028,7 @@
           {view === 'tournament' && (
             <>
           {/* Tournament header with back button */}
-          {!spectatorMode && !liveMode && (
+          {!spectatorMode && !liveMode && !scorekeeperMode && (
             <div className="flex items-center justify-between mb-3 max-w-6xl mx-auto">
               <button onClick={goHome} className="text-sm text-gray-400 hover:text-white flex items-center gap-1">
                 ← All Tournaments
@@ -2034,8 +2059,33 @@
               {liveMode ? '📡 Live Mode — Reload page for latest scores' : '👁️ Spectator Mode - View Only'}
             </div>
           )}
+          {scorekeeperMode && !spectatorMode && (
+            <div className={`border text-center py-2 px-4 rounded mb-3 max-w-md mx-auto ${scoreLocked ? 'bg-red-900 border-red-500 text-red-200' : 'bg-emerald-900 border-emerald-500 text-emerald-200'}`}>
+              {scoreLocked ? '🔒 Scores Locked — Organizer has locked score entry' : '📝 Scorekeeper Mode — Enter scores and click Submit'}
+            </div>
+          )}
 
-          {!spectatorMode && (
+          {!spectatorMode && scorekeeperMode && (
+            <div className="flex justify-center gap-2 mb-2 flex-wrap">
+              {!scoreLocked && <button
+                onClick={publishToNpoint}
+                disabled={publishStatus === 'publishing'}
+                className={`text-xs px-3 py-1.5 rounded font-semibold ${
+                  publishStatus === 'published' ? 'bg-green-600' :
+                  publishStatus === 'error' ? 'bg-red-600' :
+                  publishStatus === 'publishing' ? 'bg-yellow-600' :
+                  'bg-emerald-600 hover:bg-emerald-500'
+                }`}
+              >
+                {publishStatus === 'published' ? '✓ Submitted!' :
+                 publishStatus === 'error' ? '✗ Failed' :
+                 publishStatus === 'publishing' ? 'Submitting...' :
+                 '✅ Submit Scores'}
+              </button>}
+              <button onClick={() => window.location.reload()} className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600">🔄 Reload</button>
+            </div>
+          )}
+          {!spectatorMode && !scorekeeperMode && (
             <div className="flex justify-center gap-2 mb-2 flex-wrap">
               <button onClick={saveProgress} className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600">💾 Save</button>
               <label className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600 cursor-pointer">
@@ -2066,7 +2116,19 @@
                     onClick={copyLiveLink}
                     className={`text-xs px-2 py-1 rounded ${linkCopied ? 'bg-green-600' : 'bg-gray-600 hover:bg-gray-500'}`}
                   >
-                    {linkCopied ? '✓ Copied!' : '📋 Live Link'}
+                    {linkCopied ? '✓ Copied!' : '👁️ Viewer Link'}
+                  </button>
+                  <button
+                    onClick={copyScoreLink}
+                    className={`text-xs px-2 py-1 rounded ${scoreLinkCopied ? 'bg-green-600' : 'bg-orange-600 hover:bg-orange-500'}`}
+                  >
+                    {scoreLinkCopied ? '✓ Copied!' : '📝 Scorer Link'}
+                  </button>
+                  <button
+                    onClick={() => setScoreLocked(!scoreLocked)}
+                    className={`text-xs px-2 py-1 rounded ${scoreLocked ? 'bg-red-600 hover:bg-red-500' : 'bg-gray-600 hover:bg-gray-500'}`}
+                  >
+                    {scoreLocked ? '🔒 Locked' : '🔓 Unlocked'}
                   </button>
                 </>
               )}
@@ -2074,8 +2136,8 @@
           )}
 
           <div className="flex justify-center gap-2 mb-4 flex-wrap">
-            <button onClick={() => setPhase('import')} className={`px-3 py-1 rounded text-sm ${phase === 'import' ? 'bg-orange-600' : 'bg-gray-700'}`}>Import</button>
-            <button onClick={() => setPhase('setup')} className={`px-3 py-1 rounded text-sm ${phase === 'setup' ? 'bg-purple-600' : 'bg-gray-700'}`} disabled={!teamsValid}>Setup</button>
+            {!scorekeeperMode && <button onClick={() => setPhase('import')} className={`px-3 py-1 rounded text-sm ${phase === 'import' ? 'bg-orange-600' : 'bg-gray-700'}`}>Import</button>}
+            {!scorekeeperMode && <button onClick={() => setPhase('setup')} className={`px-3 py-1 rounded text-sm ${phase === 'setup' ? 'bg-purple-600' : 'bg-gray-700'}`} disabled={!teamsValid}>Setup</button>}
             {(rrGames > 0 || poolSize > 0) && <button onClick={() => setPhase('roundrobin')} className={`px-3 py-1 rounded text-sm ${phase === 'roundrobin' ? 'bg-blue-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Round Robin</button>}
             {(rrGames > 0 || poolSize > 0) && <button onClick={() => setPhase('standings')} className={`px-3 py-1 rounded text-sm ${phase === 'standings' ? 'bg-cyan-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Standings</button>}
             <button onClick={() => setPhase('bracket')} className={`px-3 py-1 rounded text-sm ${phase === 'bracket' ? 'bg-green-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Bracket</button>
@@ -2148,7 +2210,7 @@
                       onDrop={handleDrop}
                       isDragging={dragIndex === i}
                       isDragOver={dragOverIndex === i}
-                      readOnly={spectatorMode}
+                      readOnly={spectatorMode || (scorekeeperMode && scoreLocked)}
                     />
                   ))}
                   <h3 className="text-blue-400 font-semibold mb-2 mt-4">Seeds 5-8</h3>
@@ -2165,7 +2227,7 @@
                       onDrop={handleDrop}
                       isDragging={dragIndex === i}
                       isDragOver={dragOverIndex === i}
-                      readOnly={spectatorMode}
+                      readOnly={spectatorMode || (scorekeeperMode && scoreLocked)}
                     />
                   ))}
                 </div>
@@ -2184,7 +2246,7 @@
                       onDrop={handleDrop}
                       isDragging={dragIndex === i}
                       isDragOver={dragOverIndex === i}
-                      readOnly={spectatorMode}
+                      readOnly={spectatorMode || (scorekeeperMode && scoreLocked)}
                     />
                   ))}
                   {teamCount > 12 && (
@@ -2371,11 +2433,17 @@
                       </div>
                     </div>
                     {npointId ? (
-                      <div className="mt-2 space-y-1">
-                        <div className="text-xs text-green-400">Live link active. Share this URL with spectators:</div>
-                        <div className="text-xs text-gray-300 font-mono bg-gray-900 rounded px-2 py-1 select-all break-all">{window.location.origin}{window.location.pathname}?live={npointId}</div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          <span className="text-yellow-400">How to use:</span> Click <span className="text-emerald-400">Publish</span> in the toolbar after entering scores. Spectators reload the page to see updates.
+                      <div className="mt-2 space-y-2">
+                        <div>
+                          <div className="text-xs text-gray-400 mb-1">👁️ Viewer Link <span className="text-gray-600">(read-only for spectators)</span></div>
+                          <div className="text-xs text-gray-300 font-mono bg-gray-900 rounded px-2 py-1 select-all break-all">{window.location.origin}{window.location.pathname}?live={npointId}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-orange-400 mb-1">📝 Scorer Link <span className="text-gray-600">(can enter scores + submit)</span></div>
+                          <div className="text-xs text-gray-300 font-mono bg-gray-900 rounded px-2 py-1 select-all break-all">{window.location.origin}{window.location.pathname}?live={npointId}&score=1</div>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          <span className="text-yellow-400">How to use:</span> Click <span className="text-emerald-400">Publish</span> after entering scores. Use <span className="text-red-400">🔒 Lock</span> to prevent scorekeepers from editing.
                         </div>
                         <div className="text-xs text-gray-600">
                           Manage your bin: <a href={`https://www.npoint.io/docs/${npointId}`} target="_blank" className="text-blue-400 underline">npoint.io/docs/{npointId}</a>
@@ -2413,9 +2481,9 @@
             <div className="max-w-6xl mx-auto">
               <div className="flex justify-between items-center mb-2">
                 <h2 className="text-xl font-semibold">Round Robin ({teamCount} teams, {seedingMatches.length} games to {rrPointTarget})</h2>
-                {!spectatorMode && <button onClick={generateFakeSeedingScores} className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>}
+                {!spectatorMode && !scorekeeperMode && <button onClick={generateFakeSeedingScores} className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>}
               </div>
-              {!spectatorMode && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} onCourt={onCourt} />}
+              {!spectatorMode && !scorekeeperMode && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} onCourt={onCourt} />}
 
               {Object.keys(pools).length > 0 && (() => {
                 const numPools = Math.max(...Object.values(pools)) + 1;
@@ -2479,10 +2547,10 @@
                                     isOnCourt={!!onCourt[m.id]}
                                     courtNum={onCourt[m.id]}
                                     onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
-                                    onToggleCourt={() => toggleOnCourt(m.id)}
-                                    onSetCourt={(ct) => setMatchCourt(m.id, ct)}
+                                    onToggleCourt={scorekeeperMode ? null : () => toggleOnCourt(m.id)}
+                                    onSetCourt={scorekeeperMode ? null : (ct) => setMatchCourt(m.id, ct)}
                                     courtCount={courtCount}
-                                    readOnly={spectatorMode}
+                                    readOnly={spectatorMode || (scorekeeperMode && scoreLocked)}
                                     poolColor={poolColor}
                                   />
                                 </div>
@@ -2511,10 +2579,10 @@
                               isOnCourt={!!onCourt[m.id]}
                               courtNum={onCourt[m.id]}
                               onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
-                              onToggleCourt={() => toggleOnCourt(m.id)}
-                              onSetCourt={(ct) => setMatchCourt(m.id, ct)}
+                              onToggleCourt={scorekeeperMode ? null : () => toggleOnCourt(m.id)}
+                              onSetCourt={scorekeeperMode ? null : (ct) => setMatchCourt(m.id, ct)}
                               courtCount={courtCount}
-                              readOnly={spectatorMode}
+                              readOnly={spectatorMode || (scorekeeperMode && scoreLocked)}
                             />
                           ))}
                         </div>
@@ -2535,7 +2603,7 @@
             <div className="max-w-2xl mx-auto">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-center flex-1">Live Standings</h2>
-                {!spectatorMode && (
+                {!spectatorMode && !scorekeeperMode && (
                   <div className="flex items-center gap-2">
                     {standingsOverride && (
                       <button onClick={() => { setStandingsOverride(null); setBracketSeedOverride(null); }} className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600">Reset Order</button>
@@ -2548,7 +2616,7 @@
                   Manual order applied — drag to reorder, or Reset to recalculate
                 </div>
               )}
-              <p className="text-gray-500 text-xs text-center mb-2">Drag rows to manually reorder</p>
+              {!spectatorMode && !scorekeeperMode && <p className="text-gray-500 text-xs text-center mb-2">Drag rows to manually reorder</p>}
               <div className="bg-gray-800 rounded p-3">
                 <div className="text-xs text-gray-500 flex px-2 mb-2">
                   <span className="w-6"></span>
@@ -2566,16 +2634,16 @@
                   return (
                     <div
                       key={t.seed}
-                      draggable={!spectatorMode}
+                      draggable={!spectatorMode && !scorekeeperMode}
                       onDragStart={(e) => handleStandingsDragStart(e, i)}
                       onDragOver={(e) => handleStandingsDragOver(e, i)}
                       onDrop={(e) => handleStandingsDrop(e, i)}
                       onDragEnd={() => { setStandingsDragIndex(null); setStandingsDragOverIndex(null); }}
                       className={`flex items-center text-sm py-2 px-2 rounded mb-1 transition-all ${
                         standingsDragOverIndex === i ? 'border-2 border-yellow-400' : 'border-2 border-transparent'
-                      } ${standingsDragIndex === i ? 'opacity-50' : ''} ${isWinners ? 'bg-blue-900/30' : 'bg-red-900/30'} ${!spectatorMode ? 'cursor-move' : ''}`}
+                      } ${standingsDragIndex === i ? 'opacity-50' : ''} ${isWinners ? 'bg-blue-900/30' : 'bg-red-900/30'} ${!spectatorMode && !scorekeeperMode ? 'cursor-move' : ''}`}
                     >
-                      {!spectatorMode && <span className="w-6 text-gray-600 text-xs">☰</span>}
+                      {!spectatorMode && !scorekeeperMode && <span className="w-6 text-gray-600 text-xs">☰</span>}
                       <span className={`w-8 font-bold ${isWinners ? 'text-blue-400' : 'text-red-400'}`}>{i + 1}</span>
                       {Object.keys(pools).length > 0 && (
                         <span className={`w-10 text-xs ${poolColors[t.pool] || 'text-gray-400'}`}>
@@ -2625,13 +2693,13 @@
                   showOverride={bracketPreview ? false : showOverride}
                   onScoreChange={(field, value) => handleBracketScore(id, m?.t1, m?.t2, field, value)}
                   onBo3ScoreChange={m?.bo3 ? (gi, field, value) => handleBo3Score(id, m?.t1, m?.t2, gi, field, value) : undefined}
-                  onToggleCourt={() => toggleOnCourt(id)}
-                  onSetCourt={(ct) => setMatchCourt(id, ct)}
+                  onToggleCourt={scorekeeperMode ? null : () => toggleOnCourt(id)}
+                  onSetCourt={scorekeeperMode ? null : (ct) => setMatchCourt(id, ct)}
                   courtCount={courtCount}
-                  onOverride={(team) => handleBracketOverride(id, team, team === m?.t1 ? m?.t2 : m?.t1)}
-                  onClearOverride={() => clearBracketOverride(id)}
+                  onOverride={scorekeeperMode ? null : (team) => handleBracketOverride(id, team, team === m?.t1 ? m?.t2 : m?.t1)}
+                  onClearOverride={scorekeeperMode ? null : () => clearBracketOverride(id)}
                   winner={bracketPreview ? null : getBracketMatchTeam(id)}
-                  readOnly={spectatorMode || bracketPreview}
+                  readOnly={spectatorMode || bracketPreview || (scorekeeperMode && scoreLocked)}
                 />
               );
             };
@@ -2660,7 +2728,7 @@
                   Bracket Preview — seeds will be filled after round robin is complete
                 </div>
               )}
-              {!spectatorMode && !bracketPreview && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} onCourt={onCourt} />}
+              {!spectatorMode && !scorekeeperMode && !bracketPreview && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} onCourt={onCourt} />}
 
               {bracketSwaps.length > 0 && !bracketPreview && (
                 <div className="mb-3 bg-yellow-900/50 border border-yellow-600 rounded p-2 text-sm">
@@ -2673,7 +2741,7 @@
 
               <div className="flex justify-between items-center mb-2">
                 <h2 className="text-lg font-semibold text-blue-400">{bracketType === 'single' ? 'Single Elimination' : 'Winners Bracket'}</h2>
-                {!spectatorMode && !bracketPreview && (
+                {!spectatorMode && !scorekeeperMode && !bracketPreview && (
                   <div className="flex items-center gap-3">
                     <button onClick={generateFakeBracketScores} className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>
                     <label className="text-xs text-gray-500 flex items-center gap-1">
@@ -2684,7 +2752,7 @@
                 )}
               </div>
 
-              {showOverride && !spectatorMode && bracketType === 'double' && bracketTeams.winners.length > 0 && (
+              {showOverride && !spectatorMode && !scorekeeperMode && bracketType === 'double' && bracketTeams.winners.length > 0 && (
                 <div className="mb-3 bg-gray-800 rounded p-3">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-semibold">Flip Bracket Seeds</span>
