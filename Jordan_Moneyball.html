@@ -1988,35 +1988,43 @@
 
               <div className="bg-gray-800 rounded-lg p-5 mt-2">
                 <h3 className="text-sm font-semibold text-gray-300 mb-3">How It Works</h3>
-                <div className="grid sm:grid-cols-3 gap-4 text-xs text-gray-400">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs text-gray-400">
                   <div>
                     <div className="text-orange-400 font-semibold mb-1">Organizer (You)</div>
                     <ul className="space-y-1 list-disc list-inside">
                       <li>Click a tournament to open it in edit mode</li>
                       <li><strong className="text-gray-300">Quick Save</strong> saves progress to this browser</li>
-                      <li><strong className="text-gray-300">Save</strong> also downloads a JSON backup file — move these to <span className="font-mono text-gray-500">Moneyballs/saves/</span></li>
-                      <li><strong className="text-gray-300">Share Link</strong> copies a snapshot link for players</li>
-                      <li>Your saved state loads automatically next visit</li>
+                      <li><strong className="text-gray-300">Save</strong> also downloads a JSON backup file</li>
+                      <li><strong className="text-gray-300">Share Link</strong> copies a snapshot link</li>
+                      <li><strong className="text-gray-300">Publish</strong> pushes scores to live link</li>
+                      <li><strong className="text-gray-300">🔒 Lock</strong> prevents scorekeepers from editing</li>
                     </ul>
                   </div>
                   <div>
-                    <div className="text-blue-400 font-semibold mb-1">Players / Spectators</div>
+                    <div className="text-blue-400 font-semibold mb-1">Viewers</div>
                     <ul className="space-y-1 list-disc list-inside">
-                      <li>Open the shared link to view brackets and scores</li>
-                      <li>Spectator mode is view-only — no editing</li>
-                      <li>Share links are snapshots — ask for a new one for latest scores</li>
-                      <li>If Live mode is enabled, just reload the page for updates</li>
+                      <li>Open the <strong className="text-gray-300">👁️ Viewer Link</strong> to see scores</li>
+                      <li>View-only — no editing allowed</li>
+                      <li>Reload the page for latest updates</li>
                     </ul>
                   </div>
                   <div>
-                    <div className="text-emerald-400 font-semibold mb-1">Live Mode (Optional)</div>
-                    <p className="mb-1">Give spectators a stable link that updates in real-time:</p>
+                    <div className="text-emerald-400 font-semibold mb-1">Scorekeepers</div>
+                    <ul className="space-y-1 list-disc list-inside">
+                      <li>Open the <strong className="text-gray-300">📝 Scorer Link</strong> from the organizer</li>
+                      <li>Enter scores and click <strong className="text-gray-300">Submit Scores</strong></li>
+                      <li>No access to settings, courts, or overrides</li>
+                      <li>Organizer can lock scoring at any time</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="text-purple-400 font-semibold mb-1">Live Mode Setup</div>
                     <ol className="space-y-1 list-decimal list-inside">
-                      <li>Go to <strong className="text-gray-300">npoint.io</strong> and click "Create JSON Bin"</li>
-                      <li>Leave the default content, click "Save"</li>
-                      <li>Copy the ID from the URL (after <span className="font-mono text-gray-500">api.npoint.io/</span>)</li>
-                      <li>Open a tournament → Setup tab → paste the ID in "Live Spectator Link"</li>
-                      <li>Click <strong className="text-emerald-300">Publish</strong> after entering scores — spectators reload to see updates</li>
+                      <li>Go to <strong className="text-gray-300">npoint.io</strong> → "Create JSON Bin"</li>
+                      <li>Leave default content, click "Save"</li>
+                      <li>Copy the ID from the URL</li>
+                      <li>Tournament → Setup → paste in "Live Spectator Link"</li>
+                      <li>Use <strong className="text-gray-300">👁️ Viewer</strong> and <strong className="text-gray-300">📝 Scorer</strong> links from toolbar</li>
                     </ol>
                   </div>
                 </div>

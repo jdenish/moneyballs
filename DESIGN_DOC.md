@@ -328,7 +328,7 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 - **Auto-Save** - Tournament state auto-saves to localStorage every 1 second (debounced) while editing. No manual save needed.
 - **Quick Save** - Manual button for explicit localStorage save with visual "Saved!" feedback
 - **localStorage Persistence** - Tournament state loads automatically from localStorage on next visit. Priority: localStorage → embedded state → preloaded teams.
-- **URL Routing** - Default URL → home page; `#t=ID` → organizer mode; `?s=` → spectator; `?live=` → live mode
+- **URL Routing** - Default URL → home page; `#t=ID` → organizer mode; `?s=` → spectator; `?live=` → viewer; `?live=&score=1` → scorekeeper
 - **Tournament Registry** - `TOURNAMENTS` array defines all tournaments with embedded data for completed events and preloaded teams for upcoming ones
 - **8-16 Team Support** - Variable team counts with automatic format and payout adjustments
 - **Team Count Selector** - Select expected teams on Import page, auto-detects from paste (>= 8 teams), validates on import
@@ -357,6 +357,8 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 - **Drag & Drop Seeding** - Reorder teams on Setup page by dragging (☰ handle)
 - **Share Link** - Compressed URL for spectators (optimized: slim keys, stripped team objects from bracket scores). Includes all new config (bracket type, Bo3, pool size, court count).
 - **Spectator Mode** - Clean read-only view when opening shared link (hides paid status, admin controls, override panels)
+- **Scorekeeper Mode** - Helpers can enter scores and submit via `?live=ID&score=1` link. No access to settings, courts, overrides, or drag-and-drop. Organizer controls who gets the link.
+- **Score Locking** - Organizer can lock/unlock scoring for scorekeepers. Lock state published to npoint. When locked, scorekeepers see "Scores Locked" and all inputs become read-only.
 - **Placement Highlights** - Gold, Silver, Bronze highlighting in bracket and Results tab
 
 ### How Share Link Works
@@ -413,20 +415,52 @@ Spectators can view the latest tournament state at a **stable URL** — no more 
 ### How It Works
 1. **One-time setup:** Create a free JSON bin at [npoint.io](https://www.npoint.io) and paste the ID into the Setup page
 2. **During tournament:** Click **Publish** in the toolbar after entering scores
-3. **Spectators:** Open the live link (e.g., `jdenish.github.io/moneyballs/Jordan_Moneyball.html?live=abc123`), reload the page to see the latest scores
-4. **Same link every tournament** — the npoint bin gets overwritten each time you publish. Use Save to archive past tournaments.
+3. **Spectators:** Open the viewer link, reload the page to see the latest scores
+4. **Scorekeepers:** Open the scorer link — can enter scores and click **Submit** (publishes to same npoint bin)
+5. **Same link every tournament** — the npoint bin gets overwritten each time you publish. Use Save to archive past tournaments.
+
+### Three Access Levels
+
+| Role | URL | Can Enter Scores | Can Manage Courts/Settings | Can Lock |
+|------|-----|------------------|---------------------------|----------|
+| **Organizer** | `Jordan_Moneyball.html#t=ID` | Yes | Yes | Yes |
+| **Scorekeeper** | `?live=abc123&score=1` | Yes (unless locked) | No | No |
+| **Viewer** | `?live=abc123` | No | No | No |
+
+### Scorekeeper Mode
+Scorekeepers can enter scores from their own device and click **Submit Scores** to push to npoint. They see:
+- Round Robin, Standings, and Bracket tabs only (no Import/Setup)
+- Score inputs on matches (no court assignments, no overrides, no test scores, no drag-and-drop)
+- A green "Scorekeeper Mode" banner
+- **Submit Scores** + **Reload** buttons (no Save/Load/Share)
+
+### Score Locking
+The organizer can click **🔒 Lock** in the toolbar to lock scoring for all scorekeepers:
+- Lock state is published to npoint with the tournament data (`sl` key)
+- Scorekeepers see a red "Scores Locked" banner and all inputs become read-only
+- Submit button is hidden when locked
+- Scorekeepers can still reload to see the latest state
+- Organizer can toggle lock on/off at any time and re-publish
+
+**Typical workflow:**
+1. During RR: scoring is unlocked, scorekeepers enter scores
+2. After RR: organizer locks scoring, reviews standings, adjusts if needed
+3. During bracket: organizer unlocks or keeps locked (enters bracket scores themselves)
 
 ### Technical Details
 - **Publish:** POSTs the same slim state (same format as share link) to `https://api.npoint.io/{id}`
-- **Live load:** When `?live=` URL param is detected, fetches state from npoint and enters spectator mode
+- **Live load:** When `?live=` URL param is detected, fetches state from npoint. `?score=1` enables scorekeeper mode.
 - **No auth required:** npoint.io requires no API keys or account
 - **npoint ID** is saved in the JSON file so it persists across save/load
+- **Score lock** is published as `sl: true/false` in the npoint state
 - **Fallback:** Share Link button still works for one-off snapshots if npoint is unavailable
 
 ### UI Elements
-- **Setup page:** "Live Spectator Link" field for entering npoint ID, shows the full spectator URL
-- **Toolbar:** "Publish" button (appears when npoint ID is configured) + "Live Link" copy button
-- **Spectator banner:** Shows "Live Mode — Reload page for latest scores" instead of generic spectator message
+- **Setup page:** "Live Spectator Link" field for entering npoint ID, shows both viewer and scorer URLs
+- **Toolbar (organizer):** Publish + Viewer Link + Scorer Link + Lock/Unlock buttons
+- **Toolbar (scorekeeper):** Submit Scores + Reload buttons
+- **Spectator banner:** Shows "Live Mode — Reload page for latest scores"
+- **Scorekeeper banner:** Shows "Scorekeeper Mode — Enter scores and click Submit" (or "Scores Locked" when locked)
 
 ### Alternatives Considered
 | Approach | Pros | Cons |
@@ -560,7 +594,8 @@ The app is a single HTML file with an integrated home page. Tournament data is m
 | `Jordan_Moneyball.html` | Home page (tournament grid) |
 | `Jordan_Moneyball.html#t=2026-02-20` | Open specific tournament in organizer (edit) mode |
 | `Jordan_Moneyball.html?s=...` | Spectator mode (compressed state in URL) |
-| `Jordan_Moneyball.html?live=abc123` | Live spectator mode (fetches from npoint.io) |
+| `Jordan_Moneyball.html?live=abc123` | Live viewer mode (read-only, fetches from npoint.io) |
+| `Jordan_Moneyball.html?live=abc123&score=1` | Scorekeeper mode (can enter scores + submit to npoint) |
 
 ### Adding a New Tournament
 1. Add entry to `TOURNAMENTS` array with `id`, `date`, `title`, `status`, and optionally `preloadedTeams`
