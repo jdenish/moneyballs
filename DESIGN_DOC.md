@@ -307,9 +307,14 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 
 ### Files
 - `Jordan_Moneyball.html` - CDN version (needs internet on first load)
-- `Jordan_Moneyball_offline.html` - Fully offline, no internet needed
+- `Jordan_Moneyball_offline.html` - Fully offline, no internet needed (legacy, not updated with home page)
+- `saves/` - JSON backup files for each tournament
 
-### Tabs/Phases
+### Views
+1. **Home Page** (default) - Tournament card grid showing all tournaments with date, status badge, and medal winners for completed events. "New Tournament" card. Directions for organizers, spectators, and npoint.io live mode setup.
+2. **Tournament View** - Opens when clicking a tournament card or via `#t=` hash URL. Shows "All Tournaments" back button and Quick Save in header.
+
+### Tabs/Phases (within Tournament View)
 1. **Import** - Select team count (8-16), paste team list, validates count on import
 2. **Setup** - Edit teams, configure RR format (0-7 games or Pools with size 3-6), bracket type (single/double), finals format (Bo3/single), court count, winners bracket size, drag to reorder seeding, paid tracking, randomize matchups
 3. **Round Robin** - Enter scores for seeding games, shows pool assignments with color-coded labels when using pools. Dynamic column layout (up to 4 columns, wraps for 5+). Hidden when 0 RR games.
@@ -318,6 +323,13 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 6. **Results** - Final standings with gold/silver/bronze highlighting and download button (unlocks when final match is complete)
 
 ### Key Features
+- **Home Page** - Tournament card grid with status badges (completed/upcoming), medal winners (🥇🥈🥉) for completed events, and "New Tournament" option
+- **Multi-Tournament Support** - Each tournament has its own ID, embedded data or preloaded teams, and independent localStorage state
+- **Auto-Save** - Tournament state auto-saves to localStorage every 1 second (debounced) while editing. No manual save needed.
+- **Quick Save** - Manual button for explicit localStorage save with visual "Saved!" feedback
+- **localStorage Persistence** - Tournament state loads automatically from localStorage on next visit. Priority: localStorage → embedded state → preloaded teams.
+- **URL Routing** - Default URL → home page; `#t=ID` → organizer mode; `?s=` → spectator; `?live=` → live mode
+- **Tournament Registry** - `TOURNAMENTS` array defines all tournaments with embedded data for completed events and preloaded teams for upcoming ones
 - **8-16 Team Support** - Variable team counts with automatic format and payout adjustments
 - **Team Count Selector** - Select expected teams on Import page, auto-detects from paste (>= 8 teams), validates on import
 - **Configurable RR Games (0-7)** - Skip RR entirely (0), seed-balanced (2), pools (3 for 12/16), or random with repeat-avoidance (3-7)
@@ -438,27 +450,34 @@ Spectators can view the latest tournament state at a **stable URL** — no more 
 
 ---
 
-## Upcoming Tournament Team List
+## Tournament History
 
-Copy/paste this into the Import tab:
+### Moneyball #1 — February 6, 2026 (16 teams)
+- 🥇 **Oscar Serra / Sanil Jagtiani** ($500)
+- 🥈 **Matvey Radionov / Matt Meadows** ($220)
+- 🥉 **Jack Hared / Preston Gordon** ($100)
+- Format: 3 RR games (pools of 4) → Double Elimination
+- Backup: `saves/moneyballs-2026-02-06.json`
 
+### Moneyball #2 — February 20, 2026 (16 teams, upcoming)
+Teams pre-loaded in app:
 ```
-Oscar Serra / Sanil Jagtiani
-Jack Hared / Preston Gordon
-Matvey Radionov / Matt Meadows
-Lukas Choi / William Hayes
-Jordan Denish / Alex Tong
-Conor Landrigan / Geoff Watson
-Cody Sadreameli / Dan Wach
-Jeff Comer / Kenoa Tio
-Matthew Matro / Zach Bowe
-Bruno Casino Remondo / Drew Von Bargen
-Austin Gow / Peter Weaver
+Brandon Fritze / Troy Clemmer
+Garrison Eaby / Michael Benash
+Matt Meadows / Matvey Radionov
+Jack Hared / Ram Kotnana
+Alex Tong / Jordan Denish
+Tyler Arsenault / Zach Bowe
+Dylan Ashbach / Steven Fernandez
+Lukas Choi / Zachary Lessner
+Cody Sadreameli / Matt Korsak
+Alex Szczepkowski / Jase Volz
+Brandon Fooks / Kenoa Tio
+Jameson Mays / Kevin Herod
+Kishan Shah / Thomas Abramski
 Austin Keefer / Mason McCabe
-Alex Boory / Ronald Marchese
-Shashank Kamdar / Zachary Lessner
-Kevin Herod / Jameson Mays
-Matthew Chen / Johny Mario
+Ashwin Korde / Samuel Darla
+Johny Mario / Matthew Chen
 ```
 
 ---
@@ -523,100 +542,34 @@ Supported formats:
 
 ---
 
-## Master Tournament Site (Future)
+## Multi-Tournament Architecture
 
-### Overview
-A public website to host all Jordan's Moneyballs tournaments with:
-- Historical archive of all past tournaments
-- Individual tournament pages with full brackets
-- Player statistics and all-time leaderboard
+### How It Works Now
+The app is a single HTML file with an integrated home page. Tournament data is managed in three layers:
 
-### Proposed Architecture
+1. **Embedded data** (`TOURNAMENT_STATES`) — Completed tournament state stored in slim share format directly in the HTML. Loaded as fallback when no localStorage exists.
+2. **Preloaded teams** (`TOURNAMENTS[].preloadedTeams`) — Team rosters for upcoming tournaments, pre-populated in the app.
+3. **localStorage** — Auto-saved every 1 second while editing. Takes priority over embedded data on load.
+4. **JSON backups** (`saves/` folder) — Downloaded via Save button. Manual backup for disaster recovery.
 
-```
-jordans-moneyballs.github.io/
-├── index.html              # Main tournament app (current)
-├── history.html            # List of all past tournaments
-├── tournament.html         # Individual tournament detail view
-├── leaderboard.html        # All-time player stats
-├── tournaments/
-│   ├── 2025-02-07.json     # Tournament data files
-│   ├── 2025-02-14.json
-│   └── ...
-└── DESIGN_DOC.md
-```
+### URL Routing
+| URL Pattern | Behavior |
+|-------------|----------|
+| `Jordan_Moneyball.html` | Home page (tournament grid) |
+| `Jordan_Moneyball.html#t=2026-02-20` | Open specific tournament in organizer (edit) mode |
+| `Jordan_Moneyball.html?s=...` | Spectator mode (compressed state in URL) |
+| `Jordan_Moneyball.html?live=abc123` | Live spectator mode (fetches from npoint.io) |
 
-### Tournament JSON Schema
-```json
-{
-  "id": "2025-02-07",
-  "name": "Jordan's Moneyballs #1",
-  "date": "2025-02-07",
-  "venue": "Bounce Philly",
-  "teams": [...],
-  "seedingScores": {...},
-  "bracketScores": {...},
-  "standings": {
-    "1st": { "team": "Oscar Serra / Sanil Jagtiani", "payout": 520 },
-    "2nd": { "team": "...", "payout": 220 },
-    "3rd": { "team": "...", "payout": 100 }
-  }
-}
-```
+### Adding a New Tournament
+1. Add entry to `TOURNAMENTS` array with `id`, `date`, `title`, `status`, and optionally `preloadedTeams`
+2. After the tournament is completed, save the JSON backup to `saves/` and add `results` object with `first`, `second`, `third`
+3. Optionally embed the completed state in `TOURNAMENT_STATES` for offline access
+4. Push updated HTML to GitHub
 
-### Features
-
-#### History Page (`history.html`)
-- List of all tournaments with date, winner, runner-up
-- Click any tournament to view full details
-- Filter by date range, search by player name
-
-#### Tournament Detail Page (`tournament.html#2025-02-07`)
-- Full bracket visualization (same as current app, read-only)
-- Final standings with payouts
-- All teams and their seeding scores
-- Shareable URL for each tournament
-
-#### Leaderboard Page (`leaderboard.html`)
-- All-time earnings leaderboard
-- Tournament wins, 2nd places, 3rd places
-- Win rate statistics
-- Player search
-
-Example:
-```
-| Rank | Player        | Wins | 2nd | 3rd | Earnings | Tournaments |
-|------|---------------|------|-----|-----|----------|-------------|
-| 1    | Oscar Serra   | 3    | 1   | 0   | $1,670   | 4           |
-| 2    | Jack Hared    | 2    | 2   | 1   | $1,380   | 5           |
-```
-
-### Submit Tournament Flow
-1. Complete Grand Final in main app
-2. Click "Submit Tournament" button
-3. Enter tournament name (defaults to "Jordan's Moneyballs #N")
-4. Confirm submission
-5. Downloads JSON file (e.g., `2025-02-07.json`)
-6. Drag file into GitHub `/tournaments/` folder
-7. Site auto-updates within minutes
-
-### Why GitHub Pages
-| Feature | Benefit |
-|---------|---------|
-| **Free hosting** | No costs ever |
-| **Version history** | Every change tracked, can undo mistakes |
-| **Easy editing** | Edit JSON files directly in GitHub web UI |
-| **Custom domain** | Can use `moneyballs.jordandenish.com` |
-| **Auto-deploy** | Push changes, site updates automatically |
-| **Reliable** | GitHub has 99.9% uptime |
-
-### Backwards Compatibility
-Current tournament app already exports compatible JSON via **💾 Save** button. All tournaments run before the master site is built can be imported later.
-
-**Action for each tournament:**
-1. After Grand Final, click **💾 Save**
-2. Rename file to `YYYY-MM-DD.json` (e.g., `2025-02-07.json`)
-3. Keep file safe until master site is built
+### Future Enhancements
+- **Leaderboard page** — All-time earnings, wins, placements across all tournaments
+- **Player search** — Find a player across all tournament history
+- **Custom domain** — `moneyballs.jordandenish.com`
 
 ---
 
@@ -650,11 +603,21 @@ Current tournament app already exports compatible JSON via **💾 Save** button.
 - [x] Standings recalculate on JSON load
 - [x] Payouts displayed in app (header, bracket, results, download) for 8-16 teams
 - [x] Live spectator updates via npoint.io (publish button, stable live URL, reload-based)
+- [x] Home page with tournament card grid, medal winners, and directions
+- [x] Multi-tournament support with tournament registry
+- [x] URL routing (home page default, hash links for organizer, share/live links for spectator)
+- [x] localStorage auto-save (debounced 1s) + Quick Save button
+- [x] localStorage persistence with automatic restore on visit
+- [x] Embedded completed tournament data (slim share format)
+- [x] Preloaded teams for upcoming tournaments
+- [x] "Create New Tournament" option
+- [x] npoint.io setup directions on home page
+- [x] saves/ folder for JSON backups
 
 ### Phase 2: Master Site Foundation
 - [x] Set up GitHub repository (https://github.com/jdenish/moneyballs)
 - [x] Deploy current app to GitHub Pages (https://jdenish.github.io/moneyballs/)
-- [ ] Create history page (list all tournaments)
+- [x] Home page with tournament history (integrated into main app)
 - [ ] Create tournament detail page (read-only bracket view)
 - [ ] Add "Submit Tournament" button to main app
 
