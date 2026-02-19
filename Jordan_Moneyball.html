@@ -2069,7 +2069,7 @@
             <button onClick={() => setPhase('setup')} className={`px-3 py-1 rounded text-sm ${phase === 'setup' ? 'bg-purple-600' : 'bg-gray-700'}`} disabled={!teamsValid}>Setup</button>
             {(rrGames > 0 || poolSize > 0) && <button onClick={() => setPhase('roundrobin')} className={`px-3 py-1 rounded text-sm ${phase === 'roundrobin' ? 'bg-blue-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Round Robin</button>}
             {(rrGames > 0 || poolSize > 0) && <button onClick={() => setPhase('standings')} className={`px-3 py-1 rounded text-sm ${phase === 'standings' ? 'bg-cyan-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Standings</button>}
-            <button onClick={() => setPhase('bracket')} className={`px-3 py-1 rounded text-sm ${phase === 'bracket' ? 'bg-green-600' : 'bg-gray-700'}`} disabled={!allSeedingComplete}>Bracket</button>
+            <button onClick={() => setPhase('bracket')} className={`px-3 py-1 rounded text-sm ${phase === 'bracket' ? 'bg-green-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Bracket</button>
             <button onClick={() => setPhase('results')} className={`px-3 py-1 rounded text-sm ${phase === 'results' ? 'bg-yellow-600' : 'bg-gray-700'}`} disabled={!gfWinner}>Results</button>
           </div>
 
