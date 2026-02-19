@@ -672,6 +672,41 @@ The app is a single HTML file with an integrated home page. Tournament data is m
 
 ---
 
+## Implementation Decisions
+
+### Default Pool Size
+**Decision:** Pool size defaults to **4** (was 0/no pools).
+**Rationale:** With 16 teams and pool size 4, you get 4 pools of 4 teams = 3 round-robin games per pool. This is the standard Moneyball format. Preloaded upcoming tournaments also default to pool size 4 so organizers don't have to remember to set it.
+
+### Bracket Preview Before RR Completes
+**Decision:** The Bracket tab is viewable during round robin, but shows an **empty bracket with seed placeholders** (#1 Seed, #2 Seed, etc.) instead of actual team names.
+**Rationale:** Lets players see the bracket structure and understand the format before RR finishes, without revealing seedings that could affect competitive play. The bracket is read-only during preview — no scores, court assignments, or overrides. A blue banner shows "Bracket Preview — seeds will be filled after round robin is complete." Once all RR games are scored, real teams populate automatically and editing unlocks.
+
+### Crossed Losers Bracket Drops (Rematch Prevention)
+**Decision:** W-QF losers cross to the **opposite half** of the losers bracket to prevent rematches.
+**How it works:**
+- Winners bracket has two sides: wsf1 side (wqf1, wqf2) and wsf2 side (wqf3, wqf4)
+- **L-R2 crossing:** wqf3/wqf4 losers → top half of losers bracket, wqf1/wqf2 losers → bottom half
+- **L-R4:** lr3m1 winner (from wqf3/4 side) faces wsf1 loser (from wqf1/2 side) — no overlap
+- **L=0 case:** W-SF losers also cross — wsf2 loser → top (faces wqf1/2 losers), wsf1 loser → bottom (faces wqf3/4 losers)
+
+**Why:** Without crossing, a team that lost in W-QF could face the same opponent again just 2 rounds later in the losers bracket. Crossing ensures dropped teams always face opponents from the other side of the winners bracket.
+
+### Mobile Pool Layout: Horizontal Scroll
+**Decision:** Pool columns use **horizontal scroll** on mobile instead of stacking vertically.
+**Alternatives considered:**
+| Layout | Pros | Cons |
+|--------|------|------|
+| **Horizontal scroll (chosen)** | Preserves column structure, allows side-by-side comparison | Pools off-screen not immediately visible |
+| **Stacked (1 column)** | All content visible, maximum readability | Lose side-by-side comparison, very long scroll |
+| **2 columns** | Balance of readability and comparison | Still cramped on narrow phones |
+
+**Additional mobile improvements:**
+- Each pool column has a **colored background tint** and **colored border** matching pool color (yellow/blue/green/red)
+- Each match card has a **colored left border** (3px) in its pool color for quick visual identification
+- Pool assignment box uses 2-column grid on mobile, 4-column on desktop
+- Court labels shown in pool color below pool headers
+
 ## Future Enhancement Ideas
 
 - Print-friendly bracket view
