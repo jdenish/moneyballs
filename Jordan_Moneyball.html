@@ -745,10 +745,7 @@
         });
       }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, rrMatchups, bracketType, bo3Finals, poolSize, courtCount, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase]);
 
-      const publishToNpoint = useCallback(() => {
-        if (!npointId) return;
-        setPublishStatus('publishing');
-        // Build the same slim state as share link
+      const buildPublishState = useCallback(() => {
         const state = {
           tc: teamCount, rg: rrGames, rp: rrPointTarget, wc: winnersCount,
           t: teams.map(({ p1Paid, p2Paid, ...rest }) => rest), ss: seedingScores, bo: bracketOverrides,
@@ -767,22 +764,81 @@
           });
           state.bs = slim;
         }
-        fetch(`https://api.npoint.io/${npointId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(state)
-        })
-          .then(r => {
-            if (!r.ok) throw new Error(`HTTP ${r.status}`);
-            setPublishStatus('published');
-            setTimeout(() => setPublishStatus(''), 2000);
+        return state;
+      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, rrMatchups, bracketType, bo3Finals, poolSize, courtCount, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase, scoreLocked]);
+
+      const publishToNpoint = useCallback(() => {
+        if (!npointId) return;
+        setPublishStatus('publishing');
+
+        if (scorekeeperMode) {
+          // Scorekeeper: fetch latest state first, merge only our changed scores, then push
+          fetch(`https://api.npoint.io/${npointId}`)
+            .then(r => r.json())
+            .then(latest => {
+              // Merge seeding scores: only overwrite matches where we have a non-zero score
+              const mergedSS = { ...(latest.ss || {}) };
+              Object.entries(seedingScores).forEach(([id, score]) => {
+                if ((score.s1 && score.s1 > 0) || (score.s2 && score.s2 > 0)) {
+                  mergedSS[id] = score;
+                }
+              });
+              latest.ss = mergedSS;
+
+              // Merge bracket scores: only overwrite matches where we have a non-zero score
+              if (Object.keys(bracketScores).length > 0) {
+                const mergedBS = { ...(latest.bs || {}) };
+                Object.entries(bracketScores).forEach(([id, s]) => {
+                  const hasScore = s.games
+                    ? s.games.some(g => (g.s1 && g.s1 > 0) || (g.s2 && g.s2 > 0))
+                    : (s.s1 && s.s1 > 0) || (s.s2 && s.s2 > 0);
+                  if (hasScore) {
+                    if (s.games) {
+                      mergedBS[id] = { a: s.t1?.seed, b: s.t2?.seed, g: s.games };
+                    } else {
+                      mergedBS[id] = { a: s.t1?.seed, b: s.t2?.seed, s1: s.s1, s2: s.s2 };
+                    }
+                  }
+                });
+                latest.bs = mergedBS;
+              }
+
+              return fetch(`https://api.npoint.io/${npointId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(latest)
+              });
+            })
+            .then(r => {
+              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+              setPublishStatus('published');
+              setTimeout(() => setPublishStatus(''), 2000);
+            })
+            .catch(e => {
+              console.error('Publish failed', e);
+              setPublishStatus('error');
+              setTimeout(() => setPublishStatus(''), 3000);
+            });
+        } else {
+          // Organizer: push full state (they are the source of truth)
+          const state = buildPublishState();
+          fetch(`https://api.npoint.io/${npointId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(state)
           })
-          .catch(e => {
-            console.error('Publish failed', e);
-            setPublishStatus('error');
-            setTimeout(() => setPublishStatus(''), 3000);
-          });
-      }, [npointId, teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, rrMatchups, bracketType, bo3Finals, poolSize, courtCount, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase, scoreLocked]);
+            .then(r => {
+              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+              setPublishStatus('published');
+              setTimeout(() => setPublishStatus(''), 2000);
+            })
+            .catch(e => {
+              console.error('Publish failed', e);
+              setPublishStatus('error');
+              setTimeout(() => setPublishStatus(''), 3000);
+            });
+        }
+      }, [npointId, scorekeeperMode, seedingScores, bracketScores, buildPublishState]);
 
       const [scoreLinkCopied, setScoreLinkCopied] = useState(false);
 
