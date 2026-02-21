@@ -1418,9 +1418,16 @@
         setBracketScores(fakeScores);
       }, [bracketMatches, bracketType]);
 
+      // Resolve placeholder teams to real teams from standings by seed number
+      const resolveTeam = useCallback((team) => {
+        if (!team || !team.placeholder) return team;
+        const real = displayStandings.find(t => t.seed === team.seed);
+        return real || team;
+      }, [displayStandings]);
+
       const getBracketMatchTeam = useCallback((id) => {
         if (bracketOverrides[id] && bracketOverrides[id].winner) {
-          return bracketOverrides[id].winner;
+          return resolveTeam(bracketOverrides[id].winner);
         }
         const score = bracketScores[id];
         if (!score) return null;
@@ -1435,19 +1442,19 @@
               else if (s2v > s1v) t2Wins++;
             }
           });
-          if (t1Wins >= 2) return score.t1;
-          if (t2Wins >= 2) return score.t2;
+          if (t1Wins >= 2) return resolveTeam(score.t1);
+          if (t2Wins >= 2) return resolveTeam(score.t2);
           return null;
         }
 
         // Regular match
         if (score.s1 === '' || score.s2 === '' || score.s1 === undefined || score.s2 === undefined) return null;
-        return parseInt(score.s1) > parseInt(score.s2) ? score.t1 : score.t2;
-      }, [bracketScores, bracketOverrides]);
+        return parseInt(score.s1) > parseInt(score.s2) ? resolveTeam(score.t1) : resolveTeam(score.t2);
+      }, [bracketScores, bracketOverrides, resolveTeam]);
 
       const getBracketMatchLoser = useCallback((id) => {
         if (bracketOverrides[id] && bracketOverrides[id].loser) {
-          return bracketOverrides[id].loser;
+          return resolveTeam(bracketOverrides[id].loser);
         }
         const score = bracketScores[id];
         if (!score) return null;
@@ -1462,15 +1469,15 @@
               else if (s2v > s1v) t2Wins++;
             }
           });
-          if (t1Wins >= 2) return score.t2;
-          if (t2Wins >= 2) return score.t1;
+          if (t1Wins >= 2) return resolveTeam(score.t2);
+          if (t2Wins >= 2) return resolveTeam(score.t1);
           return null;
         }
 
         // Regular match
         if (score.s1 === '' || score.s2 === '' || score.s1 === undefined || score.s2 === undefined) return null;
-        return parseInt(score.s1) > parseInt(score.s2) ? score.t2 : score.t1;
-      }, [bracketScores, bracketOverrides]);
+        return parseInt(score.s1) > parseInt(score.s2) ? resolveTeam(score.t2) : resolveTeam(score.t1);
+      }, [bracketScores, bracketOverrides, resolveTeam]);
 
       const bracketMatches = useMemo(() => {
         // Before RR is complete, show empty bracket with seed placeholders
