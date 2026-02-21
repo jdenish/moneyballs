@@ -2830,7 +2830,8 @@
           )}
 
           {phase === 'bracket' && (() => {
-            const bracketPreview = !allSeedingComplete && matchupsGenerated;
+            const hasBracketDataForPreview = Object.keys(bracketScores).length > 0 || Object.keys(bracketOverrides).length > 0;
+            const bracketPreview = !allSeedingComplete && matchupsGenerated && !hasBracketDataForPreview;
             // Helper to render a bracket match by ID
             const renderMatch = (id) => {
               const m = bracketMatches[id];
