@@ -1254,13 +1254,13 @@
         // When pools are used, guarantee top N from each pool make winners bracket
         const losersCount = teamCount - winnersCount;
         let winners, losers;
-        const poolNames = Object.keys(pools);
-        if (poolNames.length > 0 && winnersCount > 0) {
-          const perPool = Math.floor(winnersCount / poolNames.length);
+        const uniquePools = [...new Set(Object.values(pools))];
+        if (uniquePools.length > 1 && winnersCount > 0) {
+          const perPool = Math.floor(winnersCount / uniquePools.length);
           const winnersSet = new Set();
           // Take top N from each pool (by overall standings order)
           const poolCounts = {};
-          poolNames.forEach(p => poolCounts[p] = 0);
+          uniquePools.forEach(p => poolCounts[p] = 0);
           for (const team of displayStandings) {
             const p = team.pool;
             if (p !== undefined && poolCounts[p] !== undefined && poolCounts[p] < perPool) {
