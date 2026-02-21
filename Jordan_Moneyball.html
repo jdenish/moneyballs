@@ -2832,6 +2832,7 @@
           {phase === 'bracket' && (() => {
             const hasBracketDataForPreview = Object.keys(bracketScores).length > 0 || Object.keys(bracketOverrides).length > 0;
             const bracketPreview = !allSeedingComplete && matchupsGenerated && !hasBracketDataForPreview;
+            console.log('BRACKET DEBUG:', { allSeedingComplete, matchupsGenerated, hasBracketDataForPreview, bracketPreview, winnersLen: bracketTeams.winners?.length, losersLen: bracketTeams.losers?.length, matchKeys: Object.keys(bracketMatches), displayStandingsLen: displayStandings.length, poolsLen: Object.keys(pools).length, seedingMatchesLen: seedingMatches.flat().length, seedingScoresLen: Object.keys(seedingScores).length });
             // Helper to render a bracket match by ID
             const renderMatch = (id) => {
               const m = bracketMatches[id];
