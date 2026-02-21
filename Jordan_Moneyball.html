@@ -1177,7 +1177,15 @@
 
       const bracketTeams = useMemo(() => {
         if (bracketSeedOverride) {
-          return { winners: bracketSeedOverride.winners, losers: bracketSeedOverride.losers, swaps: [] };
+          // Resolve placeholder team names from current standings
+          const resolveFromStandings = (t) => {
+            if (!t || !t.placeholder) return t;
+            const real = displayStandings.find(s => s.seed === t.seed);
+            return real || t;
+          };
+          const w = bracketSeedOverride.winners.map(resolveFromStandings);
+          const l = bracketSeedOverride.losers.map(resolveFromStandings);
+          return { winners: w, losers: l, swaps: [], unswappedWinners: w, unswappedLosers: l, proposedSwaps: [] };
         }
         if (displayStandings.length < teamCount) return { winners: [], losers: [], swaps: [] };
 
@@ -1862,19 +1870,15 @@
 
             // If bracket scores exist, reconstruct original bracket seeding from the played matches
             // so we don't recompute with new logic that might change positions
+            // Store as placeholder objects — real names will be resolved from displayStandings in bracketTeams
             const hasBracketData = data.bracketScores && Object.keys(data.bracketScores).length > 0;
             if (hasBracketData) {
               const bs = data.bracketScores;
               const tc = data.teamCount || 16;
               const wc = data.winnersCount || 8;
-              const teams = data.teams || [];
-              // Resolve a seed number to a real team object
               const resolve = (t) => {
                 if (!t) return null;
-                const seed = t.seed;
-                const tm = teams[seed - 1];
-                if (!tm) return t;
-                return { seed, name: tm.p1Name && tm.p2Name ? `${tm.p1Name} / ${tm.p2Name}` : `Team ${seed}` };
+                return { seed: t.seed, name: t.name || `#${t.seed} Seed`, placeholder: true };
               };
               // Reconstruct winners order from W-QF: wqf1(w[0]vw[7]), wqf2(w[3]vw[4]), wqf3(w[1]vw[6]), wqf4(w[2]vw[5])
               const winners = [
