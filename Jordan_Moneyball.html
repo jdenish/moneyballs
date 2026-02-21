@@ -1412,7 +1412,7 @@
         // Build dependency graph from bracketMatches
         const matchOrder = bracketType === 'single'
           ? ['se_r1m1','se_r1m2','se_r1m3','se_r1m4','se_qf1','se_qf2','se_qf3','se_qf4','se_sf1','se_sf2','se_f','se_3rd']
-          : ['wqf1','wqf2','wqf3','wqf4','lr1m1','lr1m2','lr1m3','lr1m4','wsf1','wsf2','lr2m1','lr2m2','lr2m3','lr2m4','lr3m1','lr3m2','wf','lr4m1','lr4m2','lsf','lf','gf'];
+          : ['wqf1','wqf2','wqf3','wqf4','lr1m1','lr1m2','lr1m3','lr1m4','wsf1','wsf2','lr2m1','lr2m2','lr2m3','lr2m4','lr3m1','lr3m2','wf','lr4m1','lr4m2','lsf','lf','gf','gf2'];
 
         matchOrder.forEach(id => {
           const m = bracketMatches[id];
@@ -1652,6 +1652,21 @@
         }
 
         matches.gf = { id: 'gf', t1: getBracketMatchTeam('wf'), t2: getBracketMatchTeam('lf'), round: 'Grand Final', bo3: bo3Finals };
+
+        // Bracket reset: if losers bracket team (t2) wins the Grand Final,
+        // both teams have 1 loss — play a reset game to 15
+        const gfScoreData = bracketScores['gf'];
+        if (gfScoreData?.games && matches.gf.t1 && matches.gf.t2) {
+          let t1W = 0, t2W = 0;
+          gfScoreData.games.forEach(g => {
+            const s1 = parseInt(g.s1), s2 = parseInt(g.s2);
+            if (!isNaN(s1) && !isNaN(s2)) { if (s1 > s2) t1W++; else if (s2 > s1) t2W++; }
+          });
+          if (t2W >= 2) {
+            matches.gf2 = { id: 'gf2', t1: matches.gf.t1, t2: matches.gf.t2, round: 'Reset' };
+          }
+        }
+
         return matches;
       }, [bracketTeams, displayStandings, bracketType, teamCount, bo3Finals, getBracketMatchTeam, getBracketMatchLoser, allSeedingComplete, matchupsGenerated, rrGames, pools, winnersCount, bracketScores, bracketOverrides]);
 
@@ -1817,7 +1832,7 @@
         if (phase === 'bracket') {
           const order = bracketType === 'single'
             ? ['se_r1m1','se_r1m2','se_r1m3','se_r1m4','se_qf1','se_qf2','se_qf3','se_qf4','se_sf1','se_sf2','se_3rd','se_f']
-            : ['wqf1','wqf2','wqf3','wqf4','lr1m1','lr1m2','lr1m3','lr1m4','wsf1','wsf2','lr2m1','lr2m2','lr2m3','lr2m4','lr3m1','lr3m2','lr4m1','lr4m2','lsf','wf','lf','gf'];
+            : ['wqf1','wqf2','wqf3','wqf4','lr1m1','lr1m2','lr1m3','lr1m4','wsf1','wsf2','lr2m1','lr2m2','lr2m3','lr2m4','lr3m1','lr3m2','lr4m1','lr4m2','lsf','wf','lf','gf','gf2'];
           order.forEach(id => {
             const m = bracketMatches[id];
             const s = bracketScores[id];
@@ -2069,6 +2084,11 @@
           results += `\nGRAND FINAL${bo3Finals ? ' (Bo3)' : ''}\n`;
           results += `------------------------------\n`;
           results += formatBracketMatch('gf', 'Grand Final');
+          if (bracketMatches.gf2) {
+            results += `\nBRACKET RESET (Game to 15)\n`;
+            results += `------------------------------\n`;
+            results += formatBracketMatch('gf2', 'Reset');
+          }
         }
 
         const blob = new Blob([results], { type: 'text/plain' });
@@ -2080,7 +2100,7 @@
         URL.revokeObjectURL(url);
       }, [teams, displayStandings, seedingMatches, seedingScores, bracketMatches, bracketScores, getTeamName, getTeamDupr, getBracketMatchTeam, getBracketMatchLoser, bracketType, bo3Finals]);
 
-      const finalMatchId = bracketType === 'single' ? 'se_f' : 'gf';
+      const finalMatchId = bracketType === 'single' ? 'se_f' : (bracketMatches.gf2 ? 'gf2' : 'gf');
       const thirdMatchId = bracketType === 'single' ? 'se_3rd' : 'lf';
       const gfWinner = getBracketMatchTeam(finalMatchId);
 
@@ -3083,6 +3103,12 @@
                     <div className="w-56 flex-shrink-0 pt-16">
                       <h3 className="text-yellow-400 font-semibold mb-2 text-center text-sm">🏆 Grand Final</h3>
                       {renderMatch('gf')}
+                      {bracketMatches.gf2 && (
+                        <>
+                          <div className="text-xs text-center text-yellow-400 my-1">↓ Bracket Reset (Game to 15)</div>
+                          {renderMatch('gf2')}
+                        </>
+                      )}
                       {gfWinner && (
                         <div className="mt-3 bg-gradient-to-r from-yellow-700 to-yellow-600 p-3 rounded text-center border-2 border-yellow-400">
                           <div className="text-xs text-yellow-200">🥇 CHAMPION — ${currentPayouts.first}</div>
