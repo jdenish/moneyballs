@@ -1326,12 +1326,16 @@
           return result;
         };
 
+        // Save un-swapped version before applying no-repeat
+        const unswappedWinners = [...winners];
+        const unswappedLosers = [...losers];
+
         winners = applyNoRepeat(winners, 'Winners');
         losers = applyNoRepeat(losers, 'Losers');
 
         setBracketSwaps(swaps);
 
-        return { winners, losers, swaps };
+        return { winners, losers, swaps, unswappedWinners, unswappedLosers };
       }, [displayStandings, teamCount, winnersCount, bracketSeedOverride, pools]);
 
       const generateFakeSeedingScores = useCallback(() => {
@@ -2924,7 +2928,23 @@
               )}
               {!spectatorMode && !scorekeeperMode && !bracketPreview && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} onCourt={onCourt} />}
 
-              {bracketSwaps.length > 0 && !bracketPreview && (
+              {bracketSwaps.length > 0 && !bracketPreview && !spectatorMode && !scorekeeperMode && !bracketSeedOverride && (
+                <div className="mb-3 bg-yellow-900/50 border border-yellow-600 rounded p-3 text-sm">
+                  <div className="font-semibold text-yellow-400 mb-1">🔄 Suggested Seeding Adjustments (No Pool Rematches in R1)</div>
+                  {bracketSwaps.map((swap, i) => (
+                    <div key={i} className="text-yellow-200 text-xs">{swap}</div>
+                  ))}
+                  <div className="flex gap-2 mt-2">
+                    <button onClick={() => setBracketSeedOverride({ winners: bracketTeams.winners, losers: bracketTeams.losers })} className="text-xs bg-green-600 hover:bg-green-500 px-3 py-1 rounded font-semibold">
+                      Accept Swaps
+                    </button>
+                    <button onClick={() => setBracketSeedOverride({ winners: bracketTeams.unswappedWinners, losers: bracketTeams.unswappedLosers })} className="text-xs bg-red-600 hover:bg-red-500 px-3 py-1 rounded font-semibold">
+                      Keep Original Seeding
+                    </button>
+                  </div>
+                </div>
+              )}
+              {bracketSwaps.length > 0 && !bracketPreview && (spectatorMode || scorekeeperMode || bracketSeedOverride) && bracketTeams.swaps?.length > 0 && (
                 <div className="mb-3 bg-yellow-900/50 border border-yellow-600 rounded p-2 text-sm">
                   <div className="font-semibold text-yellow-400 mb-1">🔄 Seeding Adjusted (No Pool Rematches in R1)</div>
                   {bracketSwaps.map((swap, i) => (
