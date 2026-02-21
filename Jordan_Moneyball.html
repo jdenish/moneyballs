@@ -1928,7 +1928,7 @@
 
       const downloadResults = useCallback(() => {
         // Determine final match IDs based on bracket type
-        const finalId = bracketType === 'single' ? 'se_f' : 'gf';
+        const finalId = bracketType === 'single' ? 'se_f' : (bracketMatches.gf2 ? 'gf2' : 'gf');
         const thirdId = bracketType === 'single' ? 'se_3rd' : 'lf';
         const winner = getBracketMatchTeam(finalId);
         const second = getBracketMatchLoser(finalId);
