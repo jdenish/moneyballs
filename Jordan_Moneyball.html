@@ -1684,8 +1684,6 @@
           }
         }
         setBracketSeedOverride(current);
-        setBracketScores({});
-        setBracketOverrides({});
         setSelectedSwapTeam(null);
       }, [selectedSwapTeam, bracketSeedOverride, bracketTeams]);
 
@@ -2902,7 +2900,7 @@
                     <div className="flex gap-2">
                       {selectedSwapTeam && <span className="text-xs text-yellow-400">Click another team to swap</span>}
                       {bracketSeedOverride && (
-                        <button onClick={() => { setBracketSeedOverride(null); setAcceptedSwaps({}); setBracketScores({}); setBracketOverrides({}); setSelectedSwapTeam(null); }} className="text-xs text-gray-400 hover:text-white bg-gray-700 px-2 py-0.5 rounded">Reset Seeds</button>
+                        <button onClick={() => { setBracketSeedOverride(null); setAcceptedSwaps({}); setSelectedSwapTeam(null); }} className="text-xs text-gray-400 hover:text-white bg-gray-700 px-2 py-0.5 rounded">Reset Seeds</button>
                       )}
                     </div>
                   </div>
