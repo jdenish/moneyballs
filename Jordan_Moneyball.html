@@ -1894,12 +1894,44 @@
             if (data.pools) setPools(data.pools);
             if (data.matchupsGenerated) setMatchupsGenerated(data.matchupsGenerated);
             if (data.onCourt) setOnCourt(data.onCourt);
-            // Clear overrides on load so standings recalculate from seeding scores
-            setBracketSeedOverride(null);
             setStandingsOverride(null);
 
-            // Auto-detect the right phase
+            // If bracket scores exist, reconstruct original bracket seeding from the played matches
+            // so we don't recompute with new logic that might change positions
             const hasBracketData = data.bracketScores && Object.keys(data.bracketScores).length > 0;
+            if (hasBracketData) {
+              const bs = data.bracketScores;
+              const tc = data.teamCount || 16;
+              const wc = data.winnersCount || 8;
+              const teams = data.teams || [];
+              // Resolve a seed number to a real team object
+              const resolve = (t) => {
+                if (!t) return null;
+                const seed = t.seed;
+                const tm = teams[seed - 1];
+                if (!tm) return t;
+                return { seed, name: tm.p1Name && tm.p2Name ? `${tm.p1Name} / ${tm.p2Name}` : `Team ${seed}` };
+              };
+              // Reconstruct winners order from W-QF: wqf1(w[0]vw[7]), wqf2(w[3]vw[4]), wqf3(w[1]vw[6]), wqf4(w[2]vw[5])
+              const winners = [
+                resolve(bs.wqf1?.t1), resolve(bs.wqf3?.t1), resolve(bs.wqf4?.t1), resolve(bs.wqf2?.t1),
+                resolve(bs.wqf2?.t2), resolve(bs.wqf4?.t2), resolve(bs.wqf3?.t2), resolve(bs.wqf1?.t2)
+              ].filter(Boolean);
+              // Reconstruct losers order from L-R1: lr1m1(l[0]vl[7]), lr1m2(l[3]vl[4]), lr1m3(l[1]vl[6]), lr1m4(l[2]vl[5])
+              const losers = [
+                resolve(bs.lr1m1?.t1), resolve(bs.lr1m3?.t1), resolve(bs.lr1m4?.t1), resolve(bs.lr1m2?.t1),
+                resolve(bs.lr1m2?.t2), resolve(bs.lr1m4?.t2), resolve(bs.lr1m3?.t2), resolve(bs.lr1m1?.t2)
+              ].filter(Boolean);
+              if (winners.length >= 4) {
+                setBracketSeedOverride({ winners: winners.slice(0, wc), losers: losers.slice(0, tc - wc) });
+              } else {
+                setBracketSeedOverride(null);
+              }
+            } else {
+              setBracketSeedOverride(null);
+            }
+
+            // Auto-detect the right phase
             const hasBracketOverrides = data.bracketOverrides && Object.keys(data.bracketOverrides).length > 0;
             const hasOnCourtBracket = data.onCourt && Object.keys(data.onCourt).some(k => k.startsWith('w') || k.startsWith('l') || k === 'gf');
             if (hasBracketData || hasBracketOverrides || hasOnCourtBracket) {
