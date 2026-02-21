@@ -1178,9 +1178,10 @@
       const bracketTeams = useMemo(() => {
         if (bracketSeedOverride) {
           // Resolve placeholder team names from current standings
+          // placeholder.seed = standings rank (1 = best), displayStandings is sorted by rank
           const resolveFromStandings = (t) => {
             if (!t || !t.placeholder) return t;
-            const real = displayStandings.find(s => s.seed === t.seed);
+            const real = displayStandings[t.seed - 1];
             return real || t;
           };
           const w = bracketSeedOverride.winners.map(resolveFromStandings);
@@ -1375,10 +1376,11 @@
         setBracketScores(fakeScores);
       }, [bracketMatches, bracketType]);
 
-      // Resolve placeholder teams to real teams from standings by seed number
+      // Resolve placeholder teams to real teams from standings
+      // placeholder.seed = standings rank (1 = best), displayStandings is sorted by rank
       const resolveTeam = useCallback((team) => {
         if (!team || !team.placeholder) return team;
-        const real = displayStandings.find(t => t.seed === team.seed);
+        const real = displayStandings[team.seed - 1];
         return real || team;
       }, [displayStandings]);
 
