@@ -1332,7 +1332,7 @@
         setBracketSwaps(swaps);
 
         return { winners, losers, swaps };
-      }, [displayStandings, teamCount, winnersCount, bracketSeedOverride]);
+      }, [displayStandings, teamCount, winnersCount, bracketSeedOverride, pools]);
 
       const generateFakeSeedingScores = useCallback(() => {
         const fakeScores = {};
