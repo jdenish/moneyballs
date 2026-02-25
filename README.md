@@ -15,13 +15,16 @@ A tournament management app for 8-16 team doubles pickleball tournaments with co
 - **Configurable finals** - Best of 3 or single game
 - **Smart court assignment** - pool-based for RR, lowest-available for bracket, manual override
 - **3rd place match** in single elimination
-- **No-repeat constraint** - pool teammates won't face each other in bracket R1
+- **No-repeat constraint** - pool teammates won't face each other in bracket R1, per-swap accept/reject
+- **Bracket reset** - reset game to 15 when losers bracket team wins Grand Final Bo3
 - **Drag & drop seeding** - reorder teams on Setup page
 - **Live spectator link** via npoint.io - one stable URL, publish to update, spectators reload
 - **Live score tracking** with numbered court display
 - **Share link** for spectators (compressed URL, read-only view)
-- **Save/load** tournament progress (backwards compatible)
+- **Multi-tournament home page** - tournament card grid with completed results
+- **Save/load** tournament progress (localStorage auto-save + JSON backup)
 - **Results tab** with gold/silver/bronze highlighting
+- **Cache busting** - service worker ensures latest version on reload
 
 ## Tournament Format
 

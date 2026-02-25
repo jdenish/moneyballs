@@ -123,7 +123,7 @@ All games are played within each pool. Scheduling uses the **circle method** to 
 - **Pool of 6:** 5 games per team (15 total matches per pool)
 
 ### No-Repeat Constraint
-Teams that played each other in pools will not face each other in **Round 1** of the bracket. If a conflict is detected, lower seeds are swapped (seed 1 is never moved). The app shows a notification when swaps occur.
+Teams that played each other in pools will not face each other in **Round 1** of the bracket. If a conflict is detected, the app proposes seed swaps (seed 1 is never moved). Each swap has an **accept/reject checkbox** so the organizer can selectively apply adjustments. After reviewing, click "Lock In Seeding" to finalize or "Keep Original Seeding" to skip all swaps. Once bracket data exists, swap detection is skipped.
 
 ### Randomization
 Within these rules, matchups are randomized (shuffle within pots) for variety and drama.
@@ -279,8 +279,8 @@ The losers bracket is generated dynamically based on the number of initial loser
 #### Grand Final
 - Winners Bracket champion vs Losers Bracket champion
 - Bo3 or single game (configurable)
-- No bracket reset
-- Champion = GF winner, 2nd = GF loser, 3rd = L-Final loser
+- **Bracket Reset:** If the Losers Bracket team wins the Grand Final Bo3, both teams have 1 loss — a single reset game to 15 is played to determine the champion
+- Champion = GF winner (or GF2 winner if bracket reset), 2nd = GF loser (or GF2 loser), 3rd = L-Final loser
 
 ---
 
@@ -308,6 +308,7 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 ### Files
 - `Jordan_Moneyball.html` - CDN version (needs internet on first load)
 - `Jordan_Moneyball_offline.html` - Fully offline, no internet needed (legacy, not updated with home page)
+- `sw.js` - Service worker for cache busting (network-first strategy, ensures fresh content on reload)
 - `saves/` - JSON backup files for each tournament
 
 ### Views
@@ -339,11 +340,11 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 - **Configurable Finals Format** - Best of 3 or Single Game for finals
 - **Configurable Winners Bracket Size** - Choose how many teams go to Winners vs Losers
 - **Dynamic Bracket Generation** - Handles any winner/loser count with byes, play-in rounds, and dynamic losers bracket structure
-- **No-Repeat Constraint** - Teams from same pool won't face each other in bracket R1, swaps shown in UI
+- **No-Repeat Constraint** - Teams from same pool won't face each other in bracket R1. Per-swap accept/reject checkboxes let organizer choose which swaps to apply before locking in seeding.
 - **Tiebreaker System** - Group H2H → Group PD → Overall PD → Original Seed (only when all tied teams played each other, otherwise Overall PD → Seed)
 - **Drag & Drop Standings** - Manually reorder standings on Standings page if tiebreaker produces wrong results
 - **Bo3 Score Entry** - Finals support game-by-game score input (progressive: G1 first, G2 after G1 done, G3 if 1-1)
-- **Bracket Seed Swap** - Override panel lets you click two teams to swap their bracket positions (clears bracket scores on swap)
+- **Bracket Seed Swap** - Override panel lets you click two teams to swap their bracket positions (preserves existing bracket scores)
 - **Paid Tracking** - $ toggle button per player on Setup page (green/gray), counter shows X/N paid, hidden from spectators
 - **DUPR Tracking** - Optional player ratings (placeholder "4.5"), shows combined team DUPR
 - **Smart Court Assignment** - Configurable court count (2-12). Auto-assigns courts: pool-based for RR (Pool A → courts 1-2, B → 3-4, etc.), lowest-available for bracket. Manual override via dropdown on any on-court match.
@@ -357,9 +358,9 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 - **Drag & Drop Seeding** - Reorder teams on Setup page by dragging (☰ handle)
 - **Share Link** - Compressed URL for spectators (optimized: slim keys, stripped team objects from bracket scores). Includes all new config (bracket type, Bo3, pool size, court count).
 - **Spectator Mode** - Clean read-only view when opening shared link (hides paid status, admin controls, override panels)
-- **Scorekeeper Mode** - Helpers can enter scores and submit via `?live=ID&score=1` link. No access to settings, courts, overrides, or drag-and-drop. Organizer controls who gets the link.
-- **Score Locking** - Organizer can lock/unlock scoring for scorekeepers. Lock state published to npoint. When locked, scorekeepers see "Scores Locked" and all inputs become read-only.
+- **Bracket Reset** - When the losers bracket team wins the Grand Final Bo3 in double elimination, a reset game to 15 is played. Both teams have 1 loss, so the reset determines the true champion.
 - **Placement Highlights** - Gold, Silver, Bronze highlighting in bracket and Results tab
+- **Cache Busting** - Service worker with network-first strategy ensures users always get the latest version on page reload
 
 ### How Share Link Works
 The **Share Link** button encodes tournament state into the URL after `?s=`.
@@ -419,48 +420,24 @@ Spectators can view the latest tournament state at a **stable URL** — no more 
 4. **Scorekeepers:** Open the scorer link — can enter scores and click **Submit** (publishes to same npoint bin)
 5. **Same link every tournament** — the npoint bin gets overwritten each time you publish. Use Save to archive past tournaments.
 
-### Three Access Levels
+### Two Access Levels
 
-| Role | URL | Can Enter Scores | Can Manage Courts/Settings | Can Lock |
-|------|-----|------------------|---------------------------|----------|
-| **Organizer** | `Jordan_Moneyball.html#t=ID` | Yes | Yes | Yes |
-| **Scorekeeper** | `?live=abc123&score=1` | Yes (unless locked) | No | No |
-| **Viewer** | `?live=abc123` | No | No | No |
-
-### Scorekeeper Mode
-Scorekeepers can enter scores from their own device and click **Submit Scores** to push to npoint. They see:
-- Round Robin, Standings, and Bracket tabs only (no Import/Setup)
-- Score inputs on matches (no court assignments, no overrides, no test scores, no drag-and-drop)
-- A green "Scorekeeper Mode" banner
-- **Submit Scores** + **Reload** buttons (no Save/Load/Share)
-
-### Score Locking
-The organizer can click **🔒 Lock** in the toolbar to lock scoring for all scorekeepers:
-- Lock state is published to npoint with the tournament data (`sl` key)
-- Scorekeepers see a red "Scores Locked" banner and all inputs become read-only
-- Submit button is hidden when locked
-- Scorekeepers can still reload to see the latest state
-- Organizer can toggle lock on/off at any time and re-publish
-
-**Typical workflow:**
-1. During RR: scoring is unlocked, scorekeepers enter scores
-2. After RR: organizer locks scoring, reviews standings, adjusts if needed
-3. During bracket: organizer unlocks or keeps locked (enters bracket scores themselves)
+| Role | URL | Can Enter Scores | Can Manage Courts/Settings |
+|------|-----|------------------|---------------------------|
+| **Organizer** | `Jordan_Moneyball.html#t=ID` | Yes | Yes |
+| **Viewer** | `?live=abc123` | No | No |
 
 ### Technical Details
 - **Publish:** POSTs the same slim state (same format as share link) to `https://api.npoint.io/{id}`
-- **Live load:** When `?live=` URL param is detected, fetches state from npoint. `?score=1` enables scorekeeper mode.
+- **Live load:** When `?live=` URL param is detected, fetches state from npoint
 - **No auth required:** npoint.io requires no API keys or account
 - **npoint ID** is saved in the JSON file so it persists across save/load
-- **Score lock** is published as `sl: true/false` in the npoint state
 - **Fallback:** Share Link button still works for one-off snapshots if npoint is unavailable
 
 ### UI Elements
-- **Setup page:** "Live Spectator Link" field for entering npoint ID, shows both viewer and scorer URLs
-- **Toolbar (organizer):** Publish + Viewer Link + Scorer Link + Lock/Unlock buttons
-- **Toolbar (scorekeeper):** Submit Scores + Reload buttons
+- **Setup page:** "Live Spectator Link" field for entering npoint ID, shows viewer URL
+- **Toolbar (organizer):** Publish + Viewer Link buttons
 - **Spectator banner:** Shows "Live Mode — Reload page for latest scores"
-- **Scorekeeper banner:** Shows "Scorekeeper Mode — Enter scores and click Submit" (or "Scores Locked" when locked)
 
 ### Alternatives Considered
 | Approach | Pros | Cons |
@@ -495,26 +472,14 @@ The organizer can click **🔒 Lock** in the toolbar to lock scoring for all sco
 - Format: 3 RR games (pools of 4) → Double Elimination
 - Backup: `saves/moneyballs-2026-02-06.json`
 
-### Moneyball #2 — February 20, 2026 (16 teams, upcoming)
-Teams pre-loaded in app:
-```
-Brandon Fritze / Troy Clemmer
-Garrison Eaby / Michael Benash
-Matt Meadows / Matvey Radionov
-Jack Hared / Ram Kotnana
-Alex Tong / Jordan Denish
-Tyler Arsenault / Zach Bowe
-Dylan Ashbach / Steven Fernandez
-Lukas Choi / Zachary Lessner
-Cody Sadreameli / Matt Korsak
-Alex Szczepkowski / Jase Volz
-Brandon Fooks / Kenoa Tio
-Jameson Mays / Kevin Herod
-Kishan Shah / Thomas Abramski
-Austin Keefer / Mason McCabe
-Ashwin Korde / Samuel Darla
-Johny Mario / Matthew Chen
-```
+### Moneyball #2 — February 20, 2026 (16 teams)
+- 🥇 **Matt Meadows / Matvey Radionov** ($500)
+- 🥈 **Jack Hared / Ram Kotnana** ($220)
+- 🥉 **Garrison Eaby / Michael Benash** ($100)
+- Format: 3 RR games (pools of 4) → Double Elimination → Bracket Reset
+- Bracket reset triggered: losers bracket team (Matt Meadows / Matvey Radionov) won Grand Final Bo3 2-1, then won reset game 15-7
+- Backup: `saves/moneyballs-2026-02-20.json`
+- npoint ID: `03e278b07afb818ff144`
 
 ---
 
@@ -561,6 +526,9 @@ Supported formats:
 6. **Share link call stack overflow** - `String.fromCharCode.apply(null, compressed)` can crash with large state arrays. Fixed with chunked loop approach.
 7. **Share link async clipboard** - jsonblob.com CORS was blocked in browser, and async fallback lost user gesture context for clipboard write. Reverted to synchronous approach.
 8. **Stale standings on load** - `bracketSeedOverride` was loaded from JSON, bypassing fresh standings calculation. Fixed by clearing overrides on load so standings always recalculate from seeding scores.
+9. **Duplicate team names in bracket** - Placeholder `seed` values represent standings rank, but `displayStandings.find(s => s.seed === t.seed)` matched on import order seed. Fixed by using `displayStandings[t.seed - 1]` (index into rank-sorted array).
+10. **Bracket seed swap cleared scores** - `handleSeedSwap` and "Reset Seeds" called `setBracketScores({})`, wiping all bracket data. Fixed by removing score-clearing calls — swaps now preserve existing scores.
+11. **downloadResults wrong winner after bracket reset** - `finalId` was hardcoded to `'gf'`, not checking for `gf2`. Fixed to use same logic as badge display.
 
 ### UI Improvements
 - **Bracket shows both partners** - Each team displays both player names stacked vertically with smaller text (`text-xs`) instead of truncated single line
@@ -595,7 +563,6 @@ The app is a single HTML file with an integrated home page. Tournament data is m
 | `Jordan_Moneyball.html#t=2026-02-20` | Open specific tournament in organizer (edit) mode |
 | `Jordan_Moneyball.html?s=...` | Spectator mode (compressed state in URL) |
 | `Jordan_Moneyball.html?live=abc123` | Live viewer mode (read-only, fetches from npoint.io) |
-| `Jordan_Moneyball.html?live=abc123&score=1` | Scorekeeper mode (can enter scores + submit to npoint) |
 
 ### Adding a New Tournament
 1. Add entry to `TOURNAMENTS` array with `id`, `date`, `title`, `status`, and optionally `preloadedTeams`
@@ -635,7 +602,9 @@ The app is a single HTML file with an integrated home page. Tournament data is m
 - [x] Bo3 game-by-game score entry (configurable for finals)
 - [x] Tiebreaker system (group H2H → group PD → overall PD → original seed)
 - [x] Drag & drop standings manual reorder
-- [x] Bracket seed swap/flip (Override panel)
+- [x] Bracket seed swap/flip (Override panel, preserves scores)
+- [x] Per-swap accept/reject checkboxes for no-repeat seeding adjustments
+- [x] Bracket reset game (gf2) when losers bracket team wins Grand Final Bo3
 - [x] Paid tracking (private, hidden from spectators)
 - [x] Standings recalculate on JSON load
 - [x] Payouts displayed in app (header, bracket, results, download) for 8-16 teams
@@ -650,6 +619,8 @@ The app is a single HTML file with an integrated home page. Tournament data is m
 - [x] "Create New Tournament" option
 - [x] npoint.io setup directions on home page
 - [x] saves/ folder for JSON backups
+- [x] Service worker (network-first) for cache busting on GitHub Pages
+- [x] Scorer mode removed (organizer manages all scoring directly)
 
 ### Phase 2: Master Site Foundation
 - [x] Set up GitHub repository (https://github.com/jdenish/moneyballs)
@@ -704,6 +675,23 @@ The app is a single HTML file with an integrated home page. Tournament data is m
 - Collect payment BEFORE the tournament starts (use the paid tracking feature)
 - Have a plan for no-shows: who replaces them, how to adjust team count
 - Keep a phone charger nearby — the tournament app drains battery over 5 hours
+
+---
+
+## Lessons Learned — Tournament #2 (Feb 20, 2026, 16 teams)
+
+### What Worked
+- **Live viewer link (npoint)** worked great — one stable URL, spectators just reload for updates
+- **Bracket reset game** worked correctly on its first real use — losers bracket team (Matt Meadows / Matvey Radionov) won the Grand Final Bo3 2-1, then won the reset game 15-7
+- **Home page** with tournament cards made it easy to navigate between events
+- **Auto-save to localStorage** meant no data loss even without manually saving
+
+### What Needed Fixing During/After
+- **Scorer mode was unnecessary** — easier for the organizer to manage all scoring directly. Removed scorer mode entirely, kept viewer mode.
+- **Team names duplicated on bracket load** — placeholder seed values used wrong lookup method. Fixed by using index-based resolution (`displayStandings[seed - 1]`) instead of `.find()`.
+- **Seed swap cleared bracket scores** — Override panel was resetting all bracket data when swapping seeds. Fixed by removing the `setBracketScores({})` calls from swap operations.
+- **Browser caching old versions** — GitHub Pages CDN cached stale HTML. Fixed by adding a service worker with network-first strategy.
+- **Per-swap control needed** — all-or-nothing swap acceptance was too rigid. Added per-swap checkboxes so organizer can accept/reject individual seeding adjustments.
 
 ---
 
