@@ -2,9 +2,10 @@
 
 A tournament management app for 8-16 team doubles pickleball tournaments with configurable round robin, pools, and single or double elimination brackets.
 
-## Live Site
+## Links
 
-**https://jdenish.github.io/moneyballs/Jordan_Moneyball.html**
+- **Public Site:** [jdenish.github.io/moneyballs](https://jdenish.github.io/moneyballs/) — View tournament history and results
+- **Organizer:** [jdenish.github.io/moneyballs/Jordan_Moneyball.html](https://jdenish.github.io/moneyballs/Jordan_Moneyball.html) — Password-protected tournament management
 
 ## Features
 
@@ -15,16 +16,14 @@ A tournament management app for 8-16 team doubles pickleball tournaments with co
 - **Configurable finals** - Best of 3 or single game
 - **Smart court assignment** - pool-based for RR, lowest-available for bracket, manual override
 - **3rd place match** in single elimination
-- **No-repeat constraint** - pool teammates won't face each other in bracket R1, per-swap accept/reject
-- **Bracket reset** - reset game to 15 when losers bracket team wins Grand Final Bo3
+- **No-repeat constraint** - pool teammates won't face each other in bracket R1
 - **Drag & drop seeding** - reorder teams on Setup page
 - **Live spectator link** via npoint.io - one stable URL, publish to update, spectators reload
 - **Live score tracking** with numbered court display
 - **Share link** for spectators (compressed URL, read-only view)
-- **Multi-tournament home page** - tournament card grid with completed results
-- **Save/load** tournament progress (localStorage auto-save + JSON backup)
+- **Save/load** tournament progress (backwards compatible)
 - **Results tab** with gold/silver/bronze highlighting
-- **Cache busting** - service worker ensures latest version on reload
+- **Public tournament history** - browse past and upcoming tournaments at the public URL
 
 ## Tournament Format
 
@@ -47,14 +46,15 @@ A tournament management app for 8-16 team doubles pickleball tournaments with co
 
 ## Quick Start
 
-1. Open the [live site](https://jdenish.github.io/moneyballs/Jordan_Moneyball.html)
-2. Select team count (8-16, auto-detects when you paste)
-3. Paste team list (format: `Player 1 / Player 2`)
-4. Click "Import Teams"
-5. Configure: RR games (0-7 or Pools), bracket type (single/double), finals format, court count
-6. (Optional) Paste an [npoint.io](https://www.npoint.io) ID for live spectator link
-7. Click "Randomize Matchups" and start entering scores
-8. Click **Publish** to push state to live link, or use **Share Link** for one-off snapshots
+1. Open the [organizer site](https://jdenish.github.io/moneyballs/Jordan_Moneyball.html)
+2. Enter the organizer password
+3. Select team count (8-16, auto-detects when you paste)
+4. Paste team list (format: `Player 1 / Player 2`)
+5. Click "Import Teams"
+6. Configure: RR games (0-7 or Pools), bracket type (single/double), finals format, court count
+7. (Optional) Paste an [npoint.io](https://www.npoint.io) ID for live spectator link
+8. Click "Randomize Matchups" and start entering scores
+9. Click **Publish** to push state to live link, or use **Share Link** for one-off snapshots
 
 ## Documentation
 
