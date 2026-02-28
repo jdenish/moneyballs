@@ -2212,6 +2212,7 @@
                 {activeTournamentId && (
                   <button
                     onClick={quickSave}
+                    title="Save tournament progress to this browser's storage"
                     className={`text-xs px-2 py-1 rounded ${quickSaveStatus === 'saved' ? 'bg-green-600' : 'bg-gray-700 hover:bg-gray-600'}`}
                   >
                     {quickSaveStatus === 'saved' ? 'Saved!' : 'Quick Save'}
@@ -2237,7 +2238,7 @@
                 📂 Load
                 <input type="file" accept=".json" className="hidden" onChange={loadProgress} />
               </label>
-              <button onClick={shareLink} className={`text-xs px-2 py-1 rounded ${linkCopied && !npointId ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-500'}`}>
+              <button onClick={shareLink} title="Copy a one-time snapshot URL — anyone with the link can view current scores" className={`text-xs px-2 py-1 rounded ${linkCopied && !npointId ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-500'}`}>
                 {linkCopied && !npointId ? '✓ Copied!' : '🔗 Share Link'}
               </button>
               {npointId && (
@@ -2245,6 +2246,7 @@
                   <button
                     onClick={publishToNpoint}
                     disabled={publishStatus === 'publishing'}
+                    title="Push scores to the live viewer link — spectators reload to see updates"
                     className={`text-xs px-2 py-1 rounded ${
                       publishStatus === 'published' ? 'bg-green-600' :
                       publishStatus === 'error' ? 'bg-red-600' :
