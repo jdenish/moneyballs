@@ -1231,7 +1231,6 @@
 
       const bracketTeams = useMemo(() => {
         if (bracketSeedOverride) {
-          setBracketSwaps([]);
           return { winners: bracketSeedOverride.winners, losers: bracketSeedOverride.losers, swaps: [] };
         }
         if (displayStandings.length < teamCount) return { winners: [], losers: [], swaps: [] };
@@ -1324,11 +1323,19 @@
         winners = applyNoRepeat(winners, 'Winners');
         losers = applyNoRepeat(losers, 'Losers');
 
-        setBracketSwaps(swaps);
-        setSwapSelections({});
-
         return { winners, losers, swaps, unswappedWinners, unswappedLosers };
       }, [displayStandings, teamCount, winnersCount, bracketSeedOverride, pools]);
+
+      // Sync bracketSwaps state from bracketTeams (useEffect instead of setState in useMemo)
+      useEffect(() => {
+        if (bracketSeedOverride) {
+          setBracketSwaps([]);
+          setSwapSelections({});
+        } else if (bracketTeams.swaps?.length > 0) {
+          setBracketSwaps(bracketTeams.swaps);
+          setSwapSelections({});
+        }
+      }, [bracketTeams, bracketSeedOverride]);
 
       const generateFakeSeedingScores = useCallback(() => {
         const fakeScores = {};
