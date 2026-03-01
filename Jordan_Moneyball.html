@@ -1231,6 +1231,7 @@
 
       const bracketTeams = useMemo(() => {
         if (bracketSeedOverride) {
+          setBracketSwaps([]);
           return { winners: bracketSeedOverride.winners, losers: bracketSeedOverride.losers, swaps: [] };
         }
         if (displayStandings.length < teamCount) return { winners: [], losers: [], swaps: [] };
