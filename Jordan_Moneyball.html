@@ -100,7 +100,7 @@
         ],losers:[
           {seed:9,name:'Dylan Ashbach / Steven Fernandez'},{seed:11,name:'Brandon Fooks / Kenoa Tio'},
           {seed:7,name:'Tyler Arsenault / Zach Bowe'},{seed:5,name:'Jordan Denish / Alex Tong'},
-          {seed:13,name:'Austin Keefer / Mason McCabe'},{seed:14,name:'Kevin Herod / Jameson Mays'},
+          {seed:14,name:'Kevin Herod / Jameson Mays'},{seed:13,name:'Austin Keefer / Mason McCabe'},
           {seed:15,name:'Samuel Darla / Ashwin Korde'},{seed:16,name:'Matthew Chen / Johny Mario'}
         ]},
         ph:'bracket',
@@ -498,6 +498,7 @@
       const [bo3Finals, setBo3Finals] = useState(true);
       const [poolSize, setPoolSize] = useState(4); // 0 = no pools, 3-6 = pool size
       const [bracketSwaps, setBracketSwaps] = useState([]);
+      const [swapSelections, setSwapSelections] = useState({});
       const [onCourt, setOnCourt] = useState({}); // { matchId: courtNumber } (0 or absent = not on court)
       const [courtCount, setCourtCount] = useState(8);
       const [showOverride, setShowOverride] = useState(false);
@@ -1300,7 +1301,12 @@
                     if (otherIdx < result.length && result[otherIdx].pool === t2.pool) continue; // Would create new conflict
                   }
 
-                  swaps.push(`${bracketName}: Swapped seed ${j + 1} (${t2.name}) with seed ${k + 1} (${result[k].name}) to avoid pool rematch`);
+                  swaps.push({
+                    description: `${bracketName}: Swapped seed ${j + 1} (${t2.name}) with seed ${k + 1} (${result[k].name}) to avoid pool rematch`,
+                    side: bracketName === 'Winners' ? 'winners' : 'losers',
+                    j,
+                    k
+                  });
                   [result[j], result[k]] = [result[k], result[j]];
                   break;
                 }
@@ -1318,6 +1324,7 @@
         losers = applyNoRepeat(losers, 'Losers');
 
         setBracketSwaps(swaps);
+        setSwapSelections({});
 
         return { winners, losers, swaps, unswappedWinners, unswappedLosers };
       }, [displayStandings, teamCount, winnersCount, bracketSeedOverride, pools]);
@@ -2867,11 +2874,28 @@
                 <div className="mb-3 bg-yellow-900/50 border border-yellow-600 rounded p-3 text-sm">
                   <div className="font-semibold text-yellow-400 mb-1">🔄 Suggested Seeding Adjustments (No Pool Rematches in R1)</div>
                   {bracketSwaps.map((swap, i) => (
-                    <div key={i} className="text-yellow-200 text-xs">{swap}</div>
+                    <label key={i} className="flex items-center gap-2 text-yellow-200 text-xs cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={swapSelections[i] !== false}
+                        onChange={() => setSwapSelections(prev => ({...prev, [i]: prev[i] === false ? true : false}))}
+                      />
+                      {swap.description}
+                    </label>
                   ))}
                   <div className="flex gap-2 mt-2">
-                    <button onClick={() => setBracketSeedOverride({ winners: bracketTeams.winners, losers: bracketTeams.losers })} className="text-xs bg-green-600 hover:bg-green-500 px-3 py-1 rounded font-semibold">
-                      Accept Swaps
+                    <button onClick={() => {
+                      const w = [...bracketTeams.unswappedWinners];
+                      const l = [...bracketTeams.unswappedLosers];
+                      bracketSwaps.forEach((swap, i) => {
+                        if (swapSelections[i] !== false) {
+                          const arr = swap.side === 'winners' ? w : l;
+                          [arr[swap.j], arr[swap.k]] = [arr[swap.k], arr[swap.j]];
+                        }
+                      });
+                      setBracketSeedOverride({ winners: w, losers: l });
+                    }} className="text-xs bg-green-600 hover:bg-green-500 px-3 py-1 rounded font-semibold">
+                      Apply Selected
                     </button>
                     <button onClick={() => setBracketSeedOverride({ winners: bracketTeams.unswappedWinners, losers: bracketTeams.unswappedLosers })} className="text-xs bg-red-600 hover:bg-red-500 px-3 py-1 rounded font-semibold">
                       Keep Original Seeding
@@ -2883,7 +2907,7 @@
                 <div className="mb-3 bg-yellow-900/50 border border-yellow-600 rounded p-2 text-sm">
                   <div className="font-semibold text-yellow-400 mb-1">🔄 Seeding Adjusted (No Pool Rematches in R1)</div>
                   {bracketSwaps.map((swap, i) => (
-                    <div key={i} className="text-yellow-200 text-xs">{swap}</div>
+                    <div key={i} className="text-yellow-200 text-xs">{swap.description}</div>
                   ))}
                 </div>
               )}
