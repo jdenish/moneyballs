@@ -639,8 +639,8 @@
             if (data.pools) setPools(data.pools);
             if (data.matchupsGenerated) setMatchupsGenerated(data.matchupsGenerated);
             if (data.onCourt) setOnCourt(data.onCourt);
-            setBracketSeedOverride(null);
-            setStandingsOverride(null);
+            setBracketSeedOverride(data.bracketSeedOverride || null);
+            setStandingsOverride(data.standingsOverride || null);
             // Auto-detect phase
             const hasBracket = data.bracketScores && Object.keys(data.bracketScores).length > 0;
             const hasBracketOverrides = data.bracketOverrides && Object.keys(data.bracketOverrides).length > 0;
