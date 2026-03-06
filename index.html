@@ -175,16 +175,16 @@
       const t2Won = isComplete && parseInt(score.s2) > parseInt(score.s1);
 
       return (
-        <div className={`p-1.5 rounded border ${isComplete ? 'bg-gray-800 border-green-600' : 'bg-gray-800 border-gray-600'}`} style={poolColor ? { borderLeftWidth: '3px', borderLeftColor: poolColor } : undefined}>
-          <div className={`flex items-center gap-1 ${t1Won ? 'text-green-400' : 'text-gray-300'}`}>
-            <span className="bg-gray-700 px-1 rounded flex-shrink-0" style={{fontSize:'10px'}}>{match.t1.seed}</span>
-            <span className="flex-1 truncate" style={{fontSize:'10px'}}>{match.t1.name}</span>
-            <span className="w-6 text-center font-mono flex-shrink-0" style={{fontSize:'10px'}}>{score.s1 || '-'}</span>
+        <div className={`p-1.5 sm:p-2 rounded border ${isComplete ? 'bg-gray-800 border-green-600' : 'bg-gray-800 border-gray-600'}`} style={poolColor ? { borderLeftWidth: '3px', borderLeftColor: poolColor } : undefined}>
+          <div className={`flex items-center gap-1 sm:gap-2 ${t1Won ? 'text-green-400' : 'text-gray-300'}`}>
+            <span className="text-[10px] sm:text-xs bg-gray-700 px-1 rounded flex-shrink-0">{match.t1.seed}</span>
+            <span className="flex-1 text-[10px] sm:text-sm truncate">{match.t1.name}</span>
+            <span className="w-6 sm:w-12 text-center text-[10px] sm:text-sm font-mono flex-shrink-0">{score.s1 || '-'}</span>
           </div>
-          <div className={`flex items-center gap-1 mt-0.5 ${t2Won ? 'text-green-400' : 'text-gray-300'}`}>
-            <span className="bg-gray-700 px-1 rounded flex-shrink-0" style={{fontSize:'10px'}}>{match.t2.seed}</span>
-            <span className="flex-1 truncate" style={{fontSize:'10px'}}>{match.t2.name}</span>
-            <span className="w-6 text-center font-mono flex-shrink-0" style={{fontSize:'10px'}}>{score.s2 || '-'}</span>
+          <div className={`flex items-center gap-1 sm:gap-2 mt-0.5 sm:mt-1 ${t2Won ? 'text-green-400' : 'text-gray-300'}`}>
+            <span className="text-[10px] sm:text-xs bg-gray-700 px-1 rounded flex-shrink-0">{match.t2.seed}</span>
+            <span className="flex-1 text-[10px] sm:text-sm truncate">{match.t2.name}</span>
+            <span className="w-6 sm:w-12 text-center text-[10px] sm:text-sm font-mono flex-shrink-0">{score.s2 || '-'}</span>
           </div>
         </div>
       );
