@@ -208,29 +208,29 @@
               </div>
             )}
           </div>
-          <div className={`flex items-center gap-2 ${t1Won ? 'text-green-400' : 'text-gray-300'}`}>
+          <div className={`flex items-center gap-1 ${t1Won ? 'text-green-400' : 'text-gray-300'}`}>
             <span className="text-xs bg-gray-700 px-1 rounded">{match.t1.seed}</span>
-            <span className="flex-1 text-sm truncate">{match.t1.name}</span>
+            <span className="flex-1 text-xs leading-tight">{match.t1.name.split(' / ').map(n => n.split(' ')[0]).join(' / ')}</span>
             {readOnly ? (
-              <span className="w-12 text-center text-sm font-mono">{score.s1 || '-'}</span>
+              <span className="w-6 text-center text-xs font-mono">{score.s1 || '-'}</span>
             ) : (
               <input
                 type="number"
-                className="w-12 bg-gray-700 text-center rounded text-sm"
+                className="w-10 bg-gray-700 text-center rounded text-xs"
                 value={score.s1 || ''}
                 onChange={(e) => onScoreChange('s1', e.target.value)}
               />
             )}
           </div>
-          <div className={`flex items-center gap-2 mt-1 ${t2Won ? 'text-green-400' : 'text-gray-300'}`}>
+          <div className={`flex items-center gap-1 mt-1 ${t2Won ? 'text-green-400' : 'text-gray-300'}`}>
             <span className="text-xs bg-gray-700 px-1 rounded">{match.t2.seed}</span>
-            <span className="flex-1 text-sm truncate">{match.t2.name}</span>
+            <span className="flex-1 text-xs leading-tight">{match.t2.name.split(' / ').map(n => n.split(' ')[0]).join(' / ')}</span>
             {readOnly ? (
-              <span className="w-12 text-center text-sm font-mono">{score.s2 || '-'}</span>
+              <span className="w-6 text-center text-xs font-mono">{score.s2 || '-'}</span>
             ) : (
               <input
                 type="number"
-                className="w-12 bg-gray-700 text-center rounded text-sm"
+                className="w-10 bg-gray-700 text-center rounded text-xs"
                 value={score.s2 || ''}
                 onChange={(e) => onScoreChange('s2', e.target.value)}
               />
