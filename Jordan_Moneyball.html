@@ -1479,7 +1479,26 @@
         // Build dependency graph from bracketMatches
         const matchOrder = bracketType === 'single'
           ? ['se_r1m1','se_r1m2','se_r1m3','se_r1m4','se_qf1','se_qf2','se_qf3','se_qf4','se_sf1','se_sf2','se_f','se_3rd']
-          : ['wqf1','wqf2','wqf3','wqf4','lr1m1','lr1m2','lr1m3','lr1m4','wsf1','wsf2','lr2m1','lr2m2','lr2m3','lr2m4','lr3m1','lr3m2','wf','lr4m1','lr4m2','lsf','lf','gf','gf2'];
+          : Object.keys(bracketMatches).sort((a, b) => {
+              // Sort: winners first (wqf, wsf, wf), then losers (lr*), then lsf, lf, gf
+              const priority = (id) => {
+                if (id.startsWith('wqf')) return 10;
+                if (id.startsWith('wsf')) return 20;
+                if (id === 'wf') return 30;
+                if (id.startsWith('lr1')) return 40;
+                if (id.startsWith('lr2')) return 50;
+                if (id.startsWith('lr3')) return 60;
+                if (id.startsWith('lr4')) return 70;
+                if (id.startsWith('lr5')) return 80;
+                if (id.startsWith('lr6')) return 90;
+                if (id === 'lsf') return 100;
+                if (id === 'lf') return 110;
+                if (id === 'gf') return 120;
+                if (id === 'gf2') return 130;
+                return 200;
+              };
+              return priority(a) - priority(b);
+            });
 
         matchOrder.forEach(id => {
           const m = bracketMatches[id];
@@ -1658,64 +1677,152 @@
         matches.wsf2 = { id: 'wsf2', t1: getWqfWinner('wqf3'), t2: getWqfWinner('wqf4'), round: 'W-SF' };
         matches.wf = { id: 'wf', t1: getBracketMatchTeam('wsf1'), t2: getBracketMatchTeam('wsf2'), round: 'W-Final', bo3: bo3Finals };
 
-        // Losers bracket (crossed drops to prevent rematches)
-        // W-QF losers cross to opposite half: wqf1/wqf2 (wsf1 side) → bottom, wqf3/wqf4 (wsf2 side) → top
-        // W-SF losers stay uncrossed since L-R2 crossing already prevents rematches
-        if (l.length >= 8) {
-          matches.lr1m1 = { id: 'lr1m1', t1: l[0], t2: l[7], round: 'L-R1', court: 5 };
-          matches.lr1m2 = { id: 'lr1m2', t1: l[3], t2: l[4], round: 'L-R1', court: 6 };
-          matches.lr1m3 = { id: 'lr1m3', t1: l[1], t2: l[6], round: 'L-R1', court: 7 };
-          matches.lr1m4 = { id: 'lr1m4', t1: l[2], t2: l[5], round: 'L-R1', court: 8 };
-          // Crossed: wqf3/4 losers → top half, wqf1/2 losers → bottom half
-          matches.lr2m1 = { id: 'lr2m1', t1: getBracketMatchTeam('lr1m1'), t2: getBracketMatchLoser('wqf3'), round: 'L-R2' };
-          matches.lr2m2 = { id: 'lr2m2', t1: getBracketMatchTeam('lr1m2'), t2: getBracketMatchLoser('wqf4'), round: 'L-R2' };
-          matches.lr2m3 = { id: 'lr2m3', t1: getBracketMatchTeam('lr1m3'), t2: getBracketMatchLoser('wqf1'), round: 'L-R2' };
-          matches.lr2m4 = { id: 'lr2m4', t1: getBracketMatchTeam('lr1m4'), t2: getBracketMatchLoser('wqf2'), round: 'L-R2' };
-          matches.lr3m1 = { id: 'lr3m1', t1: getBracketMatchTeam('lr2m1'), t2: getBracketMatchTeam('lr2m2'), round: 'L-R3' };
-          matches.lr3m2 = { id: 'lr3m2', t1: getBracketMatchTeam('lr2m3'), t2: getBracketMatchTeam('lr2m4'), round: 'L-R3' };
-          matches.lr4m1 = { id: 'lr4m1', t1: getBracketMatchTeam('lr3m1'), t2: getBracketMatchLoser('wsf1'), round: 'L-R4' };
-          matches.lr4m2 = { id: 'lr4m2', t1: getBracketMatchTeam('lr3m2'), t2: getBracketMatchLoser('wsf2'), round: 'L-R4' };
-          matches.lsf = { id: 'lsf', t1: getBracketMatchTeam('lr4m1'), t2: getBracketMatchTeam('lr4m2'), round: 'L-Semi' };
-          matches.lf = { id: 'lf', t1: getBracketMatchTeam('lsf'), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
-        } else if (l.length === 0) {
-          // All teams in winners — losers bracket from W-QF drops
+        // Losers bracket — general algorithm for any loser count (0-8)
+        // Crossed drops to prevent rematches: wqf3/4 → top half, wqf1/2 → bottom half
+        const L = l.length;
+        const wqfDropsTop = ['wqf3', 'wqf4'];
+        const wqfDropsBottom = ['wqf1', 'wqf2'];
+
+        if (L === 0) {
+          // All teams in winners — losers bracket from W-QF drops only
           matches.lr2m1 = { id: 'lr2m1', t1: getBracketMatchLoser('wqf1'), t2: getBracketMatchLoser('wqf2'), round: 'L-R2' };
           matches.lr2m2 = { id: 'lr2m2', t1: getBracketMatchLoser('wqf3'), t2: getBracketMatchLoser('wqf4'), round: 'L-R2' };
-          // Crossed: wsf1 loser (wqf1/2 side) → bottom, wsf2 loser (wqf3/4 side) → top
           matches.lr3m1 = { id: 'lr3m1', t1: getBracketMatchTeam('lr2m1'), t2: getBracketMatchLoser('wsf2'), round: 'L-R3' };
           matches.lr3m2 = { id: 'lr3m2', t1: getBracketMatchTeam('lr2m2'), t2: getBracketMatchLoser('wsf1'), round: 'L-R3' };
           matches.lsf = { id: 'lsf', t1: getBracketMatchTeam('lr3m1'), t2: getBracketMatchTeam('lr3m2'), round: 'L-Semi' };
           matches.lf = { id: 'lf', t1: getBracketMatchTeam('lsf'), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
-        } else if (l.length >= 4) {
-          matches.lr1m1 = { id: 'lr1m1', t1: l[0], t2: l.length > 3 ? l[3] : null, round: l.length > 3 ? 'L-R1' : 'L-R1 (bye)', court: 5, bye: l.length <= 3 };
-          matches.lr1m2 = { id: 'lr1m2', t1: l[1], t2: l[2], round: 'L-R1', court: 6 };
-          if (l.length > 4) {
-            matches.lr1m3 = { id: 'lr1m3', t1: l[4], t2: l.length > 5 ? l[5] : null, round: l.length > 5 ? 'L-R1' : 'L-R1 (bye)', court: 7, bye: l.length <= 5 };
-          }
-          if (l.length > 6) {
-            matches.lr1m4 = { id: 'lr1m4', t1: l[6], t2: l.length > 7 ? l[7] : null, round: l.length > 7 ? 'L-R1' : 'L-R1 (bye)', court: 8, bye: l.length <= 7 };
-          }
-          const getLr1Win = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
-          const getWqfLos = (id) => matches[id]?.bye ? null : getBracketMatchLoser(id);
-          // Crossed: wqf3/4 losers → top half, wqf1/2 losers → bottom half
-          matches.lr2m1 = { id: 'lr2m1', t1: getLr1Win('lr1m1'), t2: getWqfLos('wqf3'), round: 'L-R2' };
-          matches.lr2m2 = { id: 'lr2m2', t1: getLr1Win('lr1m2'), t2: getWqfLos('wqf4'), round: 'L-R2' };
-          if (matches.lr1m3) matches.lr2m3 = { id: 'lr2m3', t1: getLr1Win('lr1m3'), t2: getWqfLos('wqf1'), round: 'L-R2' };
-          if (matches.lr1m4) matches.lr2m4 = { id: 'lr2m4', t1: getLr1Win('lr1m4'), t2: getWqfLos('wqf2'), round: 'L-R2' };
-          matches.lr3m1 = { id: 'lr3m1', t1: getBracketMatchTeam('lr2m1'), t2: getBracketMatchTeam('lr2m2'), round: 'L-R3' };
-          if (matches.lr2m3 && matches.lr2m4) matches.lr3m2 = { id: 'lr3m2', t1: getBracketMatchTeam('lr2m3'), t2: getBracketMatchTeam('lr2m4'), round: 'L-R3' };
-          if (matches.lr3m2) {
-            matches.lr4m1 = { id: 'lr4m1', t1: getBracketMatchTeam('lr3m1'), t2: getBracketMatchLoser('wsf1'), round: 'L-R4' };
-            matches.lr4m2 = { id: 'lr4m2', t1: getBracketMatchTeam('lr3m2'), t2: getBracketMatchLoser('wsf2'), round: 'L-R4' };
-            matches.lsf = { id: 'lsf', t1: getBracketMatchTeam('lr4m1'), t2: getBracketMatchTeam('lr4m2'), round: 'L-Semi' };
-          } else {
-            matches.lr4m1 = { id: 'lr4m1', t1: getBracketMatchTeam('lr3m1'), t2: getBracketMatchLoser('wsf1'), round: 'L-R4' };
-            matches.lsf = { id: 'lsf', t1: getBracketMatchTeam('lr4m1'), t2: getBracketMatchLoser('wsf2'), round: 'L-Semi' };
-          }
-          matches.lf = { id: 'lf', t1: getBracketMatchTeam('lsf'), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
         } else {
-          // < 4 losers
-          matches.lf = { id: 'lf', t1: getBracketMatchLoser('wsf1'), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
+          // === L-R1: Initial losers play each other ===
+          const lr1Pairings = [];
+          if (L <= 2) {
+            if (L === 1) lr1Pairings.push([0, null]);
+            else lr1Pairings.push([0, 1]);
+          } else if (L <= 4) {
+            lr1Pairings.push([0, L > 3 ? 3 : null]);
+            lr1Pairings.push([1, 2]);
+          } else if (L <= 6) {
+            lr1Pairings.push([0, L > 5 ? 5 : null]);
+            lr1Pairings.push([3, 4]);
+            lr1Pairings.push([1, 2]);
+          } else {
+            lr1Pairings.push([0, L > 7 ? 7 : null]);
+            lr1Pairings.push([3, 4]);
+            lr1Pairings.push([1, L > 6 ? 6 : null]);
+            lr1Pairings.push([2, 5]);
+          }
+
+          const lr1WinnerIds = [];
+          lr1Pairings.forEach(([i1, i2], idx) => {
+            const matchId = `lr1m${idx + 1}`;
+            if (i2 === null) {
+              matches[matchId] = { id: matchId, t1: l[i1], t2: null, round: 'L-R1 (bye)', bye: true, court: 5 + idx };
+            } else {
+              matches[matchId] = { id: matchId, t1: l[i1], t2: l[i2], round: 'L-R1', court: 5 + idx };
+            }
+            lr1WinnerIds.push(matchId);
+          });
+
+          const getLr1Win = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
+
+          // === L-R2: Merge L-R1 survivors with W-QF losers (crossed) ===
+          const topCount = Math.ceil(lr1WinnerIds.length / 2);
+          const topSurvivorIds = lr1WinnerIds.slice(0, topCount);
+          const bottomSurvivorIds = lr1WinnerIds.slice(topCount);
+
+          const lr2WinnerIds = [];
+          let lr2Idx = 1;
+
+          // Top half: survivors paired with wqfDropsTop
+          const topPairs = Math.max(topSurvivorIds.length, wqfDropsTop.length);
+          for (let i = 0; i < topPairs; i++) {
+            const matchId = `lr2m${lr2Idx++}`;
+            const survivor = i < topSurvivorIds.length ? getLr1Win(topSurvivorIds[i]) : null;
+            const drop = i < wqfDropsTop.length ? getBracketMatchLoser(wqfDropsTop[i]) : null;
+            if (survivor && drop) {
+              matches[matchId] = { id: matchId, t1: survivor, t2: drop, round: 'L-R2' };
+            } else {
+              matches[matchId] = { id: matchId, t1: survivor || drop, t2: null, round: 'L-R2 (bye)', bye: true };
+            }
+            lr2WinnerIds.push(matchId);
+          }
+
+          // Bottom half: survivors paired with wqfDropsBottom
+          const bottomPairs = Math.max(bottomSurvivorIds.length, wqfDropsBottom.length);
+          for (let i = 0; i < bottomPairs; i++) {
+            const matchId = `lr2m${lr2Idx++}`;
+            const survivor = i < bottomSurvivorIds.length ? getLr1Win(bottomSurvivorIds[i]) : null;
+            const drop = i < wqfDropsBottom.length ? getBracketMatchLoser(wqfDropsBottom[i]) : null;
+            if (survivor && drop) {
+              matches[matchId] = { id: matchId, t1: survivor, t2: drop, round: 'L-R2' };
+            } else {
+              matches[matchId] = { id: matchId, t1: survivor || drop, t2: null, round: 'L-R2 (bye)', bye: true };
+            }
+            lr2WinnerIds.push(matchId);
+          }
+
+          const getLrWin = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
+
+          // === Reduction rounds: halve survivors until 2 remain ===
+          let currentIds = lr2WinnerIds;
+          let roundNum = 3;
+
+          while (currentIds.length > 2) {
+            const nextIds = [];
+            let mNum = 1;
+            for (let i = 0; i < currentIds.length; i += 2) {
+              const matchId = `lr${roundNum}m${mNum++}`;
+              if (i + 1 < currentIds.length) {
+                matches[matchId] = { id: matchId, t1: getLrWin(currentIds[i]), t2: getLrWin(currentIds[i + 1]), round: `L-R${roundNum}` };
+              } else {
+                matches[matchId] = { id: matchId, t1: getLrWin(currentIds[i]), t2: null, round: `L-R${roundNum} (bye)`, bye: true };
+              }
+              nextIds.push(matchId);
+            }
+            currentIds = nextIds;
+            roundNum++;
+          }
+
+          // === Merge W-SF losers ===
+          const wsfDrops = ['wsf1', 'wsf2'];
+          const lr4Ids = [];
+          const mergeCount = Math.max(currentIds.length, wsfDrops.length);
+          for (let i = 0; i < mergeCount; i++) {
+            const matchId = `lr${roundNum}m${i + 1}`;
+            const survivor = i < currentIds.length ? getLrWin(currentIds[i]) : null;
+            const drop = i < wsfDrops.length ? getBracketMatchLoser(wsfDrops[i]) : null;
+            if (survivor && drop) {
+              matches[matchId] = { id: matchId, t1: survivor, t2: drop, round: `L-R${roundNum}` };
+            } else {
+              matches[matchId] = { id: matchId, t1: survivor || drop, t2: null, round: `L-R${roundNum} (bye)`, bye: true };
+            }
+            lr4Ids.push(matchId);
+          }
+          roundNum++;
+
+          // === Reduce to 1 survivor, then L-Final ===
+          let finalIds = lr4Ids;
+          while (finalIds.length > 1) {
+            if (finalIds.length === 2) {
+              matches.lsf = { id: 'lsf', t1: getLrWin(finalIds[0]), t2: getLrWin(finalIds[1]), round: 'L-Semi' };
+              finalIds = ['lsf'];
+            } else {
+              const nextIds = [];
+              let mNum = 1;
+              for (let i = 0; i < finalIds.length; i += 2) {
+                const matchId = `lr${roundNum}m${mNum++}`;
+                if (i + 1 < finalIds.length) {
+                  matches[matchId] = { id: matchId, t1: getLrWin(finalIds[i]), t2: getLrWin(finalIds[i + 1]), round: `L-R${roundNum}` };
+                } else {
+                  matches[matchId] = { id: matchId, t1: getLrWin(finalIds[i]), t2: null, round: `L-R${roundNum} (bye)`, bye: true };
+                }
+                nextIds.push(matchId);
+              }
+              finalIds = nextIds;
+              roundNum++;
+            }
+          }
+
+          matches.lf = { id: 'lf', t1: getLrWin(finalIds[0]), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
         }
 
         matches.gf = { id: 'gf', t1: getBracketMatchTeam('wf'), t2: getBracketMatchTeam('lf'), round: 'Grand Final', bo3: bo3Finals };
@@ -1893,7 +2000,25 @@
         if (phase === 'bracket') {
           const order = bracketType === 'single'
             ? ['se_r1m1','se_r1m2','se_r1m3','se_r1m4','se_qf1','se_qf2','se_qf3','se_qf4','se_sf1','se_sf2','se_3rd','se_f']
-            : ['wqf1','wqf2','wqf3','wqf4','lr1m1','lr1m2','lr1m3','lr1m4','wsf1','wsf2','lr2m1','lr2m2','lr2m3','lr2m4','lr3m1','lr3m2','lr4m1','lr4m2','lsf','wf','lf','gf','gf2'];
+            : Object.keys(bracketMatches).sort((a, b) => {
+                const priority = (id) => {
+                  if (id.startsWith('wqf')) return 10;
+                  if (id.startsWith('lr1')) return 15;
+                  if (id.startsWith('wsf')) return 20;
+                  if (id.startsWith('lr2')) return 25;
+                  if (id.startsWith('lr3')) return 30;
+                  if (id === 'wf') return 35;
+                  if (id.startsWith('lr4')) return 40;
+                  if (id.startsWith('lr5')) return 45;
+                  if (id.startsWith('lr6')) return 50;
+                  if (id === 'lsf') return 60;
+                  if (id === 'lf') return 70;
+                  if (id === 'gf') return 80;
+                  if (id === 'gf2') return 90;
+                  return 200;
+                };
+                return priority(a) - priority(b);
+              });
           order.forEach(id => {
             const m = bracketMatches[id];
             const s = bracketScores[id];
@@ -2012,11 +2137,13 @@
                 resolve(bs.wqf1?.t1), resolve(bs.wqf3?.t1), resolve(bs.wqf4?.t1), resolve(bs.wqf2?.t1),
                 resolve(bs.wqf2?.t2), resolve(bs.wqf4?.t2), resolve(bs.wqf3?.t2), resolve(bs.wqf1?.t2)
               ].filter(Boolean);
-              // Reconstruct losers order from L-R1: lr1m1(l[0]vl[7]), lr1m2(l[3]vl[4]), lr1m3(l[1]vl[6]), lr1m4(l[2]vl[5])
-              const losers = [
-                resolve(bs.lr1m1?.t1), resolve(bs.lr1m3?.t1), resolve(bs.lr1m4?.t1), resolve(bs.lr1m2?.t1),
-                resolve(bs.lr1m2?.t2), resolve(bs.lr1m4?.t2), resolve(bs.lr1m3?.t2), resolve(bs.lr1m1?.t2)
-              ].filter(Boolean);
+              // Reconstruct losers order from L-R1 matches (collect all direct team entries)
+              const loserSeeds = new Set();
+              ['lr1m1','lr1m2','lr1m3','lr1m4'].forEach(id => {
+                if (bs[id]?.t1?.seed) loserSeeds.add(bs[id].t1.seed);
+                if (bs[id]?.t2?.seed) loserSeeds.add(bs[id].t2.seed);
+              });
+              const losers = [...loserSeeds].sort((a, b) => a - b).map(s => resolve({ seed: s })).filter(Boolean);
               if (winners.length >= 4) {
                 setBracketSeedOverride({ winners: winners.slice(0, wc), losers: losers.slice(0, tc - wc) });
               } else {
@@ -3163,14 +3290,33 @@
 
                   <h2 className="text-lg font-semibold text-red-400 mb-2">Losers Bracket</h2>
                   <div className="flex gap-3 pb-4 overflow-x-auto">
-                    {col('L-R1', ['lr1m1','lr1m2','lr1m3','lr1m4'])}
-                    {col('L-R2', ['lr2m1','lr2m2','lr2m3','lr2m4'])}
-                    {col('L-R3', ['lr3m1','lr3m2'], { pt: 'pt-10', gap: 'h-6' })}
-                    {col('L-R4', ['lr4m1','lr4m2'], { pt: 'pt-10', gap: 'h-6' })}
+                    {(() => {
+                      // Dynamically render losers bracket rounds from bracketMatches
+                      const losersRounds = {};
+                      Object.values(bracketMatches).forEach(m => {
+                        if (m.id === 'lsf' || m.id === 'lf' || m.id === 'gf' || m.id === 'gf2') return;
+                        if (!m.id.startsWith('lr')) return;
+                        const roundMatch = m.round.replace(' (bye)', '');
+                        if (!losersRounds[roundMatch]) losersRounds[roundMatch] = [];
+                        losersRounds[roundMatch].push(m.id);
+                      });
+                      const sortedRounds = Object.keys(losersRounds).sort((a, b) => {
+                        const numA = parseInt(a.replace('L-R', ''));
+                        const numB = parseInt(b.replace('L-R', ''));
+                        return numA - numB;
+                      });
+                      return sortedRounds.map((round, i) => {
+                        const pt = i >= 2 ? 'pt-10' : '';
+                        const gap = losersRounds[round].length <= 2 ? 'h-6' : undefined;
+                        return col(round, losersRounds[round], { pt, gap });
+                      });
+                    })()}
+                    {bracketMatches.lsf && (
                     <div className="w-44 flex-shrink-0 pt-14">
                       <div className="text-xs text-gray-500 text-center">L-Semi</div>
                       {renderMatch('lsf')}
                     </div>
+                    )}
                     <div className="w-44 flex-shrink-0 pt-14">
                       <div className="text-xs text-gray-500 text-center">L-Final</div>
                       {renderMatch('lf')}
