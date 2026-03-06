@@ -1083,14 +1083,32 @@
 
                       <h2 className="text-lg font-semibold text-red-400 mb-2">Losers Bracket</h2>
                       <div className="flex gap-3 pb-4 overflow-x-auto">
-                        {col('L-R1', ['lr1m1','lr1m2','lr1m3','lr1m4'])}
-                        {col('L-R2', ['lr2m1','lr2m2','lr2m3','lr2m4'])}
-                        {col('L-R3', ['lr3m1','lr3m2'], { pt: 'pt-10', gap: 'h-6' })}
-                        {col('L-R4', ['lr4m1','lr4m2'], { pt: 'pt-10', gap: 'h-6' })}
+                        {(() => {
+                          const losersRounds = {};
+                          Object.values(bracketMatches).forEach(m => {
+                            if (m.id === 'lsf' || m.id === 'lf' || m.id === 'gf' || m.id === 'gf2') return;
+                            if (!m.id.startsWith('lr')) return;
+                            const roundMatch = m.round.replace(' (bye)', '');
+                            if (!losersRounds[roundMatch]) losersRounds[roundMatch] = [];
+                            losersRounds[roundMatch].push(m.id);
+                          });
+                          const sortedRounds = Object.keys(losersRounds).sort((a, b) => {
+                            const numA = parseInt(a.replace('L-R', ''));
+                            const numB = parseInt(b.replace('L-R', ''));
+                            return numA - numB;
+                          });
+                          return sortedRounds.map((round, i) => {
+                            const pt = i >= 2 ? 'pt-10' : '';
+                            const gap = losersRounds[round].length <= 2 ? 'h-6' : undefined;
+                            return col(round, losersRounds[round], { pt, gap });
+                          });
+                        })()}
+                        {bracketMatches.lsf && (
                         <div className="w-44 flex-shrink-0 pt-14">
                           <div className="text-xs text-gray-500 text-center">L-Semi</div>
                           {renderMatch('lsf')}
                         </div>
+                        )}
                         <div className="w-44 flex-shrink-0 pt-14">
                           <div className="text-xs text-gray-500 text-center">L-Final</div>
                           {renderMatch('lf')}
