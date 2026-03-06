@@ -1,0 +1,1980 @@
+{
+  "teamCount": 16,
+  "rrGames": 3,
+  "rrPointTarget": 11,
+  "winnersCount": 8,
+  "teams": [
+    {
+      "p1Name": "Troy Clemmer",
+      "p1Dupr": "",
+      "p2Name": "Brandon Fritze",
+      "p2Dupr": "",
+      "p1Paid": true,
+      "p2Paid": true
+    },
+    {
+      "p1Name": "Garrison Eaby",
+      "p1Dupr": "",
+      "p2Name": "Michael Benash",
+      "p2Dupr": "",
+      "p1Paid": true,
+      "p2Paid": true
+    },
+    {
+      "p1Name": "Matt Meadows",
+      "p1Dupr": "",
+      "p2Name": "Matvey Radionov",
+      "p2Dupr": "",
+      "p1Paid": true,
+      "p2Paid": true
+    },
+    {
+      "p1Name": "Jack Hared",
+      "p1Dupr": "",
+      "p2Name": "Ram Kotnana",
+      "p2Dupr": "",
+      "p1Paid": true,
+      "p2Paid": true
+    },
+    {
+      "p1Name": "Jordan Denish",
+      "p1Dupr": "",
+      "p2Name": "Alex Tong",
+      "p2Dupr": "",
+      "p1Paid": true,
+      "p2Paid": true
+    },
+    {
+      "p1Name": "Alex Szczepkowski",
+      "p1Dupr": "",
+      "p2Name": "Jase Volz",
+      "p2Dupr": "",
+      "p1Paid": true,
+      "p2Paid": true
+    },
+    {
+      "p1Name": "Tyler Arsenault",
+      "p1Dupr": "",
+      "p2Name": "Zach Bowe",
+      "p2Dupr": "",
+      "p1Paid": true,
+      "p2Paid": true
+    },
+    {
+      "p1Name": "Bruno Casino Remondo",
+      "p1Dupr": "",
+      "p2Name": "Drew Von Bargen",
+      "p2Dupr": "",
+      "p1Paid": true,
+      "p2Paid": true
+    },
+    {
+      "p1Name": "Dylan Ashbach",
+      "p1Dupr": "",
+      "p2Name": "Steven Fernandez",
+      "p2Dupr": "",
+      "p1Paid": true,
+      "p2Paid": true
+    },
+    {
+      "p1Name": "Matt Korsak",
+      "p1Dupr": "",
+      "p2Name": "Cody Sadreameli",
+      "p2Dupr": "",
+      "p1Paid": true,
+      "p2Paid": true
+    },
+    {
+      "p1Name": "Brandon Fooks",
+      "p1Dupr": "",
+      "p2Name": "Kenoa Tio",
+      "p2Dupr": "",
+      "p2Paid": true,
+      "p1Paid": true
+    },
+    {
+      "p1Name": "Lukas Choi",
+      "p1Dupr": "",
+      "p2Name": "Zachary Lessner",
+      "p2Dupr": "",
+      "p2Paid": true,
+      "p1Paid": true
+    },
+    {
+      "p1Name": "Austin Keefer",
+      "p1Dupr": "",
+      "p2Name": "Mason McCabe",
+      "p2Dupr": "",
+      "p1Paid": true,
+      "p2Paid": true
+    },
+    {
+      "p1Name": "Kevin Herod",
+      "p1Dupr": "",
+      "p2Name": "Jameson Mays",
+      "p2Dupr": "",
+      "p2Paid": true
+    },
+    {
+      "p1Name": "Samuel Darla",
+      "p1Dupr": "",
+      "p2Name": "Ashwin Korde",
+      "p2Dupr": "",
+      "p2Paid": true,
+      "p1Paid": true
+    },
+    {
+      "p1Name": "Matthew Chen",
+      "p1Dupr": "",
+      "p2Name": "Johny Mario",
+      "p2Dupr": "",
+      "p2Paid": true
+    }
+  ],
+  "seedingScores": {
+    "g1m1": {
+      "s1": "11",
+      "s2": "3"
+    },
+    "g1m2": {
+      "s1": "11",
+      "s2": "1"
+    },
+    "g1m0": {
+      "s1": "11",
+      "s2": "3"
+    },
+    "g1m5": {
+      "s1": "11",
+      "s2": "3"
+    },
+    "g1m4": {
+      "s1": "11",
+      "s2": "5"
+    },
+    "g1m3": {
+      "s1": "6",
+      "s2": "11"
+    },
+    "g2m1": {
+      "s2": "11",
+      "s1": "2"
+    },
+    "g1m6": {
+      "s1": "11",
+      "s2": "5"
+    },
+    "g1m7": {
+      "s2": "13",
+      "s1": "11"
+    },
+    "g2m0": {
+      "s1": "12",
+      "s2": "10"
+    },
+    "g2m2": {
+      "s1": "11",
+      "s2": "4"
+    },
+    "g2m3": {
+      "s1": "4",
+      "s2": "11"
+    },
+    "g2m4": {
+      "s1": "11",
+      "s2": "6"
+    },
+    "g2m6": {
+      "s1": "11",
+      "s2": "2"
+    },
+    "g2m7": {
+      "s2": "11",
+      "s1": "9"
+    },
+    "g3m4": {
+      "s1": "11",
+      "s2": "1"
+    },
+    "g3m3": {
+      "s1": "11",
+      "s2": "6"
+    },
+    "g3m2": {
+      "s2": "2",
+      "s1": "11"
+    },
+    "g3m5": {
+      "s1": "11",
+      "s2": "1"
+    },
+    "g3m0": {
+      "s1": "13",
+      "s2": "11"
+    },
+    "g3m6": {
+      "s1": "11",
+      "s2": "2"
+    },
+    "g3m7": {
+      "s2": "7",
+      "s1": "11"
+    },
+    "g2m5": {
+      "s2": "11",
+      "s1": "8"
+    },
+    "g3m1": {
+      "s1": "11",
+      "s2": "3"
+    }
+  },
+  "bracketScores": {
+    "lr1m3": {
+      "t1": {
+        "seed": 11,
+        "name": "Brandon Fooks / Kenoa Tio",
+        "dupr": null,
+        "wins": 1,
+        "losses": 2,
+        "pf": 20,
+        "pa": 23,
+        "h2h": {
+          "3": {
+            "result": -1,
+            "pf": 6,
+            "pa": 11
+          },
+          "6": {
+            "result": -1,
+            "pf": 3,
+            "pa": 11
+          },
+          "14": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          }
+        },
+        "pool": 2
+      },
+      "t2": {
+        "seed": 15,
+        "name": "Samuel Darla / Ashwin Korde",
+        "dupr": null,
+        "wins": 0,
+        "losses": 3,
+        "pf": 11,
+        "pa": 33,
+        "h2h": {
+          "2": {
+            "result": -1,
+            "pf": 1,
+            "pa": 11
+          },
+          "7": {
+            "result": -1,
+            "pf": 4,
+            "pa": 11
+          },
+          "10": {
+            "result": -1,
+            "pf": 6,
+            "pa": 11
+          }
+        },
+        "pool": 1
+      },
+      "s1": "15",
+      "s2": "4"
+    },
+    "lr1m2": {
+      "t1": {
+        "seed": 5,
+        "name": "Jordan Denish / Alex Tong",
+        "dupr": null,
+        "wins": 1,
+        "losses": 2,
+        "pf": 24,
+        "pa": 33,
+        "h2h": {
+          "4": {
+            "result": -1,
+            "pf": 2,
+            "pa": 11
+          },
+          "12": {
+            "result": -1,
+            "pf": 11,
+            "pa": 13
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 9
+          }
+        },
+        "pool": 3
+      },
+      "t2": {
+        "seed": 13,
+        "name": "Austin Keefer / Mason McCabe",
+        "dupr": null,
+        "wins": 0,
+        "losses": 3,
+        "pf": 21,
+        "pa": 33,
+        "h2h": {
+          "4": {
+            "result": -1,
+            "pf": 5,
+            "pa": 11
+          },
+          "5": {
+            "result": -1,
+            "pf": 9,
+            "pa": 11
+          },
+          "12": {
+            "result": -1,
+            "pf": 7,
+            "pa": 11
+          }
+        },
+        "pool": 3
+      },
+      "s1": "15",
+      "s2": "6"
+    },
+    "lr1m4": {
+      "t1": {
+        "seed": 11,
+        "name": "#11 Seed",
+        "placeholder": true
+      },
+      "t2": {
+        "seed": 14,
+        "name": "#14 Seed",
+        "placeholder": true
+      },
+      "s1": "8",
+      "s2": "15"
+    },
+    "wqf3": {
+      "t1": {
+        "seed": 4,
+        "name": "Jack Hared / Ram Kotnana",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 9,
+        "h2h": {
+          "5": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "12": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 5
+          }
+        },
+        "pool": 3
+      },
+      "t2": {
+        "seed": 6,
+        "name": "Alex Szczepkowski / Jase Volz",
+        "dupr": null,
+        "wins": 2,
+        "losses": 1,
+        "pf": 23,
+        "pa": 22,
+        "h2h": {
+          "3": {
+            "result": -1,
+            "pf": 1,
+            "pa": 11
+          },
+          "11": {
+            "result": 1,
+            "pf": 11,
+            "pa": 3
+          },
+          "14": {
+            "result": 1,
+            "pf": 11,
+            "pa": 8
+          }
+        },
+        "pool": 2
+      },
+      "s1": "15",
+      "s2": "8"
+    },
+    "lr1m1": {
+      "t1": {
+        "seed": 9,
+        "name": "#9 Seed",
+        "placeholder": true
+      },
+      "t2": {
+        "seed": 16,
+        "name": "#16 Seed",
+        "placeholder": true
+      },
+      "s1": "15",
+      "s2": "7"
+    },
+    "wqf2": {
+      "t1": {
+        "seed": 1,
+        "name": "Troy Clemmer / Brandon Fritze",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 36,
+        "pa": 24,
+        "h2h": {
+          "8": {
+            "result": 1,
+            "pf": 13,
+            "pa": 11
+          },
+          "9": {
+            "result": 1,
+            "pf": 12,
+            "pa": 10
+          },
+          "16": {
+            "result": 1,
+            "pf": 11,
+            "pa": 3
+          }
+        },
+        "pool": 0
+      },
+      "t2": {
+        "seed": 10,
+        "name": "Matt Korsak / Cody Sadreameli",
+        "dupr": null,
+        "wins": 2,
+        "losses": 1,
+        "pf": 26,
+        "pa": 23,
+        "h2h": {
+          "2": {
+            "result": -1,
+            "pf": 4,
+            "pa": 11
+          },
+          "7": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          },
+          "15": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          }
+        },
+        "pool": 1
+      },
+      "s1": "15",
+      "s2": "8"
+    },
+    "wqf4": {
+      "t1": {
+        "seed": 3,
+        "name": "Matt Meadows / Matvey Radionov",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 12,
+        "h2h": {
+          "6": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          },
+          "11": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          },
+          "14": {
+            "result": 1,
+            "pf": 11,
+            "pa": 5
+          }
+        },
+        "pool": 2
+      },
+      "t2": {
+        "seed": 8,
+        "name": "Bruno Casino Remondo / Drew Von Bargen",
+        "dupr": null,
+        "wins": 2,
+        "losses": 1,
+        "pf": 33,
+        "pa": 18,
+        "h2h": {
+          "1": {
+            "result": -1,
+            "pf": 11,
+            "pa": 13
+          },
+          "9": {
+            "result": 1,
+            "pf": 11,
+            "pa": 3
+          },
+          "16": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          }
+        },
+        "pool": 0
+      },
+      "s1": "15",
+      "s2": "13"
+    },
+    "wqf1": {
+      "t1": {
+        "seed": 2,
+        "name": "Garrison Eaby / Michael Benash",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 7,
+        "h2h": {
+          "7": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "10": {
+            "result": 1,
+            "pf": 11,
+            "pa": 4
+          },
+          "15": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          }
+        },
+        "pool": 1
+      },
+      "t2": {
+        "seed": 12,
+        "name": "Lukas Choi / Zachary Lessner",
+        "dupr": null,
+        "wins": 2,
+        "losses": 1,
+        "pf": 26,
+        "pa": 29,
+        "h2h": {
+          "4": {
+            "result": -1,
+            "pf": 2,
+            "pa": 11
+          },
+          "5": {
+            "result": 1,
+            "pf": 13,
+            "pa": 11
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 7
+          }
+        },
+        "pool": 3
+      },
+      "s1": "15",
+      "s2": "1"
+    },
+    "wsf2": {
+      "t1": {
+        "seed": 4,
+        "name": "Jack Hared / Ram Kotnana",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 9,
+        "h2h": {
+          "5": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "12": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 5
+          }
+        },
+        "pool": 3
+      },
+      "t2": {
+        "seed": 3,
+        "name": "Matt Meadows / Matvey Radionov",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 12,
+        "h2h": {
+          "6": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          },
+          "11": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          },
+          "14": {
+            "result": 1,
+            "pf": 11,
+            "pa": 5
+          }
+        },
+        "pool": 2
+      },
+      "s1": "15",
+      "s2": "12"
+    },
+    "lr2m2": {
+      "t1": {
+        "seed": 5,
+        "name": "Jordan Denish / Alex Tong",
+        "dupr": null,
+        "wins": 1,
+        "losses": 2,
+        "pf": 24,
+        "pa": 33,
+        "h2h": {
+          "4": {
+            "result": -1,
+            "pf": 2,
+            "pa": 11
+          },
+          "12": {
+            "result": -1,
+            "pf": 11,
+            "pa": 13
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 9
+          }
+        },
+        "pool": 3
+      },
+      "t2": {
+        "seed": 8,
+        "name": "Bruno Casino Remondo / Drew Von Bargen",
+        "dupr": null,
+        "wins": 2,
+        "losses": 1,
+        "pf": 33,
+        "pa": 18,
+        "h2h": {
+          "1": {
+            "result": -1,
+            "pf": 11,
+            "pa": 13
+          },
+          "9": {
+            "result": 1,
+            "pf": 11,
+            "pa": 3
+          },
+          "16": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          }
+        },
+        "pool": 0
+      },
+      "s1": "15",
+      "s2": "13"
+    },
+    "lr2m1": {
+      "t1": {
+        "seed": 9,
+        "name": "#9 Seed",
+        "placeholder": true
+      },
+      "t2": {
+        "seed": 7,
+        "name": "#7 Seed",
+        "placeholder": true
+      },
+      "s1": "15",
+      "s2": "8"
+    },
+    "wsf1": {
+      "t1": {
+        "seed": 2,
+        "name": "Garrison Eaby / Michael Benash",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 7,
+        "h2h": {
+          "7": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "10": {
+            "result": 1,
+            "pf": 11,
+            "pa": 4
+          },
+          "15": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          }
+        },
+        "pool": 1
+      },
+      "t2": {
+        "seed": 1,
+        "name": "Troy Clemmer / Brandon Fritze",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 36,
+        "pa": 24,
+        "h2h": {
+          "8": {
+            "result": 1,
+            "pf": 13,
+            "pa": 11
+          },
+          "9": {
+            "result": 1,
+            "pf": 12,
+            "pa": 10
+          },
+          "16": {
+            "result": 1,
+            "pf": 11,
+            "pa": 3
+          }
+        },
+        "pool": 0
+      },
+      "s1": "16",
+      "s2": "14"
+    },
+    "lr2m4": {
+      "t1": {
+        "seed": 14,
+        "name": "Kevin Herod / Jameson Mays",
+        "dupr": null,
+        "wins": 0,
+        "losses": 3,
+        "pf": 14,
+        "pa": 33,
+        "h2h": {
+          "3": {
+            "result": -1,
+            "pf": 5,
+            "pa": 11
+          },
+          "6": {
+            "result": -1,
+            "pf": 8,
+            "pa": 11
+          },
+          "11": {
+            "result": -1,
+            "pf": 1,
+            "pa": 11
+          }
+        },
+        "pool": 2
+      },
+      "t2": {
+        "seed": 10,
+        "name": "Matt Korsak / Cody Sadreameli",
+        "dupr": null,
+        "wins": 2,
+        "losses": 1,
+        "pf": 26,
+        "pa": 23,
+        "h2h": {
+          "2": {
+            "result": -1,
+            "pf": 4,
+            "pa": 11
+          },
+          "7": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          },
+          "15": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          }
+        },
+        "pool": 1
+      },
+      "s1": "14",
+      "s2": "16"
+    },
+    "lr2m3": {
+      "t1": {
+        "seed": 11,
+        "name": "Brandon Fooks / Kenoa Tio",
+        "dupr": null,
+        "wins": 1,
+        "losses": 2,
+        "pf": 20,
+        "pa": 23,
+        "h2h": {
+          "3": {
+            "result": -1,
+            "pf": 6,
+            "pa": 11
+          },
+          "6": {
+            "result": -1,
+            "pf": 3,
+            "pa": 11
+          },
+          "14": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          }
+        },
+        "pool": 2
+      },
+      "t2": {
+        "seed": 12,
+        "name": "Lukas Choi / Zachary Lessner",
+        "dupr": null,
+        "wins": 2,
+        "losses": 1,
+        "pf": 26,
+        "pa": 29,
+        "h2h": {
+          "4": {
+            "result": -1,
+            "pf": 2,
+            "pa": 11
+          },
+          "5": {
+            "result": 1,
+            "pf": 13,
+            "pa": 11
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 7
+          }
+        },
+        "pool": 3
+      },
+      "s1": "10",
+      "s2": "15"
+    },
+    "lr3m1": {
+      "t1": {
+        "seed": 9,
+        "name": "Dylan Ashbach / Steven Fernandez",
+        "dupr": null,
+        "wins": 1,
+        "losses": 2,
+        "pf": 24,
+        "pa": 26,
+        "h2h": {
+          "1": {
+            "result": -1,
+            "pf": 10,
+            "pa": 12
+          },
+          "8": {
+            "result": -1,
+            "pf": 3,
+            "pa": 11
+          },
+          "16": {
+            "result": 1,
+            "pf": 11,
+            "pa": 3
+          }
+        },
+        "pool": 0
+      },
+      "t2": {
+        "seed": 5,
+        "name": "Jordan Denish / Alex Tong",
+        "dupr": null,
+        "wins": 1,
+        "losses": 2,
+        "pf": 24,
+        "pa": 33,
+        "h2h": {
+          "4": {
+            "result": -1,
+            "pf": 2,
+            "pa": 11
+          },
+          "12": {
+            "result": -1,
+            "pf": 11,
+            "pa": 13
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 9
+          }
+        },
+        "pool": 3
+      },
+      "s1": "13",
+      "s2": "15"
+    },
+    "lr4m1": {
+      "t1": {
+        "seed": 5,
+        "name": "Jordan Denish / Alex Tong",
+        "dupr": null,
+        "wins": 1,
+        "losses": 2,
+        "pf": 24,
+        "pa": 33,
+        "h2h": {
+          "4": {
+            "result": -1,
+            "pf": 2,
+            "pa": 11
+          },
+          "12": {
+            "result": -1,
+            "pf": 11,
+            "pa": 13
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 9
+          }
+        },
+        "pool": 3
+      },
+      "t2": {
+        "seed": 1,
+        "name": "Troy Clemmer / Brandon Fritze",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 36,
+        "pa": 24,
+        "h2h": {
+          "8": {
+            "result": 1,
+            "pf": 13,
+            "pa": 11
+          },
+          "9": {
+            "result": 1,
+            "pf": 12,
+            "pa": 10
+          },
+          "16": {
+            "result": 1,
+            "pf": 11,
+            "pa": 3
+          }
+        },
+        "pool": 0
+      },
+      "s1": "9",
+      "s2": "15"
+    },
+    "wf": {
+      "t1": {
+        "seed": 2,
+        "name": "Garrison Eaby / Michael Benash",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 7,
+        "h2h": {
+          "7": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "10": {
+            "result": 1,
+            "pf": 11,
+            "pa": 4
+          },
+          "15": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          }
+        },
+        "pool": 1
+      },
+      "t2": {
+        "seed": 4,
+        "name": "Jack Hared / Ram Kotnana",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 9,
+        "h2h": {
+          "5": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "12": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 5
+          }
+        },
+        "pool": 3
+      },
+      "games": [
+        {
+          "s1": "3",
+          "s2": "11"
+        },
+        {
+          "s1": "9",
+          "s2": "11"
+        }
+      ]
+    },
+    "lr3m2": {
+      "t1": {
+        "seed": 12,
+        "name": "Lukas Choi / Zachary Lessner",
+        "dupr": null,
+        "wins": 2,
+        "losses": 1,
+        "pf": 26,
+        "pa": 29,
+        "h2h": {
+          "4": {
+            "result": -1,
+            "pf": 2,
+            "pa": 11
+          },
+          "5": {
+            "result": 1,
+            "pf": 13,
+            "pa": 11
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 7
+          }
+        },
+        "pool": 3
+      },
+      "t2": {
+        "seed": 10,
+        "name": "Matt Korsak / Cody Sadreameli",
+        "dupr": null,
+        "wins": 2,
+        "losses": 1,
+        "pf": 26,
+        "pa": 23,
+        "h2h": {
+          "2": {
+            "result": -1,
+            "pf": 4,
+            "pa": 11
+          },
+          "7": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          },
+          "15": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          }
+        },
+        "pool": 1
+      },
+      "s1": "9",
+      "s2": "15"
+    },
+    "lr4m2": {
+      "t1": {
+        "seed": 5,
+        "name": "#5 Seed",
+        "placeholder": true
+      },
+      "t2": {
+        "seed": 3,
+        "name": "#3 Seed",
+        "placeholder": true
+      },
+      "s1": "11",
+      "s2": "15"
+    },
+    "lsf": {
+      "t1": {
+        "seed": 1,
+        "name": "Troy Clemmer / Brandon Fritze",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 36,
+        "pa": 24,
+        "h2h": {
+          "8": {
+            "result": 1,
+            "pf": 13,
+            "pa": 11
+          },
+          "9": {
+            "result": 1,
+            "pf": 12,
+            "pa": 10
+          },
+          "16": {
+            "result": 1,
+            "pf": 11,
+            "pa": 3
+          }
+        },
+        "pool": 0
+      },
+      "t2": {
+        "seed": 3,
+        "name": "Matt Meadows / Matvey Radionov",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 12,
+        "h2h": {
+          "6": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          },
+          "11": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          },
+          "14": {
+            "result": 1,
+            "pf": 11,
+            "pa": 5
+          }
+        },
+        "pool": 2
+      },
+      "s1": "8",
+      "s2": "15"
+    },
+    "lf": {
+      "t1": {
+        "seed": 3,
+        "name": "Matt Meadows / Matvey Radionov",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 12,
+        "h2h": {
+          "6": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          },
+          "11": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          },
+          "14": {
+            "result": 1,
+            "pf": 11,
+            "pa": 5
+          }
+        },
+        "pool": 2
+      },
+      "t2": {
+        "seed": 2,
+        "name": "Garrison Eaby / Michael Benash",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 7,
+        "h2h": {
+          "7": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "10": {
+            "result": 1,
+            "pf": 11,
+            "pa": 4
+          },
+          "15": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          }
+        },
+        "pool": 1
+      },
+      "s1": "15",
+      "s2": "10"
+    },
+    "gf": {
+      "t1": {
+        "seed": 4,
+        "name": "Jack Hared / Ram Kotnana",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 9,
+        "h2h": {
+          "5": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "12": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 5
+          }
+        },
+        "pool": 3
+      },
+      "t2": {
+        "seed": 3,
+        "name": "Matt Meadows / Matvey Radionov",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 12,
+        "h2h": {
+          "6": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          },
+          "11": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          },
+          "14": {
+            "result": 1,
+            "pf": 11,
+            "pa": 5
+          }
+        },
+        "pool": 2
+      },
+      "games": [
+        {
+          "s1": "11",
+          "s2": "4"
+        },
+        {
+          "s1": "9",
+          "s2": "11"
+        },
+        {
+          "s1": "1",
+          "s2": "11"
+        }
+      ]
+    },
+    "gf2": {
+      "t1": {
+        "seed": 4,
+        "name": "Jack Hared / Ram Kotnana",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 9,
+        "h2h": {
+          "5": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "12": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 5
+          }
+        },
+        "pool": 3
+      },
+      "t2": {
+        "seed": 3,
+        "name": "Matt Meadows / Matvey Radionov",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 12,
+        "h2h": {
+          "6": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          },
+          "11": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          },
+          "14": {
+            "result": 1,
+            "pf": 11,
+            "pa": 5
+          }
+        },
+        "pool": 2
+      },
+      "s1": "7",
+      "s2": "15"
+    }
+  },
+  "bracketOverrides": {},
+  "matchupsGenerated": true,
+  "rrMatchups": [
+    [
+      {
+        "t1": 0,
+        "t2": 15
+      },
+      {
+        "t1": 7,
+        "t2": 8
+      },
+      {
+        "t1": 1,
+        "t2": 14
+      },
+      {
+        "t1": 6,
+        "t2": 9
+      },
+      {
+        "t1": 2,
+        "t2": 13
+      },
+      {
+        "t1": 5,
+        "t2": 10
+      },
+      {
+        "t1": 3,
+        "t2": 12
+      },
+      {
+        "t1": 4,
+        "t2": 11
+      }
+    ],
+    [
+      {
+        "t1": 0,
+        "t2": 8
+      },
+      {
+        "t1": 15,
+        "t2": 7
+      },
+      {
+        "t1": 1,
+        "t2": 9
+      },
+      {
+        "t1": 14,
+        "t2": 6
+      },
+      {
+        "t1": 2,
+        "t2": 10
+      },
+      {
+        "t1": 13,
+        "t2": 5
+      },
+      {
+        "t1": 3,
+        "t2": 11
+      },
+      {
+        "t1": 12,
+        "t2": 4
+      }
+    ],
+    [
+      {
+        "t1": 0,
+        "t2": 7
+      },
+      {
+        "t1": 8,
+        "t2": 15
+      },
+      {
+        "t1": 1,
+        "t2": 6
+      },
+      {
+        "t1": 9,
+        "t2": 14
+      },
+      {
+        "t1": 2,
+        "t2": 5
+      },
+      {
+        "t1": 10,
+        "t2": 13
+      },
+      {
+        "t1": 3,
+        "t2": 4
+      },
+      {
+        "t1": 11,
+        "t2": 12
+      }
+    ]
+  ],
+  "pools": {
+    "0": 0,
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 3,
+    "5": 2,
+    "6": 1,
+    "7": 0,
+    "8": 0,
+    "9": 1,
+    "10": 2,
+    "11": 3,
+    "12": 3,
+    "13": 2,
+    "14": 1,
+    "15": 0
+  },
+  "onCourt": {},
+  "bracketSeedOverride": {
+    "winners": [
+      {
+        "seed": 2,
+        "name": "Garrison Eaby / Michael Benash",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 7,
+        "h2h": {
+          "7": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "10": {
+            "result": 1,
+            "pf": 11,
+            "pa": 4
+          },
+          "15": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          }
+        },
+        "pool": 1
+      },
+      {
+        "seed": 4,
+        "name": "Jack Hared / Ram Kotnana",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 9,
+        "h2h": {
+          "5": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "12": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 5
+          }
+        },
+        "pool": 3
+      },
+      {
+        "seed": 3,
+        "name": "Matt Meadows / Matvey Radionov",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 33,
+        "pa": 12,
+        "h2h": {
+          "6": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          },
+          "11": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          },
+          "14": {
+            "result": 1,
+            "pf": 11,
+            "pa": 5
+          }
+        },
+        "pool": 2
+      },
+      {
+        "seed": 1,
+        "name": "Troy Clemmer / Brandon Fritze",
+        "dupr": null,
+        "wins": 3,
+        "losses": 0,
+        "pf": 36,
+        "pa": 24,
+        "h2h": {
+          "8": {
+            "result": 1,
+            "pf": 13,
+            "pa": 11
+          },
+          "9": {
+            "result": 1,
+            "pf": 12,
+            "pa": 10
+          },
+          "16": {
+            "result": 1,
+            "pf": 11,
+            "pa": 3
+          }
+        },
+        "pool": 0
+      },
+      {
+        "seed": 10,
+        "name": "Matt Korsak / Cody Sadreameli",
+        "dupr": null,
+        "wins": 2,
+        "losses": 1,
+        "pf": 26,
+        "pa": 23,
+        "h2h": {
+          "2": {
+            "result": -1,
+            "pf": 4,
+            "pa": 11
+          },
+          "7": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          },
+          "15": {
+            "result": 1,
+            "pf": 11,
+            "pa": 6
+          }
+        },
+        "pool": 1
+      },
+      {
+        "seed": 8,
+        "name": "Bruno Casino Remondo / Drew Von Bargen",
+        "dupr": null,
+        "wins": 2,
+        "losses": 1,
+        "pf": 33,
+        "pa": 18,
+        "h2h": {
+          "1": {
+            "result": -1,
+            "pf": 11,
+            "pa": 13
+          },
+          "9": {
+            "result": 1,
+            "pf": 11,
+            "pa": 3
+          },
+          "16": {
+            "result": 1,
+            "pf": 11,
+            "pa": 2
+          }
+        },
+        "pool": 0
+      },
+      {
+        "seed": 6,
+        "name": "Alex Szczepkowski / Jase Volz",
+        "dupr": null,
+        "wins": 2,
+        "losses": 1,
+        "pf": 23,
+        "pa": 22,
+        "h2h": {
+          "3": {
+            "result": -1,
+            "pf": 1,
+            "pa": 11
+          },
+          "11": {
+            "result": 1,
+            "pf": 11,
+            "pa": 3
+          },
+          "14": {
+            "result": 1,
+            "pf": 11,
+            "pa": 8
+          }
+        },
+        "pool": 2
+      },
+      {
+        "seed": 12,
+        "name": "Lukas Choi / Zachary Lessner",
+        "dupr": null,
+        "wins": 2,
+        "losses": 1,
+        "pf": 26,
+        "pa": 29,
+        "h2h": {
+          "4": {
+            "result": -1,
+            "pf": 2,
+            "pa": 11
+          },
+          "5": {
+            "result": 1,
+            "pf": 13,
+            "pa": 11
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 7
+          }
+        },
+        "pool": 3
+      }
+    ],
+    "losers": [
+      {
+        "seed": 9,
+        "name": "Dylan Ashbach / Steven Fernandez",
+        "dupr": null,
+        "wins": 1,
+        "losses": 2,
+        "pf": 24,
+        "pa": 26,
+        "h2h": {
+          "1": {
+            "result": -1,
+            "pf": 10,
+            "pa": 12
+          },
+          "8": {
+            "result": -1,
+            "pf": 3,
+            "pa": 11
+          },
+          "16": {
+            "result": 1,
+            "pf": 11,
+            "pa": 3
+          }
+        },
+        "pool": 0
+      },
+      {
+        "seed": 11,
+        "name": "Brandon Fooks / Kenoa Tio",
+        "dupr": null,
+        "wins": 1,
+        "losses": 2,
+        "pf": 20,
+        "pa": 23,
+        "h2h": {
+          "3": {
+            "result": -1,
+            "pf": 6,
+            "pa": 11
+          },
+          "6": {
+            "result": -1,
+            "pf": 3,
+            "pa": 11
+          },
+          "14": {
+            "result": 1,
+            "pf": 11,
+            "pa": 1
+          }
+        },
+        "pool": 2
+      },
+      {
+        "seed": 7,
+        "name": "Tyler Arsenault / Zach Bowe",
+        "dupr": null,
+        "wins": 1,
+        "losses": 2,
+        "pf": 19,
+        "pa": 26,
+        "h2h": {
+          "2": {
+            "result": -1,
+            "pf": 2,
+            "pa": 11
+          },
+          "10": {
+            "result": -1,
+            "pf": 6,
+            "pa": 11
+          },
+          "15": {
+            "result": 1,
+            "pf": 11,
+            "pa": 4
+          }
+        },
+        "pool": 1
+      },
+      {
+        "seed": 5,
+        "name": "Jordan Denish / Alex Tong",
+        "dupr": null,
+        "wins": 1,
+        "losses": 2,
+        "pf": 24,
+        "pa": 33,
+        "h2h": {
+          "4": {
+            "result": -1,
+            "pf": 2,
+            "pa": 11
+          },
+          "12": {
+            "result": -1,
+            "pf": 11,
+            "pa": 13
+          },
+          "13": {
+            "result": 1,
+            "pf": 11,
+            "pa": 9
+          }
+        },
+        "pool": 3
+      },
+      {
+        "seed": 13,
+        "name": "Austin Keefer / Mason McCabe",
+        "dupr": null,
+        "wins": 0,
+        "losses": 3,
+        "pf": 21,
+        "pa": 33,
+        "h2h": {
+          "4": {
+            "result": -1,
+            "pf": 5,
+            "pa": 11
+          },
+          "5": {
+            "result": -1,
+            "pf": 9,
+            "pa": 11
+          },
+          "12": {
+            "result": -1,
+            "pf": 7,
+            "pa": 11
+          }
+        },
+        "pool": 3
+      },
+      {
+        "seed": 14,
+        "name": "Kevin Herod / Jameson Mays",
+        "dupr": null,
+        "wins": 0,
+        "losses": 3,
+        "pf": 14,
+        "pa": 33,
+        "h2h": {
+          "3": {
+            "result": -1,
+            "pf": 5,
+            "pa": 11
+          },
+          "6": {
+            "result": -1,
+            "pf": 8,
+            "pa": 11
+          },
+          "11": {
+            "result": -1,
+            "pf": 1,
+            "pa": 11
+          }
+        },
+        "pool": 2
+      },
+      {
+        "seed": 15,
+        "name": "Samuel Darla / Ashwin Korde",
+        "dupr": null,
+        "wins": 0,
+        "losses": 3,
+        "pf": 11,
+        "pa": 33,
+        "h2h": {
+          "2": {
+            "result": -1,
+            "pf": 1,
+            "pa": 11
+          },
+          "7": {
+            "result": -1,
+            "pf": 4,
+            "pa": 11
+          },
+          "10": {
+            "result": -1,
+            "pf": 6,
+            "pa": 11
+          }
+        },
+        "pool": 1
+      },
+      {
+        "seed": 16,
+        "name": "Matthew Chen / Johny Mario",
+        "dupr": null,
+        "wins": 0,
+        "losses": 3,
+        "pf": 8,
+        "pa": 33,
+        "h2h": {
+          "1": {
+            "result": -1,
+            "pf": 3,
+            "pa": 11
+          },
+          "8": {
+            "result": -1,
+            "pf": 2,
+            "pa": 11
+          },
+          "9": {
+            "result": -1,
+            "pf": 3,
+            "pa": 11
+          }
+        },
+        "pool": 0
+      }
+    ]
+  },
+  "bracketType": "double",
+  "bo3Finals": true,
+  "poolSize": 4,
+  "courtCount": 8,
+  "npointId": "03e278b07afb818ff144"
+}
