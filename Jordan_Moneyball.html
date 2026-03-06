@@ -631,11 +631,16 @@
           return;
         }
 
-        // Try localStorage first (user's latest saved state)
+        // Try localStorage first, but skip if preloaded team count changed
         const saved = localStorage.getItem(`moneyball_${id}`);
         if (saved) {
           try {
             const data = JSON.parse(saved);
+            // If preloaded teams exist and count differs from saved, prefer preloaded (roster changed)
+            if (tournament.preloadedTeams && data.teamCount !== tournament.preloadedTeams.length) {
+              localStorage.removeItem(`moneyball_${id}`);
+              throw new Error('Team count mismatch, reloading preloaded teams');
+            }
             // Use loadProgress-style restoration
             if (data.teamCount) setTeamCount(data.teamCount);
             if (data.rrGames) setRrGames(data.rrGames);
@@ -2068,6 +2073,14 @@
         setTimeout(() => setQuickSaveStatus(''), 1500);
       }, [getSaveData, activeTournamentId]);
 
+      // Reset tournament: clear localStorage and reload from preloaded teams or embedded state
+      const resetTournament = useCallback(() => {
+        if (!activeTournamentId) return;
+        if (!confirm('Reset this tournament? This clears all locally saved progress and reloads the default state.')) return;
+        localStorage.removeItem(`moneyball_${activeTournamentId}`);
+        loadTournament(activeTournamentId);
+      }, [activeTournamentId, loadTournament]);
+
       // Auto-save to localStorage whenever tournament state changes
       // Skip auto-save for completed tournaments unless in edit mode
       const isCompletedTournament = activeTournamentId && TOURNAMENTS.find(t => t.id === activeTournamentId)?.status === 'completed';
@@ -2455,6 +2468,15 @@
                     {quickSaveStatus === 'saved' ? 'Saved!' : 'Quick Save'}
                   </button>
                 )}
+                {activeTournamentId && (
+                  <button
+                    onClick={resetTournament}
+                    title="Clear locally saved data and reload default teams/state"
+                    className="text-xs px-2 py-1 rounded bg-red-900 hover:bg-red-800 text-red-200"
+                  >
+                    Reset
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -2484,8 +2506,8 @@
 
           {!spectatorMode && (
             <div className="flex justify-center gap-2 mb-2 flex-wrap">
-              <button onClick={saveProgress} className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600">💾 Save</button>
-              <label className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600 cursor-pointer">
+              <button onClick={saveProgress} title="Download tournament state as a JSON file for backup" className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600">💾 Save</button>
+              <label title="Load tournament state from a saved JSON file" className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600 cursor-pointer">
                 📂 Load
                 <input type="file" accept=".json" className="hidden" onChange={loadProgress} />
               </label>
@@ -2846,7 +2868,7 @@
                       </div>
                     )}
                   </div>
-                  <button onClick={generateRandomMatchups} className="w-full bg-yellow-600 hover:bg-yellow-500 py-2 rounded font-semibold mb-2">
+                  <button onClick={generateRandomMatchups} title="Generate random round robin matchups with repeat-avoidance" className="w-full bg-yellow-600 hover:bg-yellow-500 py-2 rounded font-semibold mb-2">
                     🎲 Randomize Matchups
                   </button>
                   {matchupsGenerated && (
@@ -2863,7 +2885,7 @@
             <div className="max-w-6xl mx-auto">
               <div className="flex justify-between items-center mb-2">
                 <h2 className="text-xl font-semibold">Round Robin ({teamCount} teams, {seedingMatches.length} games to {rrPointTarget})</h2>
-                {!spectatorMode && <button onClick={generateFakeSeedingScores} className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>}
+                {!spectatorMode && <button onClick={generateFakeSeedingScores} title="Generate fake scores based on seeding for testing" className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>}
               </div>
               {!spectatorMode && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} onCourt={onCourt} />}
 
@@ -3160,7 +3182,7 @@
                 <h2 className="text-lg font-semibold text-blue-400">{bracketType === 'single' ? 'Single Elimination' : 'Winners Bracket'}</h2>
                 {!spectatorMode && !bracketPreview && (
                   <div className="flex items-center gap-3">
-                    <button onClick={generateFakeBracketScores} className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>
+                    <button onClick={generateFakeBracketScores} title="Generate fake bracket scores based on seeding for testing" className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>
                     <label className="text-xs text-gray-500 flex items-center gap-1">
                       <input type="checkbox" checked={showOverride} onChange={(e) => setShowOverride(e.target.checked)} />
                       Override
