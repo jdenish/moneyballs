@@ -1150,50 +1150,76 @@
           }
           setRrMatchups([shuffle(g1), shuffle(g2)]);
         } else {
-          // 3+ games: sum-balanced random matchups
-          // Each team's opponents should sum to roughly the same value
-          // Seeds are 0-indexed internally, so opponent "strength" = index
-          const allTeams = Array.from({ length: teamCount }, (_, i) => i);
-          const targetSum = (teamCount - 1) / 2 * rrGames; // avg opponent seed × numGames
-          const tolerance = 3;
+          // 3+ games: sum-balanced matchups
+          // Use fold pairing: pair seed i with seed (n-1-i) each round,
+          // rotating assignments so no repeats and sums stay balanced
+          const n = teamCount;
+          const allTeams = Array.from({ length: n }, (_, i) => i);
 
-          const generateBalanced = () => {
-            const opponents = {};
-            allTeams.forEach(t => opponents[t] = []);
-            const rounds = [];
+          // Generate all possible fold-paired rounds using circle method
+          const teams = [...allTeams];
+          if (n % 2 === 1) teams.push(-1); // dummy for odd count
+          const numSlots = teams.length;
+          const fixed = teams[0];
+          const rotating = teams.slice(1);
+          const allRounds = [];
 
-            for (let round = 0; round < rrGames; round++) {
-              const available = shuffle([...allTeams]);
-              const roundMatches = [];
-
-              while (available.length >= 2) {
-                const t1 = available.shift();
-                let t2Idx = available.findIndex(t => !opponents[t1].includes(t));
-                if (t2Idx === -1) t2Idx = 0;
-                const t2 = available.splice(t2Idx, 1)[0];
-
-                opponents[t1].push(t2);
-                opponents[t2].push(t1);
+          for (let r = 0; r < numSlots - 1; r++) {
+            const current = [fixed, ...rotating];
+            const roundMatches = [];
+            for (let i = 0; i < numSlots / 2; i++) {
+              const t1 = current[i];
+              const t2 = current[numSlots - 1 - i];
+              if (t1 !== -1 && t2 !== -1) {
                 roundMatches.push({ t1, t2 });
               }
-
-              rounds.push(roundMatches);
             }
-
-            // Check balance: each team's opponent sum should be near target
-            const sums = allTeams.map(t => opponents[t].reduce((a, b) => a + b, 0));
-            const maxDev = Math.max(...sums.map(s => Math.abs(s - targetSum)));
-            return { rounds, maxDev };
-          };
-
-          // Try up to 200 times to find a balanced schedule
-          let best = generateBalanced();
-          for (let attempt = 0; attempt < 200 && best.maxDev > tolerance; attempt++) {
-            const candidate = generateBalanced();
-            if (candidate.maxDev < best.maxDev) best = candidate;
+            allRounds.push(roundMatches);
+            rotating.unshift(rotating.pop());
           }
 
-          setRrMatchups(best.rounds);
+          // Pick the best rrGames rounds by trying all combinations
+          // and selecting the set with the most balanced opponent sums
+          const scoreCombination = (indices) => {
+            const sums = new Array(n).fill(0);
+            for (const idx of indices) {
+              for (const { t1, t2 } of allRounds[idx]) {
+                sums[t1] += t2 + 1; // 1-indexed for display
+                sums[t2] += t1 + 1;
+              }
+            }
+            const avg = sums.reduce((a, b) => a + b, 0) / n;
+            return Math.max(...sums.map(s => Math.abs(s - avg)));
+          };
+
+          // For small round counts, try all combos; otherwise sample
+          const totalRounds = allRounds.length;
+          let bestIndices = Array.from({ length: rrGames }, (_, i) => i);
+          let bestScore = scoreCombination(bestIndices);
+
+          if (totalRounds <= 13) {
+            // Try all C(totalRounds, rrGames) combinations
+            const combo = (start, remaining, current) => {
+              if (remaining === 0) {
+                const score = scoreCombination(current);
+                if (score < bestScore) {
+                  bestScore = score;
+                  bestIndices = [...current];
+                }
+                return;
+              }
+              for (let i = start; i <= totalRounds - remaining; i++) {
+                current.push(i);
+                combo(i + 1, remaining - 1, current);
+                current.pop();
+              }
+            };
+            combo(0, rrGames, []);
+          }
+
+          // Build final rounds from best indices, shuffle match order
+          const rounds = bestIndices.map(idx => shuffle([...allRounds[idx]]));
+          setRrMatchups(rounds);
         }
 
         setMatchupsGenerated(true);
