@@ -2474,7 +2474,7 @@
                     title="Clear locally saved data and reload default teams/state"
                     className="text-xs px-2 py-1 rounded bg-red-900 hover:bg-red-800 text-red-200"
                   >
-                    Reset
+                    Clear Cache
                   </button>
                 )}
               </div>
@@ -2868,8 +2868,8 @@
                       </div>
                     )}
                   </div>
-                  <button onClick={generateRandomMatchups} title="Generate random round robin matchups with repeat-avoidance" className="w-full bg-yellow-600 hover:bg-yellow-500 py-2 rounded font-semibold mb-2">
-                    🎲 Randomize Matchups
+                  <button onClick={generateRandomMatchups} title={Object.keys(pools).length > 0 ? "Generate intra-pool round robin matchups" : "Generate random matchups with repeat-avoidance"} className="w-full bg-yellow-600 hover:bg-yellow-500 py-2 rounded font-semibold mb-2">
+                    🎲 Generate Matchups
                   </button>
                   {matchupsGenerated && (
                     <button onClick={() => setPhase(rrGames === 0 && poolSize === 0 ? 'bracket' : 'roundrobin')} className="w-full bg-blue-600 py-2 rounded font-semibold">
