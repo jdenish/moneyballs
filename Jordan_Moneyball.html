@@ -2813,10 +2813,10 @@
                         : 'Double elimination — losers get a second chance'}
                     </div>
                   </div>
-                  {bracketType === 'double' && (
+                  {(
                     <div className="bg-gray-800 rounded p-3 mb-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Winners Bracket Size:</span>
+                        <span className="text-sm">{bracketType === 'double' ? 'Winners Bracket Size:' : 'Bracket Size:'}</span>
                         <div className="flex items-center gap-2">
                           <select
                             value={winnersCount}
