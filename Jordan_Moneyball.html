@@ -1149,31 +1149,50 @@
           }
           setRrMatchups([shuffle(g1), shuffle(g2)]);
         } else {
-          // 3-7 games: random with repeat-avoidance
+          // 3+ games: sum-balanced random matchups
+          // Each team's opponents should sum to roughly the same value
+          // Seeds are 0-indexed internally, so opponent "strength" = index
           const allTeams = Array.from({ length: teamCount }, (_, i) => i);
-          const opponents = {};
-          allTeams.forEach(t => opponents[t] = []);
-          const rounds = [];
+          const targetSum = (teamCount - 1) / 2 * rrGames; // avg opponent seed × numGames
+          const tolerance = 3;
 
-          for (let round = 0; round < rrGames; round++) {
-            const available = shuffle([...allTeams]);
-            const roundMatches = [];
+          const generateBalanced = () => {
+            const opponents = {};
+            allTeams.forEach(t => opponents[t] = []);
+            const rounds = [];
 
-            while (available.length >= 2) {
-              const t1 = available.shift();
-              let t2Idx = available.findIndex(t => !opponents[t1].includes(t));
-              if (t2Idx === -1) t2Idx = 0; // Allow repeat if no fresh opponent
-              const t2 = available.splice(t2Idx, 1)[0];
+            for (let round = 0; round < rrGames; round++) {
+              const available = shuffle([...allTeams]);
+              const roundMatches = [];
 
-              opponents[t1].push(t2);
-              opponents[t2].push(t1);
-              roundMatches.push({ t1, t2 });
+              while (available.length >= 2) {
+                const t1 = available.shift();
+                let t2Idx = available.findIndex(t => !opponents[t1].includes(t));
+                if (t2Idx === -1) t2Idx = 0;
+                const t2 = available.splice(t2Idx, 1)[0];
+
+                opponents[t1].push(t2);
+                opponents[t2].push(t1);
+                roundMatches.push({ t1, t2 });
+              }
+
+              rounds.push(roundMatches);
             }
 
-            rounds.push(roundMatches);
+            // Check balance: each team's opponent sum should be near target
+            const sums = allTeams.map(t => opponents[t].reduce((a, b) => a + b, 0));
+            const maxDev = Math.max(...sums.map(s => Math.abs(s - targetSum)));
+            return { rounds, maxDev };
+          };
+
+          // Try up to 200 times to find a balanced schedule
+          let best = generateBalanced();
+          for (let attempt = 0; attempt < 200 && best.maxDev > tolerance; attempt++) {
+            const candidate = generateBalanced();
+            if (candidate.maxDev < best.maxDev) best = candidate;
           }
 
-          setRrMatchups(rounds);
+          setRrMatchups(best.rounds);
         }
 
         setMatchupsGenerated(true);
