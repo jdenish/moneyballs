@@ -636,10 +636,14 @@
         if (saved) {
           try {
             const data = JSON.parse(saved);
-            // If preloaded teams exist and count differs from saved, prefer preloaded (roster changed)
-            if (tournament.preloadedTeams && data.teamCount !== tournament.preloadedTeams.length) {
-              localStorage.removeItem(`moneyball_${id}`);
-              throw new Error('Team count mismatch, reloading preloaded teams');
+            // For upcoming tournaments with no scores yet, always prefer fresh preloaded data
+            if (tournament.preloadedTeams && tournament.status === 'upcoming') {
+              const hasScores = (data.seedingScores && Object.keys(data.seedingScores).length > 0) ||
+                (data.bracketScores && Object.keys(data.bracketScores).length > 0);
+              if (!hasScores) {
+                localStorage.removeItem(`moneyball_${id}`);
+                throw new Error('No scores yet, reloading preloaded teams with fresh defaults');
+              }
             }
             // Use loadProgress-style restoration
             if (data.teamCount) setTeamCount(data.teamCount);
