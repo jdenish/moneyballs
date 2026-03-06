@@ -516,7 +516,7 @@
       const [bracketSwaps, setBracketSwaps] = useState([]);
       const [swapSelections, setSwapSelections] = useState({});
       const [onCourt, setOnCourt] = useState({}); // { matchId: courtNumber } (0 or absent = not on court)
-      const [courtCount, setCourtCount] = useState(8);
+      const [courtCount, setCourtCount] = useState(Math.ceil(teamCount / 2));
       const [showOverride, setShowOverride] = useState(false);
       const [bracketSeedOverride, setBracketSeedOverride] = useState(null);
       const [selectedSwapTeam, setSelectedSwapTeam] = useState(null);
