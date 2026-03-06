@@ -3005,7 +3005,7 @@
           {phase === 'roundrobin' && (
             <div className="max-w-6xl mx-auto">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-xl font-semibold">Round Robin ({teamCount} teams, {seedingMatches.length} rounds to {rrPointTarget})</h2>
+                <h2 className="text-xl font-semibold">Round Robin ({teamCount} teams, {seedingMatches.length} rounds, games to {rrPointTarget})</h2>
                 {!spectatorMode && <button onClick={generateFakeSeedingScores} title="Generate fake scores based on seeding for testing" className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>}
               </div>
               {!spectatorMode && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} onCourt={onCourt} />}
