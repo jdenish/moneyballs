@@ -707,7 +707,9 @@
           setMatchupsGenerated(false);
           setRrMatchups([]);
           setPools({});
-          setPoolSize(4);
+          // Default to pools of 4 only for team counts divisible by 4, otherwise no pools (random RR)
+          const tc = tournament.preloadedTeams.length;
+          setPoolSize(tc % 4 === 0 ? 4 : 0);
           setOnCourt({});
           setBracketSeedOverride(null);
           setStandingsOverride(null);
