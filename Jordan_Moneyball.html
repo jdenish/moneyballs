@@ -2837,9 +2837,9 @@
                         </div>
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
-                        {winnersCount === teamCount
-                          ? 'All teams start in Winners Bracket (losers drop to Losers Bracket)'
-                          : `Top ${winnersCount} → Winners, Bottom ${teamCount - winnersCount} → Losers`}
+                        {bracketType === 'single'
+                          ? (winnersCount === teamCount ? 'All teams in bracket' : `Top ${winnersCount} advance to bracket, bottom ${teamCount - winnersCount} eliminated`)
+                          : (winnersCount === teamCount ? 'All teams start in Winners Bracket (losers drop to Losers Bracket)' : `Top ${winnersCount} → Winners, Bottom ${teamCount - winnersCount} → Losers`)}
                       </div>
                     </div>
                   )}
@@ -3146,9 +3146,9 @@
               <div className="mt-2 text-xs text-gray-500 text-center">
                 {bracketType === 'single'
                   ? `All ${teamCount} teams → Single Elimination Bracket`
-                  : winnersCount === teamCount
-                    ? `All ${teamCount} teams → Winners Bracket`
-                    : `Top ${winnersCount} → Winners Bracket | Bottom ${teamCount - winnersCount} → Losers Bracket`}
+                  : bracketType === 'single'
+                    ? (winnersCount === teamCount ? `All ${teamCount} teams in bracket` : `Top ${winnersCount} advance to bracket | Bottom ${teamCount - winnersCount} eliminated`)
+                    : (winnersCount === teamCount ? `All ${teamCount} teams → Winners Bracket` : `Top ${winnersCount} → Winners Bracket | Bottom ${teamCount - winnersCount} → Losers Bracket`)
               </div>
               {allSeedingComplete && (
                 <button onClick={() => setPhase('bracket')} className="w-full mt-4 bg-green-600 py-2 rounded font-semibold">
