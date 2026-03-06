@@ -1648,7 +1648,7 @@
           matches.se_sf2 = { id: 'se_sf2', t1: getQfWinner('se_qf3'), t2: getQfWinner('se_qf4'), round: 'SF' };
 
           // Final
-          matches.se_f = { id: 'se_f', t1: getBracketMatchTeam('se_sf1'), t2: getBracketMatchTeam('se_sf2'), round: 'Final', bo3: bo3Finals };
+          matches.se_f = { id: 'se_f', t1: getBracketMatchTeam('se_sf1'), t2: getBracketMatchTeam('se_sf2'), round: 'Final', bo3: true };
 
           // 3rd place match
           matches.se_3rd = { id: 'se_3rd', t1: getBracketMatchLoser('se_sf1'), t2: getBracketMatchLoser('se_sf2'), round: '3rd Place' };
@@ -1682,7 +1682,9 @@
         const getWqfWinner = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
         matches.wsf1 = { id: 'wsf1', t1: getWqfWinner('wqf1'), t2: getWqfWinner('wqf2'), round: 'W-SF' };
         matches.wsf2 = { id: 'wsf2', t1: getWqfWinner('wqf3'), t2: getWqfWinner('wqf4'), round: 'W-SF' };
-        matches.wf = { id: 'wf', t1: getBracketMatchTeam('wsf1'), t2: getBracketMatchTeam('wsf2'), round: 'W-Final', bo3: bo3Finals };
+        matches.wsf1 = { ...matches.wsf1, bo3: bo3Finals };
+        matches.wsf2 = { ...matches.wsf2, bo3: bo3Finals };
+        matches.wf = { id: 'wf', t1: getBracketMatchTeam('wsf1'), t2: getBracketMatchTeam('wsf2'), round: 'W-Final', bo3: true };
 
         // Losers bracket — general algorithm for any loser count (0-8)
         // Crossed drops to prevent rematches: wqf3/4 → top half, wqf1/2 → bottom half
@@ -1832,7 +1834,7 @@
           matches.lf = { id: 'lf', t1: getLrWin(finalIds[0]), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
         }
 
-        matches.gf = { id: 'gf', t1: getBracketMatchTeam('wf'), t2: getBracketMatchTeam('lf'), round: 'Grand Final', bo3: bo3Finals };
+        matches.gf = { id: 'gf', t1: getBracketMatchTeam('wf'), t2: getBracketMatchTeam('lf'), round: 'Grand Final', bo3: true };
         // gf2: reset game to 15 when losers bracket winner wins the Bo3 Grand Final
         const gfWinnerTeam = getBracketMatchTeam('gf');
         const wfWinnerTeam = getBracketMatchTeam('wf');
@@ -2287,7 +2289,7 @@
             const m = bracketMatches[id];
             if (m) results += formatBracketMatch(id, m.round);
           });
-          results += `\nGRAND FINAL${bo3Finals ? ' (Bo3)' : ''}\n`;
+          results += `\nGRAND FINAL (Bo3)\n`;
           results += `------------------------------\n`;
           results += formatBracketMatch('gf', 'Grand Final');
           if (bracketMatches['gf2']) {
@@ -2795,7 +2797,7 @@
                   )}
                   <div className="bg-gray-800 rounded p-3 mb-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm">Finals Format:</span>
+                      <span className="text-sm">W-Semis Format:</span>
                       <select
                         value={bo3Finals ? 'bo3' : 'single'}
                         onChange={(e) => setBo3Finals(e.target.value === 'bo3')}
@@ -2807,8 +2809,8 @@
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       {bracketType === 'single'
-                        ? bo3Finals ? 'Final match is Best of 3' : 'Final match is a single game'
-                        : bo3Finals ? 'Winners Final & Grand Final are Best of 3' : 'All matches are single games'}
+                        ? 'Final is always Best of 3'
+                        : bo3Finals ? 'W-Semis, W-Final & Grand Final are Best of 3' : 'W-Final & Grand Final are Best of 3 (semis are single game)'}
                     </div>
                   </div>
                   <div className="bg-gray-800 rounded p-3 mb-3">
