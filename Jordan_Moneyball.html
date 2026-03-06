@@ -2899,6 +2899,32 @@
                   <button onClick={generateRandomMatchups} title={Object.keys(pools).length > 0 ? "Generate intra-pool round robin matchups" : "Generate random matchups with repeat-avoidance"} className="w-full bg-yellow-600 hover:bg-yellow-500 py-2 rounded font-semibold mb-2">
                     🎲 Generate Matchups
                   </button>
+                  {matchupsGenerated && poolSize === 0 && rrGames >= 3 && rrMatchups.length > 0 && (() => {
+                    const sums = {};
+                    rrMatchups.forEach(round => {
+                      round.forEach(({ t1, t2 }) => {
+                        sums[t1] = (sums[t1] || 0) + (t2 + 1);
+                        sums[t2] = (sums[t2] || 0) + (t1 + 1);
+                      });
+                    });
+                    const values = Object.values(sums);
+                    const min = Math.min(...values);
+                    const max = Math.max(...values);
+                    return (
+                      <div className="text-xs text-gray-400 mb-2 p-2 bg-gray-800 rounded">
+                        <div className="font-semibold text-gray-300 mb-1">Opponent Strength (sum of opponent seeds):</div>
+                        <div className="flex flex-wrap gap-1">
+                          {Array.from({ length: teamCount }, (_, i) => i).map(t => (
+                            <span key={t} title={`Seed ${t + 1}: opponents sum to ${sums[t] || 0}`}
+                              className={`px-1 rounded ${sums[t] === min || sums[t] === max ? 'text-yellow-300' : ''}`}>
+                              {t + 1}→{sums[t] || 0}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="mt-1 text-gray-500">Range: {min}–{max} (target: ~{(rrGames * (teamCount + 1) / 2).toFixed(0)})</div>
+                      </div>
+                    );
+                  })()}
                   {matchupsGenerated && (
                     <button onClick={() => setPhase(rrGames === 0 && poolSize === 0 ? 'bracket' : 'roundrobin')} className="w-full bg-blue-600 py-2 rounded font-semibold">
                       {rrGames === 0 && poolSize === 0 ? 'Start Bracket →' : 'Start Round Robin →'}
