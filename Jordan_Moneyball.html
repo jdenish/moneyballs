@@ -510,6 +510,7 @@
       const [dragIndex, setDragIndex] = useState(null);
       const [dragOverIndex, setDragOverIndex] = useState(null);
       const [spectatorMode, setSpectatorMode] = useState(false);
+      const [editMode, setEditMode] = useState(false);
       const [linkCopied, setLinkCopied] = useState(false);
       const [npointId, setNpointId] = useState('');
       const [publishStatus, setPublishStatus] = useState(''); // '', 'publishing', 'published', 'error'
@@ -606,7 +607,14 @@
         setActiveTournamentId(id);
         setView('tournament');
         setSpectatorMode(false);
+        setEditMode(false);
         window.location.hash = `t=${id}`;
+
+        // For completed tournaments, prefer embedded state (official results)
+        if (tournament.status === 'completed' && TOURNAMENT_STATES[id]) {
+          loadSharedState(TOURNAMENT_STATES[id], { spectator: false });
+          return;
+        }
 
         // Try localStorage first (user's latest saved state)
         const saved = localStorage.getItem(`moneyball_${id}`);
@@ -685,6 +693,63 @@
           setStandingsOverride(null);
         }
       }, []);
+
+      // Enter edit mode for completed tournaments — loads from localStorage
+      const enterEditMode = useCallback(() => {
+        if (!activeTournamentId) return;
+        const saved = localStorage.getItem(`moneyball_${activeTournamentId}`);
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            if (data.teamCount) setTeamCount(data.teamCount);
+            if (data.rrGames) setRrGames(data.rrGames);
+            if (data.rrPointTarget) setRrPointTarget(data.rrPointTarget);
+            if (data.winnersCount) setWinnersCount(data.winnersCount);
+            if (data.teams) setTeams(data.teams);
+            if (data.seedingScores) setSeedingScores(data.seedingScores);
+            if (data.bracketScores) setBracketScores(data.bracketScores);
+            if (data.bracketOverrides) setBracketOverrides(data.bracketOverrides);
+            if (data.rrMatchups) {
+              setRrMatchups(data.rrMatchups);
+            } else {
+              const reconstructed = [];
+              if (data.game1Matchups?.length) reconstructed.push(data.game1Matchups);
+              if (data.game2Matchups?.length) reconstructed.push(data.game2Matchups);
+              if (data.game3Matchups?.length) reconstructed.push(data.game3Matchups);
+              if (reconstructed.length) setRrMatchups(reconstructed);
+            }
+            if (data.bracketType) setBracketType(data.bracketType);
+            if (data.bo3Finals !== undefined) setBo3Finals(data.bo3Finals);
+            if (data.poolSize) setPoolSize(data.poolSize);
+            if (data.courtCount) setCourtCount(data.courtCount);
+            if (data.npointId) setNpointId(data.npointId);
+            if (data.pools) setPools(data.pools);
+            if (data.matchupsGenerated) setMatchupsGenerated(data.matchupsGenerated);
+            if (data.onCourt) setOnCourt(data.onCourt);
+            setBracketSeedOverride(data.bracketSeedOverride || null);
+            setStandingsOverride(data.standingsOverride || null);
+            const hasBracket = data.bracketScores && Object.keys(data.bracketScores).length > 0;
+            const hasBracketOverrides = data.bracketOverrides && Object.keys(data.bracketOverrides).length > 0;
+            if (hasBracket || hasBracketOverrides) setPhase('bracket');
+            else if (data.seedingScores && Object.keys(data.seedingScores).length > 0) setPhase('roundrobin');
+            else if (data.matchupsGenerated) setPhase('roundrobin');
+            else if (data.teams?.some(t => t.p1Name)) setPhase('setup');
+            else setPhase('import');
+          } catch (e) {
+            console.error('Failed to load from localStorage for edit mode', e);
+          }
+        }
+        setEditMode(true);
+      }, [activeTournamentId]);
+
+      // Exit edit mode — reload official embedded state
+      const exitEditMode = useCallback(() => {
+        if (!activeTournamentId) return;
+        if (TOURNAMENT_STATES[activeTournamentId]) {
+          loadSharedState(TOURNAMENT_STATES[activeTournamentId], { spectator: false });
+        }
+        setEditMode(false);
+      }, [activeTournamentId, loadSharedState]);
 
       const goHome = useCallback(() => {
         setView('home');
@@ -1864,14 +1929,17 @@
       }, [getSaveData, activeTournamentId]);
 
       // Auto-save to localStorage whenever tournament state changes
+      // Skip auto-save for completed tournaments unless in edit mode
+      const isCompletedTournament = activeTournamentId && TOURNAMENTS.find(t => t.id === activeTournamentId)?.status === 'completed';
       React.useEffect(() => {
         if (!activeTournamentId || view !== 'tournament' || spectatorMode) return;
+        if (isCompletedTournament && !editMode) return;
         const timer = setTimeout(() => {
           const data = getSaveData();
           localStorage.setItem(`moneyball_${activeTournamentId}`, JSON.stringify(data));
         }, 1000); // debounce 1 second
         return () => clearTimeout(timer);
-      }, [activeTournamentId, view, spectatorMode, getSaveData]);
+      }, [activeTournamentId, view, spectatorMode, editMode, isCompletedTournament, getSaveData]);
 
       const loadProgress = useCallback((e) => {
         const file = e.target.files[0];
@@ -2255,6 +2323,20 @@
           {spectatorMode && (
             <div className="bg-blue-900 border border-blue-500 text-blue-200 text-center py-2 px-4 rounded mb-3 max-w-md mx-auto">
               {liveMode ? '📡 Live Mode — Reload page for latest scores' : '👁️ Spectator Mode - View Only'}
+            </div>
+          )}
+
+          {!spectatorMode && isCompletedTournament && !editMode && (
+            <div className="bg-gray-800 border border-gray-600 text-gray-300 text-center py-2 px-4 rounded mb-3 max-w-md mx-auto flex items-center justify-center gap-3">
+              <span className="text-sm">Viewing official results</span>
+              <button onClick={enterEditMode} className="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded">Edit</button>
+            </div>
+          )}
+
+          {!spectatorMode && isCompletedTournament && editMode && (
+            <div className="bg-yellow-900 border border-yellow-600 text-yellow-200 text-center py-2 px-4 rounded mb-3 max-w-md mx-auto flex items-center justify-center gap-3">
+              <span className="text-sm">Edit Mode — changes saved locally</span>
+              <button onClick={exitEditMode} className="text-xs bg-yellow-800 hover:bg-yellow-700 px-2 py-1 rounded">Reset to Official</button>
             </div>
           )}
 
