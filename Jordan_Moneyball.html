@@ -2803,14 +2803,14 @@
                         onChange={(e) => setBo3Finals(e.target.value === 'bo3')}
                         className="bg-gray-700 rounded px-2 py-1 text-sm"
                       >
-                        <option value="bo3">Best of 3</option>
-                        <option value="single">Single Game</option>
+                        <option value="bo3">2 of 3 to 11</option>
+                        <option value="single">Single game to 15</option>
                       </select>
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       {bracketType === 'single'
-                        ? 'Final is always Best of 3'
-                        : bo3Finals ? 'W-Semis, W-Final & Grand Final are Best of 3' : 'W-Final & Grand Final are Best of 3 (semis are single game)'}
+                        ? 'Final is always 2 of 3 to 11'
+                        : bo3Finals ? 'W-Semis, W-Final & Grand Final are 2 of 3 to 11' : 'W-Final & Grand Final are 2 of 3 to 11 (semis are single game to 15)'}
                     </div>
                   </div>
                   <div className="bg-gray-800 rounded p-3 mb-3">
