@@ -1150,61 +1150,53 @@
           }
           setRrMatchups([shuffle(g1), shuffle(g2)]);
         } else {
-          // 3+ games: sum-balanced matchups
-          // R1: fold pair (1v14, 2v13, etc.) — each pair sums to n+1
-          // R2+: random with no-repeat, then pick best out of many trials
+          // 3+ games: sum-balanced matchups via random perfect matching
+          // Shuffle all teams, pair adjacent, reject if repeat opponent
+          // Try many schedules, pick the one with tightest opponent-sum balance
           const n = teamCount;
           const half = Math.floor(n / 2);
 
-          // R1: fold pairing
-          const r1 = [];
-          for (let i = 0; i < half; i++) r1.push({ t1: i, t2: n - 1 - i });
+          const randomMatching = (played) => {
+            for (let a = 0; a < 200; a++) {
+              const perm = shuffle(Array.from({ length: n }, (_, i) => i));
+              const rm = [];
+              let ok = true;
+              for (let i = 0; i < n - 1; i += 2) {
+                if (played[perm[i]].has(perm[i + 1])) { ok = false; break; }
+                rm.push({ t1: perm[i], t2: perm[i + 1] });
+              }
+              if (ok && rm.length === half) return rm;
+            }
+            return null;
+          };
 
           let best = null;
-          for (let trial = 0; trial < 5000; trial++) {
+          for (let trial = 0; trial < 10000; trial++) {
             const played = {};
             for (let i = 0; i < n; i++) played[i] = new Set();
-            // Record R1 opponents
-            r1.forEach(({ t1, t2 }) => { played[t1].add(t2); played[t2].add(t1); });
-
-            const rounds = [r1];
+            const rounds = [];
             let valid = true;
-
-            for (let round = 1; round < rrGames; round++) {
-              const avail = shuffle(Array.from({ length: n }, (_, i) => i));
-              const rm = [], paired = new Set();
-              for (let i = 0; i < avail.length; i++) {
-                if (paired.has(avail[i])) continue;
-                for (let j = i + 1; j < avail.length; j++) {
-                  if (paired.has(avail[j]) || played[avail[i]].has(avail[j])) continue;
-                  rm.push({ t1: avail[i], t2: avail[j] });
-                  played[avail[i]].add(avail[j]);
-                  played[avail[j]].add(avail[i]);
-                  paired.add(avail[i]);
-                  paired.add(avail[j]);
-                  break;
-                }
-              }
-              if (rm.length !== half) { valid = false; break; }
+            for (let round = 0; round < rrGames; round++) {
+              const rm = randomMatching(played);
+              if (!rm) { valid = false; break; }
+              rm.forEach(({ t1, t2 }) => { played[t1].add(t2); played[t2].add(t1); });
               rounds.push(rm);
             }
             if (!valid) continue;
-
             const sums = new Array(n).fill(0);
             rounds.forEach(r => r.forEach(({ t1, t2 }) => {
               sums[t1] += t2 + 1; sums[t2] += t1 + 1;
             }));
             const avg = sums.reduce((a, b) => a + b, 0) / n;
             const maxDev = Math.max(...sums.map(s => Math.abs(s - avg)));
-
             if (!best || maxDev < best.maxDev) {
               best = { maxDev, rounds };
               if (maxDev <= 2) break;
             }
           }
 
-          // Fallback if no valid schedule found
           if (!best) {
+            // Fallback: simple repeat-avoidance
             const rounds = [];
             const played = {};
             for (let i = 0; i < n; i++) played[i] = new Set();
