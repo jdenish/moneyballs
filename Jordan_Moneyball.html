@@ -1128,7 +1128,7 @@
           for (let i = 0; i < allTeams.length - 1; i += 2) {
             matches.push({ t1: allTeams[i], t2: allTeams[i + 1] });
           }
-          setRrMatchups([matches]);
+          setRrMatchups([{ matches, bye: -1 }]);
         } else if (rrGames === 2) {
           // 2 games: seed-balanced
           const allTeams = Array.from({ length: teamCount }, (_, i) => i);
@@ -1148,24 +1148,42 @@
               used.add(opponent);
             }
           }
-          setRrMatchups([shuffle(g1), shuffle(g2)]);
+          setRrMatchups([{ matches: shuffle(g1), bye: -1 }, { matches: shuffle(g2), bye: -1 }]);
         } else {
           // 3+ games: sum-balanced matchups via random perfect matching
-          // Shuffle all teams, pair adjacent, reject if repeat opponent
-          // Try many schedules, pick the one with tightest opponent-sum balance
           const n = teamCount;
-          const half = Math.floor(n / 2);
+          const isOdd = n % 2 === 1;
+          // For odd teams: add 1 extra round so everyone plays at least rrGames
+          // (n-1 teams play rrGames+1, 1 bye per round, rrGames+1 byes distributed)
+          const numRounds = isOdd ? rrGames + 1 : rrGames;
+          const pairN = isOdd ? n + 1 : n; // phantom team index = n for odd
+          const half = pairN / 2;
 
-          const randomMatching = (played) => {
+          const randomMatching = (played, byeCounts) => {
             for (let a = 0; a < 200; a++) {
-              const perm = shuffle(Array.from({ length: n }, (_, i) => i));
+              const indices = shuffle(Array.from({ length: pairN }, (_, i) => i));
               const rm = [];
+              let byeTeam = -1;
               let ok = true;
-              for (let i = 0; i < n - 1; i += 2) {
-                if (played[perm[i]].has(perm[i + 1])) { ok = false; break; }
-                rm.push({ t1: perm[i], t2: perm[i + 1] });
+              for (let i = 0; i < pairN; i += 2) {
+                const a2 = indices[i], b2 = indices[i + 1];
+                if (isOdd && (a2 === n || b2 === n)) {
+                  // One of these is the phantom — the other gets a bye
+                  byeTeam = a2 === n ? b2 : a2;
+                  continue;
+                }
+                if (played[a2].has(b2)) { ok = false; break; }
+                rm.push({ t1: a2, t2: b2 });
               }
-              if (ok && rm.length === half) return rm;
+              if (!ok) continue;
+              // Prefer distributing byes: skip if this team already has max byes
+              if (isOdd && byeTeam >= 0) {
+                const maxByes = Math.ceil(numRounds / n);
+                if (byeCounts[byeTeam] >= maxByes + 1) continue;
+              }
+              if (rm.length === half - (isOdd ? 1 : 0)) return { matches: rm, bye: byeTeam };
+              // Even case
+              if (rm.length === half) return { matches: rm, bye: -1 };
             }
             return null;
           };
@@ -1173,24 +1191,36 @@
           let best = null;
           for (let trial = 0; trial < 10000; trial++) {
             const played = {};
+            const byeCounts = new Array(n).fill(0);
             for (let i = 0; i < n; i++) played[i] = new Set();
             const rounds = [];
             let valid = true;
-            for (let round = 0; round < rrGames; round++) {
-              const rm = randomMatching(played);
-              if (!rm) { valid = false; break; }
-              rm.forEach(({ t1, t2 }) => { played[t1].add(t2); played[t2].add(t1); });
-              rounds.push(rm);
+            for (let round = 0; round < numRounds; round++) {
+              const result = randomMatching(played, byeCounts);
+              if (!result) { valid = false; break; }
+              result.matches.forEach(({ t1, t2 }) => { played[t1].add(t2); played[t2].add(t1); });
+              if (result.bye >= 0) byeCounts[result.bye]++;
+              rounds.push({ matches: result.matches, bye: result.bye });
             }
             if (!valid) continue;
+            // For odd: ensure no team has more than 2 byes (ideally max 1)
+            if (isOdd) {
+              const maxByeCount = Math.max(...byeCounts);
+              if (maxByeCount > 1) continue; // each team byes at most once
+            }
+            // Compute games per team
+            const gamesPlayed = new Array(n).fill(0);
+            rounds.forEach(r => r.matches.forEach(({ t1, t2 }) => { gamesPlayed[t1]++; gamesPlayed[t2]++; }));
+            // Everyone must play at least rrGames
+            if (gamesPlayed.some(g => g < rrGames)) continue;
             const sums = new Array(n).fill(0);
-            rounds.forEach(r => r.forEach(({ t1, t2 }) => {
+            rounds.forEach(r => r.matches.forEach(({ t1, t2 }) => {
               sums[t1] += t2 + 1; sums[t2] += t1 + 1;
             }));
             const avg = sums.reduce((a, b) => a + b, 0) / n;
             const maxDev = Math.max(...sums.map(s => Math.abs(s - avg)));
             if (!best || maxDev < best.maxDev) {
-              best = { maxDev, rounds };
+              best = { maxDev, rounds, gamesPlayed, byeCounts };
               if (maxDev <= 2) break;
             }
           }
@@ -1200,9 +1230,13 @@
             const rounds = [];
             const played = {};
             for (let i = 0; i < n; i++) played[i] = new Set();
-            for (let round = 0; round < rrGames; round++) {
+            for (let round = 0; round < numRounds; round++) {
               const available = shuffle(Array.from({ length: n }, (_, i) => i));
               const rm = [];
+              let byeTeam = -1;
+              if (isOdd) {
+                byeTeam = available.pop();
+              }
               while (available.length >= 2) {
                 const t1 = available.shift();
                 let t2Idx = available.findIndex(t => !played[t1].has(t));
@@ -1211,12 +1245,12 @@
                 played[t1].add(t2); played[t2].add(t1);
                 rm.push({ t1, t2 });
               }
-              rounds.push(rm);
+              rounds.push({ matches: rm, bye: byeTeam });
             }
             best = { rounds };
           }
 
-          setRrMatchups(best.rounds.map(r => shuffle([...r])));
+          setRrMatchups(best.rounds.map(r => ({ matches: shuffle([...r.matches]), bye: r.bye })));
         }
 
         setMatchupsGenerated(true);
@@ -1231,18 +1265,19 @@
         }));
       }, [teams, getTeamName, getTeamDupr]);
 
-      // seedingMatches is now an array of arrays: seedingMatches[roundIdx] = [match, match, ...]
+      // seedingMatches is now an array of { matches: [...], bye: teamIdx }
       const seedingMatches = useMemo(() => {
         const t = teamData;
         if (matchupsGenerated && rrMatchups.length > 0) {
-          return rrMatchups.map((roundMatchups, roundIdx) =>
-            roundMatchups.map((m, i) => ({
+          return rrMatchups.map((round, roundIdx) => ({
+            matches: round.matches.map((m, i) => ({
               id: `g${roundIdx + 1}m${i}`,
               t1: t[m.t1],
               t2: t[m.t2],
               court: i + 1
-            }))
-          );
+            })),
+            bye: round.bye >= 0 ? t[round.bye] : null
+          }));
         }
         return [];
       }, [teamData, matchupsGenerated, rrMatchups]);
@@ -1258,7 +1293,7 @@
           return Object.values(stats);
         }
 
-        seedingMatches.flat().forEach(m => {
+        seedingMatches.flatMap(r => r.matches).forEach(m => {
           const score = seedingScores[m.id];
           if (score && score.s1 !== '' && score.s2 !== '' && score.s1 !== undefined && score.s2 !== undefined) {
             const s1 = parseInt(score.s1);
@@ -1474,7 +1509,7 @@
 
       const generateFakeSeedingScores = useCallback(() => {
         const fakeScores = {};
-        seedingMatches.flat().forEach(m => {
+        seedingMatches.flatMap(r => r.matches).forEach(m => {
           const seedDiff = m.t2.seed - m.t1.seed; // positive = t1 is better seed
           const t1WinProb = 0.5 + (seedDiff * 0.03); // 3% advantage per seed difference
           const t1Wins = Math.random() < t1WinProb;
@@ -1982,7 +2017,7 @@
 
           // Fixed court assignment for pool-based RR matches
           // Pool A → courts 1-2, Pool B → 3-4, etc.
-          const seedMatch = seedingMatches.flat().find(m => m.id === id);
+          const seedMatch = seedingMatches.flatMap(r => r.matches).find(m => m.id === id);
           if (seedMatch && Object.keys(pools).length > 0) {
             const poolIdx = pools[seedMatch.t1.seed - 1];
             const numPools = Math.max(...Object.values(pools)) + 1;
@@ -2018,7 +2053,7 @@
       const allSeedingComplete = useMemo(() => {
         // 0 RR games: always complete (skip to bracket)
         if (rrGames === 0 && matchupsGenerated) return true;
-        const allMatches = seedingMatches.flat();
+        const allMatches = seedingMatches.flatMap(r => r.matches);
         if (!allMatches.length) return false;
         return allMatches.every(m => {
           const s = seedingScores[m.id];
@@ -2030,7 +2065,7 @@
         const matches = [];
         Object.keys(onCourt).forEach(id => {
           if (onCourt[id]) {
-            const seedMatch = seedingMatches.flat().find(m => m.id === id);
+            const seedMatch = seedingMatches.flatMap(r => r.matches).find(m => m.id === id);
             if (seedMatch) {
               matches.push({ ...seedMatch, type: 'seeding' });
               return;
@@ -2046,7 +2081,7 @@
       const nextUpMatches = useMemo(() => {
         const next = [];
         if (phase === 'roundrobin') {
-          seedingMatches.flat().forEach(m => {
+          seedingMatches.flatMap(r => r.matches).forEach(m => {
             const s = seedingScores[m.id];
             const complete = s && s.s1 !== '' && s.s2 !== '' && s.s1 !== undefined && s.s2 !== undefined;
             if (!complete && !onCourt[m.id]) {
@@ -2272,11 +2307,12 @@
         results += `ROUND ROBIN SCORES\n`;
         results += `==================================================\n\n`;
 
-        seedingMatches.forEach((roundMatches, roundIdx) => {
+        seedingMatches.forEach((round, roundIdx) => {
           if (roundIdx > 0) results += '\n';
           results += `GAME ${roundIdx + 1}\n`;
+          if (round.bye) results += `BYE: ${round.bye.name}\n`;
           results += `------------------------------\n`;
-          roundMatches.forEach(m => {
+          round.matches.forEach(m => {
             const score = seedingScores[m.id];
             if (score && score.s1 !== undefined && score.s2 !== undefined) {
               const s1Won = parseInt(score.s1) > parseInt(score.s2);
@@ -2924,7 +2960,7 @@
                   {matchupsGenerated && poolSize === 0 && rrGames >= 3 && rrMatchups.length > 0 && (() => {
                     const sums = {};
                     rrMatchups.forEach(round => {
-                      round.forEach(({ t1, t2 }) => {
+                      round.matches.forEach(({ t1, t2 }) => {
                         sums[t1] = (sums[t1] || 0) + (t2 + 1);
                         sums[t2] = (sums[t2] || 0) + (t1 + 1);
                       });
@@ -2943,7 +2979,7 @@
                             </span>
                           ))}
                         </div>
-                        <div className="mt-1 text-gray-500">Range: {min}–{max} (target: ~{(rrGames * (teamCount + 1) / 2).toFixed(0)})</div>
+                        <div className="mt-1 text-gray-500">Range: {min}–{max}{teamCount % 2 === 1 ? ` | ${rrMatchups.length} rounds (${rrMatchups.filter(r => r.bye >= 0).length} byes)` : ''}</div>
                       </div>
                     );
                   })()}
@@ -2960,7 +2996,7 @@
           {phase === 'roundrobin' && (
             <div className="max-w-6xl mx-auto">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-xl font-semibold">Round Robin ({teamCount} teams, {seedingMatches.length} games to {rrPointTarget})</h2>
+                <h2 className="text-xl font-semibold">Round Robin ({teamCount} teams, {seedingMatches.length} rounds to {rrPointTarget})</h2>
                 {!spectatorMode && <button onClick={generateFakeSeedingScores} title="Generate fake scores based on seeding for testing" className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>}
               </div>
               {!spectatorMode && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} onCourt={onCourt} />}
@@ -3016,8 +3052,8 @@
                           </h3>
                           <div className="text-xs text-center mb-2" style={{ color: poolColor + 'aa' }}>{getPoolCourts(poolIdx)}</div>
                           <div className="space-y-2">
-                            {seedingMatches.map((roundMatches, roundIdx) => {
-                              const poolMatches = roundMatches.filter(m => pools[m.t1.seed - 1] === poolIdx);
+                            {seedingMatches.map((round, roundIdx) => {
+                              const poolMatches = round.matches.filter(m => pools[m.t1.seed - 1] === poolIdx);
                               return poolMatches.map(m => (
                                 <div key={m.id}>
                                   <div className="text-xs text-gray-500 mb-1">Game {roundIdx + 1}</div>
@@ -3044,14 +3080,15 @@
                 );
               })() : (
                 /* Game-based layout: dynamic columns */
-                <div className="grid gap-2 grid-cols-3">
-                  {seedingMatches.map((roundMatches, roundIdx) => {
+                <div className={`grid gap-2 ${seedingMatches.length <= 3 ? 'grid-cols-3' : `grid-cols-${Math.min(seedingMatches.length, 4)}`}`}>
+                  {seedingMatches.map((round, roundIdx) => {
                     const colors = ['text-blue-400', 'text-green-400', 'text-yellow-400', 'text-red-400', 'text-purple-400', 'text-pink-400', 'text-cyan-400'];
                     return (
                       <div key={roundIdx}>
                         <h3 className={`${colors[roundIdx % colors.length]} font-semibold mb-2 text-center`}>Game {roundIdx + 1}</h3>
+                        {round.bye && <div className="text-xs text-gray-400 text-center mb-1">BYE: {round.bye.name.split(' / ').map(n => n.split(' ')[0]).join(' / ')}</div>}
                         <div className="space-y-2">
-                          {roundMatches.map(m => (
+                          {round.matches.map(m => (
                             <SeedingMatch
                               key={m.id}
                               match={m}
@@ -3159,7 +3196,7 @@
           {phase === 'bracket' && (() => {
             const hasBracketDataForPreview = Object.keys(bracketScores).length > 0 || Object.keys(bracketOverrides).length > 0;
             const bracketPreview = !allSeedingComplete && matchupsGenerated && !hasBracketDataForPreview;
-            console.log('BRACKET DEBUG:', { allSeedingComplete, matchupsGenerated, hasBracketDataForPreview, bracketPreview, winnersLen: bracketTeams.winners?.length, losersLen: bracketTeams.losers?.length, matchKeys: Object.keys(bracketMatches), displayStandingsLen: displayStandings.length, poolsLen: Object.keys(pools).length, seedingMatchesLen: seedingMatches.flat().length, seedingScoresLen: Object.keys(seedingScores).length });
+            console.log('BRACKET DEBUG:', { allSeedingComplete, matchupsGenerated, hasBracketDataForPreview, bracketPreview, winnersLen: bracketTeams.winners?.length, losersLen: bracketTeams.losers?.length, matchKeys: Object.keys(bracketMatches), displayStandingsLen: displayStandings.length, poolsLen: Object.keys(pools).length, seedingMatchesLen: seedingMatches.flatMap(r => r.matches).length, seedingScoresLen: Object.keys(seedingScores).length });
             // Helper to render a bracket match by ID
             const renderMatch = (id) => {
               const m = bracketMatches[id];
