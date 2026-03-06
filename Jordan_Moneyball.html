@@ -2381,7 +2381,7 @@
                   Enter
                 </button>
               </div>
-              <p className="text-gray-600 text-xs mt-6">Viewers don't need a password — use your shared link.</p>
+              <p className="text-gray-600 text-xs mt-6">Spectators don't need a password — use your shared link.</p>
             </div>
           )}
           {view === 'home' && authenticated && (
@@ -2450,9 +2450,9 @@
                     </ul>
                   </div>
                   <div>
-                    <div className="text-blue-400 font-semibold mb-1">Viewers</div>
+                    <div className="text-blue-400 font-semibold mb-1">Spectators</div>
                     <ul className="space-y-1 list-disc list-inside">
-                      <li>Open the <strong className="text-gray-300">👁️ Viewer Link</strong> to see scores</li>
+                      <li>Open the <strong className="text-gray-300">📡 Live Link</strong> to see scores</li>
                       <li>View-only — no editing allowed</li>
                       <li>Reload the page for latest updates</li>
                     </ul>
@@ -2464,7 +2464,7 @@
                       <li>Leave default content, click "Save"</li>
                       <li>Copy the ID from the URL</li>
                       <li>Tournament → Setup → paste in "Live Spectator Link"</li>
-                      <li>Use the <strong className="text-gray-300">👁️ Viewer Link</strong> from the toolbar</li>
+                      <li>Use the <strong className="text-gray-300">📡 Live Link</strong> from the toolbar</li>
                     </ol>
                   </div>
                 </div>
@@ -2493,7 +2493,7 @@
                   Enter
                 </button>
               </div>
-              <p className="text-gray-600 text-xs mt-6">Viewers don't need a password — use your shared link.</p>
+              <p className="text-gray-600 text-xs mt-6">Spectators don't need a password — use your shared link.</p>
             </div>
           )}
           {view === 'tournament' && (spectatorMode || liveMode || authenticated) && (
@@ -2570,7 +2570,7 @@
                   <button
                     onClick={publishToNpoint}
                     disabled={publishStatus === 'publishing'}
-                    title="Push scores to the live viewer link — spectators reload to see updates"
+                    title="Push scores to the live link — spectators reload to see updates"
                     className={`text-xs px-2 py-1 rounded ${
                       publishStatus === 'published' ? 'bg-green-600' :
                       publishStatus === 'error' ? 'bg-red-600' :
@@ -2587,7 +2587,7 @@
                     onClick={copyLiveLink}
                     className={`text-xs px-2 py-1 rounded ${linkCopied ? 'bg-green-600' : 'bg-gray-600 hover:bg-gray-500'}`}
                   >
-                    {linkCopied ? '✓ Copied!' : '👁️ Viewer Link'}
+                    {linkCopied ? '✓ Copied!' : '📡 Live Link'}
                   </button>
                 </>
               )}
@@ -2894,11 +2894,11 @@
                     {npointId ? (
                       <div className="mt-2 space-y-2">
                         <div>
-                          <div className="text-xs text-gray-400 mb-1">👁️ Viewer Link <span className="text-gray-600">(read-only for spectators)</span></div>
+                          <div className="text-xs text-gray-400 mb-1">📡 Live Link <span className="text-gray-600">(read-only for spectators)</span></div>
                           <div className="text-xs text-gray-300 font-mono bg-gray-900 rounded px-2 py-1 select-all break-all">{window.location.origin}{window.location.pathname}?live={npointId}</div>
                         </div>
                         <div className="text-xs text-gray-500">
-                          <span className="text-yellow-400">How to use:</span> Click <span className="text-emerald-400">Publish</span> after entering scores. Viewers reload the page to see updates.
+                          <span className="text-yellow-400">How to use:</span> Click <span className="text-emerald-400">Publish</span> after entering scores. Spectators reload the page to see updates.
                         </div>
                         <div className="text-xs text-gray-600">
                           Manage your bin: <a href={`https://www.npoint.io/docs/${npointId}`} target="_blank" className="text-blue-400 underline">npoint.io/docs/{npointId}</a>
