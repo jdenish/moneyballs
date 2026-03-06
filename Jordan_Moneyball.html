@@ -509,7 +509,12 @@
       const [bracketScores, setBracketScores] = useState({});
       const [bracketOverrides, setBracketOverrides] = useState({});
       const [matchupsGenerated, setMatchupsGenerated] = useState(false);
-      const [rrMatchups, setRrMatchups] = useState([]); // rrMatchups[0] = game 1, etc.
+      const [rrMatchups, setRrMatchups] = useState([]); // [{matches: [...], bye: idx|-1}, ...]
+      // Normalize old format (array of arrays) to new format ({matches, bye})
+      const normalizeMatchups = (rounds) => {
+        if (!rounds || !rounds.length) return rounds;
+        return rounds.map(r => Array.isArray(r) ? { matches: r, bye: -1 } : r);
+      };
       const [pools, setPools] = useState({});
       const [bracketType, setBracketType] = useState('double'); // 'double' or 'single'
       const [bo3Finals, setBo3Finals] = useState(false);
@@ -574,14 +579,14 @@
         if (v('bracketOverrides', 'bo')) setBracketOverrides(v('bracketOverrides', 'bo'));
         // Handle both old (g1/g2/g3) and new (rm) matchup formats
         if (v('rrMatchups', 'rm')) {
-          setRrMatchups(v('rrMatchups', 'rm'));
+          setRrMatchups(normalizeMatchups(v('rrMatchups', 'rm')));
         } else {
           const g1 = v('game1Matchups', 'g1'), g2 = v('game2Matchups', 'g2'), g3 = v('game3Matchups', 'g3');
           const reconstructed = [];
           if (g1 && g1.length) reconstructed.push(g1);
           if (g2 && g2.length) reconstructed.push(g2);
           if (g3 && g3.length) reconstructed.push(g3);
-          if (reconstructed.length) setRrMatchups(reconstructed);
+          if (reconstructed.length) setRrMatchups(normalizeMatchups(reconstructed));
         }
         if (v('bracketType', 'bt')) setBracketType(v('bracketType', 'bt'));
         if (v('bo3Finals', 'b3') !== undefined) setBo3Finals(v('bo3Finals', 'b3'));
@@ -656,13 +661,13 @@
             if (data.bracketScores) setBracketScores(data.bracketScores);
             if (data.bracketOverrides) setBracketOverrides(data.bracketOverrides);
             if (data.rrMatchups) {
-              setRrMatchups(data.rrMatchups);
+              setRrMatchups(normalizeMatchups(data.rrMatchups));
             } else {
               const reconstructed = [];
               if (data.game1Matchups?.length) reconstructed.push(data.game1Matchups);
               if (data.game2Matchups?.length) reconstructed.push(data.game2Matchups);
               if (data.game3Matchups?.length) reconstructed.push(data.game3Matchups);
-              if (reconstructed.length) setRrMatchups(reconstructed);
+              if (reconstructed.length) setRrMatchups(normalizeMatchups(reconstructed));
             }
             if (data.bracketType) setBracketType(data.bracketType);
             if (data.bo3Finals !== undefined) setBo3Finals(data.bo3Finals);
@@ -738,13 +743,13 @@
             if (data.bracketScores) setBracketScores(data.bracketScores);
             if (data.bracketOverrides) setBracketOverrides(data.bracketOverrides);
             if (data.rrMatchups) {
-              setRrMatchups(data.rrMatchups);
+              setRrMatchups(normalizeMatchups(data.rrMatchups));
             } else {
               const reconstructed = [];
               if (data.game1Matchups?.length) reconstructed.push(data.game1Matchups);
               if (data.game2Matchups?.length) reconstructed.push(data.game2Matchups);
               if (data.game3Matchups?.length) reconstructed.push(data.game3Matchups);
-              if (reconstructed.length) setRrMatchups(reconstructed);
+              if (reconstructed.length) setRrMatchups(normalizeMatchups(reconstructed));
             }
             if (data.bracketType) setBracketType(data.bracketType);
             if (data.bo3Finals !== undefined) setBo3Finals(data.bo3Finals);
@@ -1182,8 +1187,6 @@
                 if (byeCounts[byeTeam] >= maxByes + 1) continue;
               }
               if (rm.length === half - (isOdd ? 1 : 0)) return { matches: rm, bye: byeTeam };
-              // Even case
-              if (rm.length === half) return { matches: rm, bye: -1 };
             }
             return null;
           };
@@ -1235,7 +1238,13 @@
               const rm = [];
               let byeTeam = -1;
               if (isOdd) {
-                byeTeam = available.pop();
+                // Pick team with fewest byes so far
+                const byeCounts = new Array(n).fill(0);
+                rounds.forEach(r => { if (r.bye >= 0) byeCounts[r.bye]++; });
+                const minByes = Math.min(...available.map(t => byeCounts[t]));
+                const candidates = available.filter(t => byeCounts[t] === minByes);
+                byeTeam = candidates[Math.floor(Math.random() * candidates.length)];
+                available.splice(available.indexOf(byeTeam), 1);
               }
               while (available.length >= 2) {
                 const t1 = available.shift();
@@ -2198,13 +2207,13 @@
             if (data.bracketOverrides) setBracketOverrides(data.bracketOverrides);
             // Handle both old (game1/2/3Matchups) and new (rrMatchups) formats
             if (data.rrMatchups) {
-              setRrMatchups(data.rrMatchups);
+              setRrMatchups(normalizeMatchups(data.rrMatchups));
             } else {
               const reconstructed = [];
               if (data.game1Matchups && data.game1Matchups.length) reconstructed.push(data.game1Matchups);
               if (data.game2Matchups && data.game2Matchups.length) reconstructed.push(data.game2Matchups);
               if (data.game3Matchups && data.game3Matchups.length) reconstructed.push(data.game3Matchups);
-              if (reconstructed.length) setRrMatchups(reconstructed);
+              if (reconstructed.length) setRrMatchups(normalizeMatchups(reconstructed));
             }
             if (data.bracketType) setBracketType(data.bracketType);
             if (data.bo3Finals !== undefined) setBo3Finals(data.bo3Finals);
@@ -3080,7 +3089,7 @@
                 );
               })() : (
                 /* Game-based layout: dynamic columns */
-                <div className={`grid gap-2 ${seedingMatches.length <= 3 ? 'grid-cols-3' : `grid-cols-${Math.min(seedingMatches.length, 4)}`}`}>
+                <div className={`grid gap-2 ${seedingMatches.length <= 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
                   {seedingMatches.map((round, roundIdx) => {
                     const colors = ['text-blue-400', 'text-green-400', 'text-yellow-400', 'text-red-400', 'text-purple-400', 'text-pink-400', 'text-cyan-400'];
                     return (
