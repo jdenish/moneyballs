@@ -614,11 +614,11 @@
           };
           const full = {};
           Object.entries(d.bs).forEach(([id, s]) => {
-            if (s.g) {
-              full[id] = { t1: getTeam(s.a), t2: getTeam(s.b), games: s.g };
-            } else {
-              full[id] = { t1: getTeam(s.a), t2: getTeam(s.b), s1: s.s1, s2: s.s2 };
-            }
+            const entry = s.g
+              ? { t1: getTeam(s.a), t2: getTeam(s.b), games: s.g }
+              : { t1: getTeam(s.a), t2: getTeam(s.b), s1: s.s1, s2: s.s2 };
+            if (s.rl) entry.roundLabel = s.rl;
+            full[id] = entry;
           });
           setBracketScores(full);
         }
@@ -2210,6 +2210,13 @@
             matches[id] = updated;
           }
         }
+        // Create match entries for scores that have no generated bracket match (off-bracket matches)
+        for (const [id, sc] of Object.entries(bracketScores)) {
+          if (!matches[id] && sc.t1 && sc.t2) {
+            const round = sc.roundLabel || (id.startsWith('lr') ? `L-R${id.match(/lr(\d+)/)?.[1] || '?'}` : id);
+            matches[id] = { id, t1: sc.t1, t2: sc.t2, round };
+          }
+        }
         return matches;
       }, [bracketTeams, displayStandings, bracketType, teamCount, bo3Finals, getBracketMatchTeam, getBracketMatchLoser, allSeedingComplete, matchupsGenerated, rrGames, pools, winnersCount, bracketScores, bracketOverrides]);
 
@@ -3524,6 +3531,7 @@
             const renderMatch = (id) => {
               let m = bracketMatches[id];
               if (!m || m.bye) return null;
+              if (bracketOverrides[id]?.hidden) return null;
               // Patch: prefer score teams over bracket-generated teams (handles off-bracket matches)
               const sc = bracketScores[id];
               if (sc) {
@@ -3556,7 +3564,7 @@
 
             // Column helper: renders a labeled column of matches
             const col = (label, ids, opts = {}) => {
-              const validIds = ids.filter(id => bracketMatches[id] && !bracketMatches[id].bye);
+              const validIds = ids.filter(id => bracketMatches[id] && !bracketMatches[id].bye && !bracketOverrides[id]?.hidden);
               if (!validIds.length) return null;
               return (
                 <div className={`space-y-2 w-44 flex-shrink-0 ${opts.pt || ''}`}>
