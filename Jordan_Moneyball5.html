@@ -3252,12 +3252,12 @@
             const renderMatch = (id) => {
               let m = bracketMatches[id];
               if (!m || m.bye) return null;
-              // Patch: ensure match teams are populated from bracketScores
+              // Patch: prefer score teams over bracket-generated teams (handles off-bracket matches)
               const sc = bracketScores[id];
-              if (sc && (!m.t1 || !m.t2)) {
+              if (sc) {
                 m = { ...m };
-                if (!m.t1 && sc.t1) m.t1 = sc.t1;
-                if (!m.t2 && sc.t2) m.t2 = sc.t2;
+                if (sc.t1 && (!m.t1 || (sc.t1.seed !== m.t1?.seed))) m.t1 = sc.t1;
+                if (sc.t2 && (!m.t2 || (sc.t2.seed !== m.t2?.seed))) m.t2 = sc.t2;
               }
               return (
                 <BracketMatch
