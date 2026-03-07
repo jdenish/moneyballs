@@ -165,8 +165,8 @@
           wsf1:{a:2,b:1,s1:'13',s2:'15'},wsf2:{a:7,b:4,s1:'10',s2:'15'},
           wf:{a:1,b:4,g:[{s1:'8',s2:'11'},{s1:'2',s2:'11'}]},
           lr2m2:{a:6,b:14,s1:'15',s2:'12',rl:'L-R2'},lr2m4:{a:3,b:10,s1:'15',s2:'1',rl:'L-R2'},
-          lr3m1:{a:6,b:8,s1:'5',s2:'15'},lr3m2:{a:3,b:5,s1:'13',s2:'15'},lr3m3:{a:8,b:9,s1:'15',s2:'5'},
-          lr4m1:{a:8,b:2,s1:'11',s2:'15'},lr4m2:{a:5,b:7,s1:'10',s2:'15'},
+          lr3m1:{a:6,b:8,s1:'5',s2:'15'},lr3m2:{a:3,b:5,s1:'13',s2:'15'},
+          lr4m1:{a:8,b:2,s1:'11',s2:'15'},lr4m2:{a:5,b:7,s1:'10',s2:'15'},lr4m3:{a:8,b:9,s1:'15',s2:'5'},
           lsf:{a:2,b:7,s1:'15',s2:'11'},lf:{a:2,b:1,s1:'15',s2:'10'},
           gf:{a:4,b:2,g:[{s1:'11',s2:'8'},{s1:'6',s2:'11'},{s1:'11',s2:'0'}]}
         }
@@ -3350,12 +3350,12 @@
               const validIds = ids.filter(id => bracketMatches[id] && !bracketMatches[id].bye && !bracketOverrides[id]?.hidden);
               if (!validIds.length) return null;
               return (
-                <div className={`space-y-2 w-44 flex-shrink-0 ${opts.pt || ''}`}>
+                <div className={`w-44 flex-shrink-0 ${opts.pt || ''} ${opts.center ? 'flex flex-col justify-around' : 'space-y-2'}`} style={opts.center ? { minHeight: opts.center } : undefined}>
                   <div className="text-xs text-gray-500 text-center">{label}</div>
                   {validIds.map((id, idx) => (
                     <React.Fragment key={id}>
                       {renderMatch(id)}
-                      {opts.gap && idx < validIds.length - 1 && <div className={opts.gap}></div>}
+                      {!opts.center && opts.gap && idx < validIds.length - 1 && <div className={opts.gap}></div>}
                     </React.Fragment>
                   ))}
                 </div>
@@ -3566,9 +3566,12 @@
                         return numA - numB;
                       });
                       return sortedRounds.map((round, i) => {
+                        const prevCount = i > 0 ? losersRounds[sortedRounds[i-1]]?.filter(id => bracketMatches[id] && !bracketMatches[id].bye && !bracketOverrides[id]?.hidden).length : 0;
+                        const curCount = losersRounds[round].filter(id => bracketMatches[id] && !bracketMatches[id].bye && !bracketOverrides[id]?.hidden).length;
                         const pt = i >= 2 ? 'pt-10' : '';
-                        const gap = losersRounds[round].length <= 2 ? 'h-6' : undefined;
-                        return col(round, losersRounds[round], { pt, gap });
+                        const gap = curCount <= 2 ? 'h-6' : undefined;
+                        const center = (i > 0 && curCount < prevCount) ? `${prevCount * 90}px` : undefined;
+                        return col(round, losersRounds[round], { pt, gap, center });
                       });
                     })()}
                     {bracketMatches.lsf && (
