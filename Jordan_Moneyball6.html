@@ -1883,7 +1883,17 @@
             lr2WinnerIds.push(matchId);
           }
 
-          const getLrWin = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
+          const getLrWin = (id) => {
+            if (matches[id]?.bye) return matches[id]?.t1;
+            const w = getBracketMatchTeam(id);
+            if (w) return w;
+            // Fallback: resolve winner directly from score data
+            const sc = bracketScores[id];
+            if (sc && sc.s1 !== '' && sc.s2 !== '' && sc.s1 !== undefined && sc.s2 !== undefined) {
+              return parseInt(sc.s1) > parseInt(sc.s2) ? sc.t1 : sc.t2;
+            }
+            return null;
+          };
 
           // === Reduction rounds: halve survivors until 2 remain ===
           let currentIds = lr2WinnerIds;
@@ -1958,12 +1968,14 @@
           // Also show if score data exists even if gf winner can't be determined yet
           matches.gf2 = { id: 'gf2', t1: matches.gf.t1, t2: matches.gf.t2, round: 'Game to 15' };
         }
-        // Post-process: fill in null teams from bracketScores so downstream matches resolve
+        // Post-process: fill in match teams from bracketScores (fixes chain resolution gaps)
         for (const [id, m] of Object.entries(matches)) {
           const sc = bracketScores[id];
           if (sc) {
-            if (!m.t1 && sc.t1) matches[id] = { ...m, t1: sc.t1 };
-            if (!m.t2 && sc.t2) matches[id] = { ...m, t2: sc.t2 };
+            const updated = { ...m };
+            if (sc.t1 && (!m.t1 || !m.t1.name)) updated.t1 = sc.t1;
+            if (sc.t2 && (!m.t2 || !m.t2.name)) updated.t2 = sc.t2;
+            matches[id] = updated;
           }
         }
         return matches;
