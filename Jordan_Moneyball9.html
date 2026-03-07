@@ -816,7 +816,20 @@
         const sharedState = params.get('s');
         const liveId = params.get('live');
         const hash = window.location.hash;
-        if (liveId) {
+        const viewId = params.get('view');
+        if (viewId) {
+          // View-only mode: fetch state from npoint as spectator (no password)
+          setView('tournament');
+          setSpectatorMode(true);
+          fetch(`https://api.npoint.io/${viewId}?_=${Date.now()}`)
+            .then(r => r.json())
+            .then(data => {
+              if (data && Object.keys(data).length > 0) {
+                loadSharedState(data, { spectator: true });
+              }
+            })
+            .catch(e => { console.error('Failed to load view state', e); });
+        } else if (liveId) {
           // Live mode: fetch state from npoint
           setView('tournament');
           setLiveMode(true);
