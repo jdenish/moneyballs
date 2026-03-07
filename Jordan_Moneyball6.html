@@ -1958,6 +1958,14 @@
           // Also show if score data exists even if gf winner can't be determined yet
           matches.gf2 = { id: 'gf2', t1: matches.gf.t1, t2: matches.gf.t2, round: 'Game to 15' };
         }
+        // Post-process: fill in null teams from bracketScores so downstream matches resolve
+        for (const [id, m] of Object.entries(matches)) {
+          const sc = bracketScores[id];
+          if (sc) {
+            if (!m.t1 && sc.t1) matches[id] = { ...m, t1: sc.t1 };
+            if (!m.t2 && sc.t2) matches[id] = { ...m, t2: sc.t2 };
+          }
+        }
         return matches;
       }, [bracketTeams, displayStandings, bracketType, teamCount, bo3Finals, getBracketMatchTeam, getBracketMatchLoser, allSeedingComplete, matchupsGenerated, rrGames, pools, winnersCount, bracketScores, bracketOverrides]);
 
