@@ -1240,11 +1240,13 @@
             rounds.forEach(r => r.matches.forEach(({ t1, t2 }) => {
               sums[t1] += t2 + 1; sums[t2] += t1 + 1;
             }));
-            const avg = sums.reduce((a, b) => a + b, 0) / n;
-            const maxDev = Math.max(...sums.map(s => Math.abs(s - avg)));
+            // Use average opponent seed (normalizes for different game counts with odd teams)
+            const avgs = sums.map((s, i) => gamesPlayed[i] > 0 ? s / gamesPlayed[i] : 0);
+            const meanAvg = avgs.reduce((a, b) => a + b, 0) / n;
+            const maxDev = Math.max(...avgs.map(a => Math.abs(a - meanAvg)));
             if (!best || maxDev < best.maxDev) {
               best = { maxDev, rounds, gamesPlayed, byeCounts };
-              if (maxDev <= 2) break;
+              if (maxDev <= 0.5) break;
             }
           }
 
@@ -3033,27 +3035,34 @@
                   </button>
                   {matchupsGenerated && poolSize === 0 && rrGames >= 3 && rrMatchups.length > 0 && (() => {
                     const sums = {};
+                    const counts = {};
                     rrMatchups.forEach(round => {
                       round.matches.forEach(({ t1, t2 }) => {
                         sums[t1] = (sums[t1] || 0) + (t2 + 1);
                         sums[t2] = (sums[t2] || 0) + (t1 + 1);
+                        counts[t1] = (counts[t1] || 0) + 1;
+                        counts[t2] = (counts[t2] || 0) + 1;
                       });
                     });
-                    const values = Object.values(sums);
-                    const min = Math.min(...values);
-                    const max = Math.max(...values);
+                    const avgs = {};
+                    Array.from({ length: teamCount }, (_, i) => i).forEach(t => {
+                      avgs[t] = counts[t] ? (sums[t] / counts[t]).toFixed(1) : '0';
+                    });
+                    const avgValues = Object.values(avgs).map(Number);
+                    const min = Math.min(...avgValues);
+                    const max = Math.max(...avgValues);
                     return (
                       <div className="text-xs text-gray-400 mb-2 p-2 bg-gray-800 rounded">
-                        <div className="font-semibold text-gray-300 mb-1">Opponent Strength (sum of opponent seeds):</div>
+                        <div className="font-semibold text-gray-300 mb-1">Avg Opponent Seed:</div>
                         <div className="flex flex-wrap gap-1">
                           {Array.from({ length: teamCount }, (_, i) => i).map(t => (
-                            <span key={t} title={`Seed ${t + 1}: opponents sum to ${sums[t] || 0}`}
-                              className={`px-1 rounded ${sums[t] === min || sums[t] === max ? 'text-yellow-300' : ''}`}>
-                              {t + 1}→{sums[t] || 0}
+                            <span key={t} title={`Seed ${t + 1}: avg opponent seed ${avgs[t]} (${counts[t] || 0} games)`}
+                              className={`px-1 rounded ${Number(avgs[t]) === min || Number(avgs[t]) === max ? 'text-yellow-300' : ''}`}>
+                              {t + 1}→{avgs[t]}
                             </span>
                           ))}
                         </div>
-                        <div className="mt-1 text-gray-500">Range: {min}–{max}{teamCount % 2 === 1 ? ` | ${rrMatchups.length} rounds (${rrMatchups.filter(r => r.bye >= 0).length} byes)` : ''}</div>
+                        <div className="mt-1 text-gray-500">Range: {min.toFixed(1)}–{max.toFixed(1)}{teamCount % 2 === 1 ? ` | ${rrMatchups.length} rounds (${rrMatchups.filter(r => r.bye >= 0).length} byes)` : ''}</div>
                         {teamCount % 2 === 1 && rrMatchups.some(r => r.bye >= 0) && (
                           <div className="mt-2 border-t border-gray-700 pt-2">
                             <div className="font-semibold text-gray-300 mb-1">Sits Out Per Round:</div>
