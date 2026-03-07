@@ -3538,16 +3538,13 @@
                       Object.values(bracketMatches).forEach(m => {
                         if (m.id === 'lsf' || m.id === 'lf' || m.id === 'gf' || m.id === 'gf2') return;
                         if (!m.id.startsWith('lr')) return;
-                        // Detect off-bracket matches: score teams differ from bracket teams
-                        const sc = bracketScores[m.id];
-                        let roundMatch = (sc?.roundLabel || m.round).replace(' (bye)', '');
-                        if (sc?.t1 && m.t1 && sc.t1.seed !== m.t1.seed) roundMatch = 'Elim.';
+                        let roundMatch = m.round.replace(' (bye)', '');
                         if (!losersRounds[roundMatch]) losersRounds[roundMatch] = [];
                         losersRounds[roundMatch].push(m.id);
                       });
                       const sortedRounds = Object.keys(losersRounds).sort((a, b) => {
-                        const numA = a === 'Elim.' ? 1.5 : (parseFloat(a.replace('L-R', '')) || 0);
-                        const numB = b === 'Elim.' ? 1.5 : (parseFloat(b.replace('L-R', '')) || 0);
+                        const numA = parseFloat(a.replace('L-R', '')) || 0;
+                        const numB = parseFloat(b.replace('L-R', '')) || 0;
                         return numA - numB;
                       });
                       return sortedRounds.map((round, i) => {
