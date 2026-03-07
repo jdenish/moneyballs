@@ -3501,22 +3501,22 @@
                       Object.values(bracketMatches).forEach(m => {
                         if (m.id === 'lsf' || m.id === 'lf' || m.id === 'gf' || m.id === 'gf2') return;
                         if (!m.id.startsWith('lr')) return;
-                        // Use custom roundLabel from scores if available (for off-bracket matches)
+                        // Detect off-bracket matches: score teams differ from bracket teams
                         const sc = bracketScores[m.id];
-                        const roundMatch = (sc?.roundLabel || m.round).replace(' (bye)', '');
+                        let roundMatch = (sc?.roundLabel || m.round).replace(' (bye)', '');
+                        if (sc?.t1 && m.t1 && sc.t1.seed !== m.t1.seed) roundMatch = 'Elim.';
                         if (!losersRounds[roundMatch]) losersRounds[roundMatch] = [];
                         losersRounds[roundMatch].push(m.id);
                       });
                       const sortedRounds = Object.keys(losersRounds).sort((a, b) => {
-                        const numA = parseFloat(a.replace('L-R', '')) || 0;
-                        const numB = parseFloat(b.replace('L-R', '')) || 0;
+                        const numA = a === 'Elim.' ? 1.5 : (parseFloat(a.replace('L-R', '')) || 0);
+                        const numB = b === 'Elim.' ? 1.5 : (parseFloat(b.replace('L-R', '')) || 0);
                         return numA - numB;
                       });
                       return sortedRounds.map((round, i) => {
                         const pt = i >= 2 ? 'pt-10' : '';
                         const gap = losersRounds[round].length <= 2 ? 'h-6' : undefined;
-                        const displayRound = round === 'L-R1.5' ? 'Elim.' : round;
-                        return col(displayRound, losersRounds[round], { pt, gap });
+                        return col(round, losersRounds[round], { pt, gap });
                       });
                     })()}
                     {bracketMatches.lsf && (
