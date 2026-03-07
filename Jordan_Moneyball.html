@@ -894,7 +894,7 @@
           setLinkCopied(true);
           setTimeout(() => setLinkCopied(false), 2000);
         });
-      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, rrMatchups, bracketType, bo3Finals, poolSize, courtCount, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase]);
+      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, rrMatchups, bracketType, bo3Finals, poolSize, courtCount, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase, standingsOverride]);
 
       const buildPublishState = useCallback(() => {
         const state = {
@@ -916,7 +916,7 @@
           state.bs = slim;
         }
         return state;
-      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, rrMatchups, bracketType, bo3Finals, poolSize, courtCount, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase]);
+      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, rrMatchups, bracketType, bo3Finals, poolSize, courtCount, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase, standingsOverride]);
 
       const publishToNpoint = useCallback(() => {
         if (!npointId) return;
