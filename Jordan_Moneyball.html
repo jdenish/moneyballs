@@ -595,7 +595,7 @@
         if (v('pools', 'p')) setPools(v('pools', 'p'));
         if (v('matchupsGenerated', 'mg')) setMatchupsGenerated(v('matchupsGenerated', 'mg'));
         if (v('onCourt', 'oc')) setOnCourt(v('onCourt', 'oc'));
-        if (v('bracketSeedOverride', 'bso')) setBracketSeedOverride(v('bracketSeedOverride', 'bso'));
+        // bracketSeedOverride intentionally NOT loaded — always rebuild from standings
         // Restore bracket scores: expand slim format back to full team objects
         if (d.bracketScores) {
           setBracketScores(d.bracketScores);
@@ -677,7 +677,7 @@
             if (data.pools) setPools(data.pools);
             if (data.matchupsGenerated) setMatchupsGenerated(data.matchupsGenerated);
             if (data.onCourt) setOnCourt(data.onCourt);
-            setBracketSeedOverride(data.bracketSeedOverride || null);
+            // bracketSeedOverride intentionally NOT loaded — always rebuild from standings
             setStandingsOverride(data.standingsOverride || null);
             // Auto-detect phase
             const hasBracket = data.bracketScores && Object.keys(data.bracketScores).length > 0;
@@ -759,7 +759,7 @@
             if (data.pools) setPools(data.pools);
             if (data.matchupsGenerated) setMatchupsGenerated(data.matchupsGenerated);
             if (data.onCourt) setOnCourt(data.onCourt);
-            setBracketSeedOverride(data.bracketSeedOverride || null);
+            // bracketSeedOverride intentionally NOT loaded — always rebuild from standings
             setStandingsOverride(data.standingsOverride || null);
             const hasBracket = data.bracketScores && Object.keys(data.bracketScores).length > 0;
             const hasBracketOverrides = data.bracketOverrides && Object.keys(data.bracketOverrides).length > 0;
@@ -1504,13 +1504,6 @@
 
         return { winners, losers, swaps, unswappedWinners, unswappedLosers };
       }, [displayStandings, teamCount, winnersCount, bracketSeedOverride, pools]);
-
-      // Clear stale bracketSeedOverride when standings change so bracket rebuilds
-      useEffect(() => {
-        if (bracketSeedOverride && displayStandings.length >= teamCount) {
-          setBracketSeedOverride(null);
-        }
-      }, [displayStandings]);
 
       // Sync bracketSwaps state from bracketTeams (useEffect instead of setState in useMemo)
       useEffect(() => {
