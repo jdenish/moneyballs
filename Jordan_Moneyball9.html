@@ -807,7 +807,8 @@
         setOnCourt({});
         setBracketSeedOverride(null);
         setStandingsOverride(null);
-        setSpectatorMode(false);
+        const _p = new URLSearchParams(window.location.search);
+        if (!_p.get('view') && !_p.get('s')) setSpectatorMode(false);
         window.location.hash = '';
       }, []);
 
