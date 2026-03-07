@@ -3351,12 +3351,12 @@
               const validIds = ids.filter(id => bracketMatches[id] && !bracketMatches[id].bye && !bracketOverrides[id]?.hidden);
               if (!validIds.length) return null;
               return (
-                <div key={label} className={`w-44 flex-shrink-0 flex flex-col ${opts.center ? 'justify-around' : 'justify-start gap-2'}`}>
-                  <div className="text-xs text-gray-500 text-center flex-shrink-0">{label}</div>
+                <div key={label} className="w-44 flex-shrink-0 space-y-2">
+                  <div className="text-xs text-gray-500 text-center">{label}</div>
                   {validIds.map((id, idx) => (
                     <React.Fragment key={id}>
-                      <div className="flex-shrink-0">{renderMatch(id)}</div>
-                      {!opts.center && opts.gap && idx < validIds.length - 1 && <div className={`${opts.gap} flex-shrink-0`}></div>}
+                      {renderMatch(id)}
+                      {opts.gap && idx < validIds.length - 1 && <div className={opts.gap}></div>}
                     </React.Fragment>
                   ))}
                 </div>
@@ -3511,12 +3511,24 @@
               {/* ====== DOUBLE ELIMINATION LAYOUT ====== */}
               {bracketType === 'double' && (
                 <>
-                  <div className="flex gap-3 pb-4">
+                  <div className="flex gap-0 pb-4">
                     {col('W-QF', ['wqf1','wqf2','wqf3','wqf4'])}
-                    {col('W-SF', ['wsf1','wsf2'], { pt: 'pt-10', gap: 'h-12' })}
+                    <div className="flex flex-col justify-around flex-shrink-0" style={{ width: '20px' }}>
+                      <div className="border-t border-gray-600" style={{ width: '20px', marginTop: '24px' }}></div>
+                      <div className="border-t border-gray-600" style={{ width: '20px' }}></div>
+                      <div className="border-t border-gray-600" style={{ width: '20px' }}></div>
+                    </div>
+                    {col('W-SF', ['wsf1','wsf2'], { gap: 'h-12' })}
+                    <div className="flex flex-col justify-around flex-shrink-0" style={{ width: '20px' }}>
+                      <div className="border-t border-gray-600" style={{ width: '20px' }}></div>
+                      <div className="border-t border-gray-600" style={{ width: '20px' }}></div>
+                    </div>
                     <div className="w-44 flex-shrink-0 pt-20">
                       <div className="text-xs text-gray-500 text-center">W-Final</div>
                       {renderMatch('wf')}
+                    </div>
+                    <div className="flex flex-col justify-around flex-shrink-0" style={{ width: '20px' }}>
+                      <div className="border-t border-gray-600" style={{ width: '20px', marginTop: '60px' }}></div>
                     </div>
                     <div className="w-56 flex-shrink-0 pt-16">
                       <h3 className="text-yellow-400 font-semibold mb-2 text-center text-sm">🏆 Grand Final</h3>
@@ -3547,15 +3559,13 @@
                   </div>
 
                   <h2 className="text-lg font-semibold text-red-400 mb-2">Losers Bracket</h2>
-                  <div className="flex gap-3 pb-4 overflow-x-auto items-stretch">
+                  <div className="flex gap-0 pb-4 overflow-x-auto">
                     {(() => {
                       // Dynamically render losers bracket rounds from bracketMatches
                       const losersRounds = {};
-                      let maxCount = 0;
                       Object.values(bracketMatches).forEach(m => {
                         if (m.id === 'lsf' || m.id === 'lf' || m.id === 'gf' || m.id === 'gf2') return;
                         if (!m.id.startsWith('lr')) return;
-                        // Detect off-bracket matches: score teams differ from bracket teams
                         const sc = bracketScores[m.id];
                         let roundMatch = (sc?.roundLabel || m.round).replace(' (bye)', '');
                         if (!sc?.roundLabel && sc?.t1 && m.t1 && sc.t1.seed !== m.t1.seed) roundMatch = 'Elim.';
@@ -3567,24 +3577,37 @@
                         const numB = b === 'Elim.' ? 1.5 : (parseFloat(b.replace('L-R', '')) || 0);
                         return numA - numB;
                       });
-                      // Find max visible match count across rounds for centering reference
-                      sortedRounds.forEach(round => {
-                        const cnt = losersRounds[round].filter(id => bracketMatches[id] && !bracketMatches[id].bye && !bracketOverrides[id]?.hidden).length;
-                        if (cnt > maxCount) maxCount = cnt;
+                      const result = [];
+                      sortedRounds.forEach((round, i) => {
+                        const gap = losersRounds[round].length <= 2 ? 'h-6' : undefined;
+                        result.push(col(round, losersRounds[round], { gap }));
+                        // Add connector lines between columns
+                        if (i < sortedRounds.length - 1) {
+                          result.push(
+                            <div key={`conn-${round}`} className="flex flex-col justify-around flex-shrink-0" style={{ width: '20px' }}>
+                              {losersRounds[round].filter(id => bracketMatches[id] && !bracketMatches[id].bye && !bracketOverrides[id]?.hidden).map(id => (
+                                <div key={id} className="border-t border-gray-600" style={{ width: '20px', marginTop: '32px' }}></div>
+                              ))}
+                            </div>
+                          );
+                        }
                       });
-                      return sortedRounds.map((round, i) => {
-                        const curCount = losersRounds[round].filter(id => bracketMatches[id] && !bracketMatches[id].bye && !bracketOverrides[id]?.hidden).length;
-                        const gap = curCount <= 2 ? 'h-6' : undefined;
-                        const center = curCount < maxCount;
-                        return col(round, losersRounds[round], { gap, center });
-                      });
+                      return result;
                     })()}
                     {bracketMatches.lsf && (
+                    <>
+                    <div className="flex flex-col justify-around flex-shrink-0" style={{ width: '20px' }}>
+                      <div className="border-t border-gray-600" style={{ width: '20px', marginTop: '32px' }}></div>
+                    </div>
                     <div className="w-44 flex-shrink-0 pt-14">
                       <div className="text-xs text-gray-500 text-center">L-Semi</div>
                       {renderMatch('lsf')}
                     </div>
+                    </>
                     )}
+                    <div className="flex flex-col justify-around flex-shrink-0" style={{ width: '20px' }}>
+                      <div className="border-t border-gray-600" style={{ width: '20px', marginTop: '32px' }}></div>
+                    </div>
                     <div className="w-44 flex-shrink-0 pt-14">
                       <div className="text-xs text-gray-500 text-center">L-Final</div>
                       {renderMatch('lf')}
