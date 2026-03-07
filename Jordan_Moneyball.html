@@ -550,7 +550,7 @@
       }, [passwordInput]);
 
       // Default winners count based on team count
-      const defaultWinnersCount = { 8: 8, 9: 8, 10: 8, 11: 8, 12: 12, 13: 8, 14: 8, 15: 8, 16: 8 };
+      const defaultWinnersCount = { 8: 8, 9: 8, 10: 8, 11: 8, 12: 12, 13: 8, 14: 8, 15: 8, 16: 8, 17: 8, 18: 8, 19: 8, 20: 8 };
 
       const payouts = {
         8: { first: 200, second: 100, third: 40, total: 340 },
@@ -561,7 +561,11 @@
         13: { first: 400, second: 180, third: 60, total: 640 },
         14: { first: 440, second: 200, third: 60, total: 700 },
         15: { first: 480, second: 200, third: 80, total: 760 },
-        16: { first: 500, second: 220, third: 100, total: 820 }
+        16: { first: 500, second: 220, third: 100, total: 820 },
+        17: { first: 540, second: 240, third: 100, total: 880 },
+        18: { first: 580, second: 260, third: 100, total: 940 },
+        19: { first: 620, second: 260, third: 120, total: 1000 },
+        20: { first: 660, second: 280, third: 120, total: 1060 }
       };
       const currentPayouts = payouts[teamCount] || payouts[16];
 
@@ -573,7 +577,7 @@
         if (v('teamCount', 'tc')) setTeamCount(v('teamCount', 'tc'));
         if (v('rrGames', 'rg')) setRrGames(v('rrGames', 'rg'));
         if (v('rrPointTarget', 'rp')) setRrPointTarget(v('rrPointTarget', 'rp'));
-        if (v('winnersCount', 'wc')) setWinnersCount(v('winnersCount', 'wc'));
+        if (v('winnersCount', 'wc')) setWinnersCount(Math.min(v('winnersCount', 'wc'), 12));
         if (v('teams', 't')) setTeams(v('teams', 't'));
         if (v('seedingScores', 'ss')) setSeedingScores(v('seedingScores', 'ss'));
         if (v('bracketOverrides', 'bo')) setBracketOverrides(v('bracketOverrides', 'bo'));
@@ -610,11 +614,11 @@
           };
           const full = {};
           Object.entries(d.bs).forEach(([id, s]) => {
-            if (s.g) {
-              full[id] = { t1: getTeam(s.a), t2: getTeam(s.b), games: s.g };
-            } else {
-              full[id] = { t1: getTeam(s.a), t2: getTeam(s.b), s1: s.s1, s2: s.s2 };
-            }
+            const entry = s.g
+              ? { t1: getTeam(s.a), t2: getTeam(s.b), games: s.g }
+              : { t1: getTeam(s.a), t2: getTeam(s.b), s1: s.s1, s2: s.s2 };
+            if (s.rl) entry.roundLabel = s.rl;
+            full[id] = entry;
           });
           setBracketScores(full);
         }
@@ -656,7 +660,7 @@
             if (data.teamCount) setTeamCount(data.teamCount);
             if (data.rrGames) setRrGames(data.rrGames);
             if (data.rrPointTarget) setRrPointTarget(data.rrPointTarget);
-            if (data.winnersCount) setWinnersCount(data.winnersCount);
+            if (data.winnersCount) setWinnersCount(Math.min(data.winnersCount, 12));
             if (data.teams) setTeams(data.teams);
             if (data.seedingScores) setSeedingScores(data.seedingScores);
             if (data.bracketScores) setBracketScores(data.bracketScores);
@@ -738,7 +742,7 @@
             if (data.teamCount) setTeamCount(data.teamCount);
             if (data.rrGames) setRrGames(data.rrGames);
             if (data.rrPointTarget) setRrPointTarget(data.rrPointTarget);
-            if (data.winnersCount) setWinnersCount(data.winnersCount);
+            if (data.winnersCount) setWinnersCount(Math.min(data.winnersCount, 12));
             if (data.teams) setTeams(data.teams);
             if (data.seedingScores) setSeedingScores(data.seedingScores);
             if (data.bracketScores) setBracketScores(data.bracketScores);
@@ -807,7 +811,8 @@
         setOnCourt({});
         setBracketSeedOverride(null);
         setStandingsOverride(null);
-        setSpectatorMode(false);
+        const _p = new URLSearchParams(window.location.search);
+        if (!_p.get('view') && !_p.get('s')) setSpectatorMode(false);
         window.location.hash = '';
       }, []);
 
@@ -816,7 +821,21 @@
         const sharedState = params.get('s');
         const liveId = params.get('live');
         const hash = window.location.hash;
-        if (liveId) {
+        const viewId = params.get('view');
+        if (viewId) {
+          // View-only mode: fetch state from npoint as spectator (no password)
+          setView('tournament');
+          setSpectatorMode(true);
+          fetch(`https://api.npoint.io/${viewId}?_=${Date.now()}`)
+            .then(r => r.json())
+            .then(data => {
+              if (data && Object.keys(data).length > 0) {
+                loadSharedState(data, { spectator: true });
+                setPhase('bracket');
+              }
+            })
+            .catch(e => { console.error('Failed to load view state', e); });
+        } else if (liveId) {
           // Live mode: fetch state from npoint
           setView('tournament');
           setLiveMode(true);
@@ -1225,11 +1244,13 @@
             rounds.forEach(r => r.matches.forEach(({ t1, t2 }) => {
               sums[t1] += t2 + 1; sums[t2] += t1 + 1;
             }));
-            const avg = sums.reduce((a, b) => a + b, 0) / n;
-            const maxDev = Math.max(...sums.map(s => Math.abs(s - avg)));
+            // Use average opponent seed (normalizes for different game counts with odd teams)
+            const avgs = sums.map((s, i) => gamesPlayed[i] > 0 ? s / gamesPlayed[i] : 0);
+            const meanAvg = avgs.reduce((a, b) => a + b, 0) / n;
+            const maxDev = Math.max(...avgs.map(a => Math.abs(a - meanAvg)));
             if (!best || maxDev < best.maxDev) {
               best = { maxDev, rounds, gamesPlayed, byeCounts };
-              if (maxDev <= 2) break;
+              if (maxDev <= 0.5) break;
             }
           }
 
@@ -1709,8 +1730,6 @@
           w = (bracketTeams.winners || []).map(resolveFromStandings);
           l = (bracketTeams.losers || []).map(resolveFromStandings);
         }
-        console.log('BRACKET BUILD:', { rrIncomplete, winnersCount, standingsOverride, displayStandingsOrder: displayStandings.map(t => `${t.name?.split('/')[0]?.trim()}(s${t.seed})`).join(', '), wOrder: w.map(t => `${t.name?.split('/')[0]?.trim()}(s${t.seed})`).join(', '), lOrder: l.map(t => `${t.name?.split('/')[0]?.trim()}(s${t.seed})`).join(', ') });
-
         // ========= SINGLE ELIMINATION =========
         if (bracketType === 'single') {
           const seTeams = (rrIncomplete ? Array.from({ length: teamCount }, (_, i) => makePlaceholder(i + 1)) : displayStandings.slice(0, teamCount)).map(resolveFromStandings);
@@ -1775,7 +1794,36 @@
         const matches = {};
 
         // Winners bracket
-        if (w.length >= 8) {
+        if (w.length > 8) {
+          // 9-12 winners: W-R1 play-in for seeds 9+, then W-QF
+          const wr1Pairings = [
+            [7, 8],   // wr1m1: seed 8 vs 9 → feeds wqf1
+            [6, 9],   // wr1m2: seed 7 vs 10 → feeds wqf3
+            [5, 10],  // wr1m3: seed 6 vs 11 → feeds wqf4
+            [4, 11],  // wr1m4: seed 5 vs 12 → feeds wqf2
+          ];
+          wr1Pairings.forEach(([i1, i2], idx) => {
+            const matchId = `wr1m${idx + 1}`;
+            if (i2 < w.length) {
+              matches[matchId] = { id: matchId, t1: w[i1], t2: w[i2], round: 'W-R1', court: 5 + idx };
+            } else if (i1 < w.length) {
+              matches[matchId] = { id: matchId, t1: w[i1], t2: null, round: 'W-R1 (bye)', bye: true };
+            }
+          });
+          const getWr1Winner = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
+          const wr1Feed = { wqf1: 'wr1m1', wqf2: 'wr1m4', wqf3: 'wr1m2', wqf4: 'wr1m3' };
+          const qfTopSeeds = { wqf1: 0, wqf2: 3, wqf3: 1, wqf4: 2 };
+          for (const [qfId, wr1Id] of Object.entries(wr1Feed)) {
+            const topSeed = w[qfTopSeeds[qfId]];
+            const courtNum = { wqf1: 1, wqf2: 2, wqf3: 3, wqf4: 4 }[qfId];
+            if (matches[wr1Id]) {
+              const opponent = getWr1Winner(wr1Id);
+              matches[qfId] = { id: qfId, t1: topSeed, t2: opponent, round: 'W-QF', court: courtNum };
+            } else {
+              matches[qfId] = { id: qfId, t1: topSeed, t2: null, round: 'W-QF (bye)', bye: true };
+            }
+          }
+        } else if (w.length >= 8) {
           matches.wqf1 = { id: 'wqf1', t1: w[0], t2: w[7], round: 'W-QF', court: 1 };
           matches.wqf2 = { id: 'wqf2', t1: w[3], t2: w[4], round: 'W-QF', court: 2 };
           matches.wqf3 = { id: 'wqf3', t1: w[1], t2: w[6], round: 'W-QF', court: 3 };
@@ -1800,20 +1848,130 @@
         matches.wsf2 = { ...matches.wsf2, bo3: bo3Finals };
         matches.wf = { id: 'wf', t1: getBracketMatchTeam('wsf1'), t2: getBracketMatchTeam('wsf2'), round: 'W-Final', bo3: true };
 
-        // Losers bracket — general algorithm for any loser count (0-8)
+        // Losers bracket — general algorithm for any loser count (0-12)
         // Crossed drops to prevent rematches: wqf3/4 → top half, wqf1/2 → bottom half
+        // Filter out bye matches (no loser to drop)
         const L = l.length;
-        const wqfDropsTop = ['wqf3', 'wqf4'];
-        const wqfDropsBottom = ['wqf1', 'wqf2'];
+        const wqfDropsTop = ['wqf3', 'wqf4'].filter(id => !matches[id]?.bye);
+        const wqfDropsBottom = ['wqf1', 'wqf2'].filter(id => !matches[id]?.bye);
 
-        if (L === 0) {
-          // All teams in winners — losers bracket from W-QF drops only
-          matches.lr2m1 = { id: 'lr2m1', t1: getBracketMatchLoser('wqf1'), t2: getBracketMatchLoser('wqf2'), round: 'L-R2' };
-          matches.lr2m2 = { id: 'lr2m2', t1: getBracketMatchLoser('wqf3'), t2: getBracketMatchLoser('wqf4'), round: 'L-R2' };
-          matches.lr3m1 = { id: 'lr3m1', t1: getBracketMatchTeam('lr2m1'), t2: getBracketMatchLoser('wsf2'), round: 'L-R3' };
-          matches.lr3m2 = { id: 'lr3m2', t1: getBracketMatchTeam('lr2m2'), t2: getBracketMatchLoser('wsf1'), round: 'L-R3' };
-          matches.lsf = { id: 'lsf', t1: getBracketMatchTeam('lr3m1'), t2: getBracketMatchTeam('lr3m2'), round: 'L-Semi' };
-          matches.lf = { id: 'lf', t1: getBracketMatchTeam('lsf'), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
+        const wr1DropIdsForL0 = Object.keys(matches).filter(id => id.startsWith('wr1m') && !matches[id].bye);
+
+        if (L === 0 && wr1DropIdsForL0.length > 0) {
+          // All teams in winners WITH play-in — W-R1 losers form initial losers pool
+          // W-R1 losers pair up in L-R1, then merge with W-QF losers at L-R2
+          const lr1Ids = [];
+          for (let i = 0; i < wr1DropIdsForL0.length; i += 2) {
+            const matchId = `lr1m${Math.floor(i / 2) + 1}`;
+            const t1 = getBracketMatchLoser(wr1DropIdsForL0[i]);
+            const t2 = (i + 1 < wr1DropIdsForL0.length) ? getBracketMatchLoser(wr1DropIdsForL0[i + 1]) : null;
+            if (t2) {
+              matches[matchId] = { id: matchId, t1, t2, round: 'L-R1' };
+            } else {
+              matches[matchId] = { id: matchId, t1, t2: null, round: 'L-R1 (bye)', bye: true };
+            }
+            lr1Ids.push(matchId);
+          }
+          const getLr1WinL0 = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
+
+          // L-R2: merge with W-QF losers
+          const lr2Ids = [];
+          let lr2I = 1;
+          const topC = Math.ceil(lr1Ids.length / 2);
+          const topS = lr1Ids.slice(0, topC);
+          const botS = lr1Ids.slice(topC);
+          const topP = Math.max(topS.length, wqfDropsTop.length);
+          for (let i = 0; i < topP; i++) {
+            const mid = `lr2m${lr2I++}`;
+            const s = i < topS.length ? getLr1WinL0(topS[i]) : null;
+            const d = i < wqfDropsTop.length ? getBracketMatchLoser(wqfDropsTop[i]) : null;
+            if (s && d) { matches[mid] = { id: mid, t1: s, t2: d, round: 'L-R2' }; }
+            else { matches[mid] = { id: mid, t1: s || d, t2: null, round: 'L-R2 (bye)', bye: true }; }
+            lr2Ids.push(mid);
+          }
+          const botP = Math.max(botS.length, wqfDropsBottom.length);
+          for (let i = 0; i < botP; i++) {
+            const mid = `lr2m${lr2I++}`;
+            const s = i < botS.length ? getLr1WinL0(botS[i]) : null;
+            const d = i < wqfDropsBottom.length ? getBracketMatchLoser(wqfDropsBottom[i]) : null;
+            if (s && d) { matches[mid] = { id: mid, t1: s, t2: d, round: 'L-R2' }; }
+            else { matches[mid] = { id: mid, t1: s || d, t2: null, round: 'L-R2 (bye)', bye: true }; }
+            lr2Ids.push(mid);
+          }
+          const getLrWinL0 = (id) => {
+            if (matches[id]?.bye) return matches[id]?.t1;
+            return getBracketMatchTeam(id);
+          };
+
+          // Reduce → merge W-SF → L-Semi → L-Final
+          let curIds = lr2Ids;
+          let rn = 3;
+          while (curIds.length > 2) {
+            const nxt = []; let mn = 1;
+            for (let i = 0; i < curIds.length; i += 2) {
+              const mid = `lr${rn}m${mn++}`;
+              if (i + 1 < curIds.length) { matches[mid] = { id: mid, t1: getLrWinL0(curIds[i]), t2: getLrWinL0(curIds[i + 1]), round: `L-R${rn}` }; }
+              else { matches[mid] = { id: mid, t1: getLrWinL0(curIds[i]), t2: null, round: `L-R${rn} (bye)`, bye: true }; }
+              nxt.push(mid);
+            }
+            curIds = nxt; rn++;
+          }
+          const wsfD = ['wsf1', 'wsf2'];
+          const mrgIds = [];
+          const mc = Math.max(curIds.length, wsfD.length);
+          for (let i = 0; i < mc; i++) {
+            const mid = `lr${rn}m${i + 1}`;
+            const s = i < curIds.length ? getLrWinL0(curIds[i]) : null;
+            const d = i < wsfD.length ? getBracketMatchLoser(wsfD[i]) : null;
+            if (s && d) { matches[mid] = { id: mid, t1: s, t2: d, round: `L-R${rn}` }; }
+            else { matches[mid] = { id: mid, t1: s || d, t2: null, round: `L-R${rn} (bye)`, bye: true }; }
+            mrgIds.push(mid);
+          }
+          rn++;
+          let fIds = mrgIds;
+          while (fIds.length > 1) {
+            if (fIds.length === 2) {
+              matches.lsf = { id: 'lsf', t1: getLrWinL0(fIds[0]), t2: getLrWinL0(fIds[1]), round: 'L-Semi' };
+              fIds = ['lsf'];
+            } else {
+              const nxt = []; let mn = 1;
+              for (let i = 0; i < fIds.length; i += 2) {
+                const mid = `lr${rn}m${mn++}`;
+                if (i + 1 < fIds.length) { matches[mid] = { id: mid, t1: getLrWinL0(fIds[i]), t2: getLrWinL0(fIds[i + 1]), round: `L-R${rn}` }; }
+                else { matches[mid] = { id: mid, t1: getLrWinL0(fIds[i]), t2: null, round: `L-R${rn} (bye)`, bye: true }; }
+                nxt.push(mid);
+              }
+              fIds = nxt; rn++;
+            }
+          }
+          matches.lf = { id: 'lf', t1: getLrWinL0(fIds[0]), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
+        } else if (L === 0) {
+          // All teams in winners, no play-in — losers bracket from W-QF drops only
+          const allWqfDrops = ['wqf1', 'wqf2', 'wqf3', 'wqf4'].filter(id => !matches[id]?.bye);
+          if (allWqfDrops.length >= 4) {
+            matches.lr2m1 = { id: 'lr2m1', t1: getBracketMatchLoser('wqf1'), t2: getBracketMatchLoser('wqf2'), round: 'L-R2' };
+            matches.lr2m2 = { id: 'lr2m2', t1: getBracketMatchLoser('wqf3'), t2: getBracketMatchLoser('wqf4'), round: 'L-R2' };
+          } else if (allWqfDrops.length === 3) {
+            matches.lr2m1 = { id: 'lr2m1', t1: getBracketMatchLoser(allWqfDrops[0]), t2: getBracketMatchLoser(allWqfDrops[1]), round: 'L-R2' };
+            matches.lr2m2 = { id: 'lr2m2', t1: getBracketMatchLoser(allWqfDrops[2]), t2: null, round: 'L-R2 (bye)', bye: true };
+          } else if (allWqfDrops.length === 2) {
+            matches.lr2m1 = { id: 'lr2m1', t1: getBracketMatchLoser(allWqfDrops[0]), t2: getBracketMatchLoser(allWqfDrops[1]), round: 'L-R2' };
+          } else if (allWqfDrops.length === 1) {
+            // Only 1 W-QF loser — they get a bye into L-R3
+            matches.lr2m1 = { id: 'lr2m1', t1: getBracketMatchLoser(allWqfDrops[0]), t2: null, round: 'L-R2 (bye)', bye: true };
+          }
+          // W-SF losers always exist (W-SF always has 2 real teams)
+          if (matches.lr2m2) {
+            // 3-4 W-QF drops: lr2m1/lr2m2 winners merge with W-SF losers
+            matches.lr3m1 = { id: 'lr3m1', t1: getBracketMatchTeam('lr2m1'), t2: getBracketMatchLoser('wsf2'), round: 'L-R3' };
+            matches.lr3m2 = { id: 'lr3m2', t1: matches.lr2m2.bye ? matches.lr2m2.t1 : getBracketMatchTeam('lr2m2'), t2: getBracketMatchLoser('wsf1'), round: 'L-R3' };
+            matches.lsf = { id: 'lsf', t1: getBracketMatchTeam('lr3m1') || (matches.lr3m1.bye ? matches.lr3m1.t1 : null), t2: getBracketMatchTeam('lr3m2') || (matches.lr3m2.bye ? matches.lr3m2.t1 : null), round: 'L-Semi' };
+          } else {
+            // 1-2 W-QF drops: lr2m1 winner merges with wsf2, then meets wsf1 in L-Semi
+            matches.lr3m1 = { id: 'lr3m1', t1: matches.lr2m1?.bye ? matches.lr2m1.t1 : getBracketMatchTeam('lr2m1'), t2: getBracketMatchLoser('wsf2'), round: 'L-R3' };
+            matches.lsf = { id: 'lsf', t1: getBracketMatchTeam('lr3m1') || (matches.lr3m1.bye ? matches.lr3m1.t1 : null), t2: getBracketMatchLoser('wsf1'), round: 'L-Semi' };
+          }
+          matches.lf = { id: 'lf', t1: getBracketMatchTeam('lsf') || (matches.lsf.bye ? matches.lsf.t1 : null), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
         } else {
           // === L-R1: Initial losers play each other ===
           const lr1Pairings = [];
@@ -1827,11 +1985,26 @@
             lr1Pairings.push([0, L > 5 ? 5 : null]);
             lr1Pairings.push([3, 4]);
             lr1Pairings.push([1, 2]);
-          } else {
+          } else if (L <= 8) {
             lr1Pairings.push([0, L > 7 ? 7 : null]);
             lr1Pairings.push([3, 4]);
             lr1Pairings.push([1, L > 6 ? 6 : null]);
             lr1Pairings.push([2, 5]);
+          } else if (L <= 10) {
+            // 9-10 losers: 5 matches
+            lr1Pairings.push([0, L > 9 ? 9 : null]);
+            lr1Pairings.push([4, 5]);
+            lr1Pairings.push([7, 8]);
+            lr1Pairings.push([1, L > 6 ? 6 : null]);
+            lr1Pairings.push([2, 3]);
+          } else {
+            // 11-12 losers: 6 matches
+            lr1Pairings.push([0, L > 11 ? 11 : null]);
+            lr1Pairings.push([5, 6]);
+            lr1Pairings.push([3, 8]);
+            lr1Pairings.push([4, 7]);
+            lr1Pairings.push([1, L > 10 ? 10 : null]);
+            lr1Pairings.push([2, 9]);
           }
 
           const lr1WinnerIds = [];
@@ -1847,10 +2020,56 @@
 
           const getLr1Win = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
 
-          // === L-R2: Merge L-R1 survivors with W-QF losers (crossed) ===
-          const topCount = Math.ceil(lr1WinnerIds.length / 2);
-          const topSurvivorIds = lr1WinnerIds.slice(0, topCount);
-          const bottomSurvivorIds = lr1WinnerIds.slice(topCount);
+          // === W-R1 losers merge (if play-in exists) ===
+          const wr1DropIds = Object.keys(matches).filter(id => id.startsWith('wr1m') && !matches[id].bye);
+          let preWqfMergeIds = lr1WinnerIds;
+
+          if (wr1DropIds.length > 0) {
+            // Merge L-R1 survivors with W-R1 losers (crossed for rematch prevention)
+            const wr1DropsTop = ['wr1m2', 'wr1m3'].filter(id => matches[id] && !matches[id].bye);
+            const wr1DropsBottom = ['wr1m1', 'wr1m4'].filter(id => matches[id] && !matches[id].bye);
+
+            const lr1TopCount = Math.ceil(lr1WinnerIds.length / 2);
+            const lr1TopIds = lr1WinnerIds.slice(0, lr1TopCount);
+            const lr1BottomIds = lr1WinnerIds.slice(lr1TopCount);
+
+            const mergeIds = [];
+            let mergeIdx = 1;
+
+            const topMergeCount = Math.max(lr1TopIds.length, wr1DropsTop.length);
+            for (let i = 0; i < topMergeCount; i++) {
+              const matchId = `lr15m${mergeIdx++}`;
+              const survivor = i < lr1TopIds.length ? getLr1Win(lr1TopIds[i]) : null;
+              const drop = i < wr1DropsTop.length ? getBracketMatchLoser(wr1DropsTop[i]) : null;
+              if (survivor && drop) {
+                matches[matchId] = { id: matchId, t1: survivor, t2: drop, round: 'L-R1.5' };
+              } else {
+                matches[matchId] = { id: matchId, t1: survivor || drop, t2: null, round: 'L-R1.5 (bye)', bye: true };
+              }
+              mergeIds.push(matchId);
+            }
+
+            const bottomMergeCount = Math.max(lr1BottomIds.length, wr1DropsBottom.length);
+            for (let i = 0; i < bottomMergeCount; i++) {
+              const matchId = `lr15m${mergeIdx++}`;
+              const survivor = i < lr1BottomIds.length ? getLr1Win(lr1BottomIds[i]) : null;
+              const drop = i < wr1DropsBottom.length ? getBracketMatchLoser(wr1DropsBottom[i]) : null;
+              if (survivor && drop) {
+                matches[matchId] = { id: matchId, t1: survivor, t2: drop, round: 'L-R1.5' };
+              } else {
+                matches[matchId] = { id: matchId, t1: survivor || drop, t2: null, round: 'L-R1.5 (bye)', bye: true };
+              }
+              mergeIds.push(matchId);
+            }
+
+            preWqfMergeIds = mergeIds;
+          }
+
+          // === L-R2: Merge survivors with W-QF losers (crossed) ===
+          const getLr15Win = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
+          const topCount = Math.ceil(preWqfMergeIds.length / 2);
+          const topSurvivorIds = preWqfMergeIds.slice(0, topCount);
+          const bottomSurvivorIds = preWqfMergeIds.slice(topCount);
 
           const lr2WinnerIds = [];
           let lr2Idx = 1;
@@ -1859,7 +2078,7 @@
           const topPairs = Math.max(topSurvivorIds.length, wqfDropsTop.length);
           for (let i = 0; i < topPairs; i++) {
             const matchId = `lr2m${lr2Idx++}`;
-            const survivor = i < topSurvivorIds.length ? getLr1Win(topSurvivorIds[i]) : null;
+            const survivor = i < topSurvivorIds.length ? getLr15Win(topSurvivorIds[i]) : null;
             const drop = i < wqfDropsTop.length ? getBracketMatchLoser(wqfDropsTop[i]) : null;
             if (survivor && drop) {
               matches[matchId] = { id: matchId, t1: survivor, t2: drop, round: 'L-R2' };
@@ -1873,7 +2092,7 @@
           const bottomPairs = Math.max(bottomSurvivorIds.length, wqfDropsBottom.length);
           for (let i = 0; i < bottomPairs; i++) {
             const matchId = `lr2m${lr2Idx++}`;
-            const survivor = i < bottomSurvivorIds.length ? getLr1Win(bottomSurvivorIds[i]) : null;
+            const survivor = i < bottomSurvivorIds.length ? getLr15Win(bottomSurvivorIds[i]) : null;
             const drop = i < wqfDropsBottom.length ? getBracketMatchLoser(wqfDropsBottom[i]) : null;
             if (survivor && drop) {
               matches[matchId] = { id: matchId, t1: survivor, t2: drop, round: 'L-R2' };
@@ -1974,19 +2193,28 @@
           const sc = bracketScores[id];
           if (sc) {
             const updated = { ...m };
-            if (sc.t1 && (!m.t1 || !m.t1.name)) updated.t1 = sc.t1;
-            if (sc.t2 && (!m.t2 || !m.t2.name)) updated.t2 = sc.t2;
-            // If score teams differ from bracket teams, it's an off-bracket match
-            // Check: score has both teams, and at least one doesn't match bracket expectation
-            if (sc.t1 && sc.t2 && sc.s1 !== '' && sc.s2 !== '' && m.round?.startsWith('L-R') &&
-                ((m.t1 && sc.t1.seed !== m.t1.seed) || (m.t2 && sc.t2.seed !== m.t2.seed) ||
-                 (!m.t1 && !m.t2))) {
+            // Un-bye matches that have score data with two teams (tournament was played differently)
+            if (m.bye && sc.t1 && sc.t2 && (sc.s1 || sc.g)) {
+              updated.bye = false;
+              updated.round = m.round.replace(' (bye)', '');
+            }
+            if (sc.t1) updated.t1 = sc.t1;
+            if (sc.t2) updated.t2 = sc.t2;
+            // If score teams differ from bracket teams in L-R2, it's an off-bracket match
+            if (sc.t1 && m.t1 && sc.t1.seed !== m.t1.seed && m.round === 'L-R2') {
               updated.round = 'L-R1.5';
               updated.t1 = sc.t1;
               updated.t2 = sc.t2;
             }
             if (sc.roundLabel) updated.round = sc.roundLabel;
             matches[id] = updated;
+          }
+        }
+        // Create match entries for scores that have no generated bracket match (off-bracket matches)
+        for (const [id, sc] of Object.entries(bracketScores)) {
+          if (!matches[id] && sc.t1 && sc.t2) {
+            const round = sc.roundLabel || (id.startsWith('lr') ? `L-R${id.match(/lr(\d+)/)?.[1] || '?'}` : id);
+            matches[id] = { id, t1: sc.t1, t2: sc.t2, round };
           }
         }
         return matches;
@@ -2253,7 +2481,7 @@
             if (data.teamCount) setTeamCount(data.teamCount);
             if (data.rrGames) setRrGames(data.rrGames);
             if (data.rrPointTarget) setRrPointTarget(data.rrPointTarget);
-            if (data.winnersCount) setWinnersCount(data.winnersCount);
+            if (data.winnersCount) setWinnersCount(Math.min(data.winnersCount, 12));
             if (data.teams) setTeams(data.teams);
             if (data.seedingScores) setSeedingScores(data.seedingScores);
             if (data.bracketScores) setBracketScores(data.bracketScores);
@@ -2631,6 +2859,9 @@
             </div>
           )}
 
+          <div className="text-center mb-1">
+            <a href="index.html" className="text-gray-500 hover:text-gray-300 text-xs">← Back to Tournaments</a>
+          </div>
           <h1 className="text-2xl font-bold text-center mb-1">🏓 Jordan's Moneyballs</h1>
           <p className="text-center text-gray-400 text-xs mb-2">$45/player • 🥇 ${currentPayouts.first} 🥈 ${currentPayouts.second} 🥉 ${currentPayouts.third}</p>
 
@@ -2713,10 +2944,11 @@
                     const newCount = parseInt(e.target.value);
                     setTeamCount(newCount);
                     setWinnersCount(defaultWinnersCount[newCount] || 8);
+                    if (newCount > 16) setBracketType('double');
                   }}
                   className="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-sm"
                 >
-                  {[8, 9, 10, 11, 12, 13, 14, 15, 16].map(n => (
+                  {[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(n => (
                     <option key={n} value={n}>{n}</option>
                   ))}
                 </select>
@@ -2729,9 +2961,10 @@
                   setImportText(e.target.value);
                   // Auto-detect team count from pasted text
                   const lines = e.target.value.split('\n').filter(l => l.trim() && l.includes('/'));
-                  if (lines.length >= 8 && lines.length <= 16) {
+                  if (lines.length >= 8 && lines.length <= 20) {
                     setTeamCount(lines.length);
                     setWinnersCount(defaultWinnersCount[lines.length] || 8);
+                    if (lines.length > 16) setBracketType('double');
                   }
                 }}
               />
@@ -2902,7 +3135,7 @@
                         className="bg-gray-700 rounded px-2 py-1 text-sm"
                       >
                         <option value="double">Double Elimination</option>
-                        <option value="single">Single Elimination</option>
+                        {teamCount <= 16 && <option value="single">Single Elimination</option>}
                       </select>
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
@@ -2920,10 +3153,9 @@
                           onChange={(e) => setWinnersCount(parseInt(e.target.value))}
                           className="bg-gray-700 rounded px-2 py-1 text-sm"
                         >
-                          {Array.from({ length: teamCount - 3 }, (_, i) => i + 4).map(n => (
+                          {Array.from({ length: Math.min(12, teamCount) - 3 }, (_, i) => i + 4).map(n => (
                             <option key={n} value={n}>{n} teams</option>
                           ))}
-                          <option value={teamCount}>{teamCount} (all)</option>
                         </select>
                         <button
                           onClick={() => setWinnersCount(defaultWinnersCount[teamCount] || 8)}
@@ -3021,27 +3253,64 @@
                   </button>
                   {matchupsGenerated && poolSize === 0 && rrGames >= 3 && rrMatchups.length > 0 && (() => {
                     const sums = {};
+                    const counts = {};
                     rrMatchups.forEach(round => {
                       round.matches.forEach(({ t1, t2 }) => {
                         sums[t1] = (sums[t1] || 0) + (t2 + 1);
                         sums[t2] = (sums[t2] || 0) + (t1 + 1);
+                        counts[t1] = (counts[t1] || 0) + 1;
+                        counts[t2] = (counts[t2] || 0) + 1;
                       });
                     });
-                    const values = Object.values(sums);
-                    const min = Math.min(...values);
-                    const max = Math.max(...values);
+                    const avgs = {};
+                    Array.from({ length: teamCount }, (_, i) => i).forEach(t => {
+                      avgs[t] = counts[t] ? (sums[t] / counts[t]).toFixed(1) : '0';
+                    });
+                    const avgValues = Object.values(avgs).map(Number);
+                    const min = Math.min(...avgValues);
+                    const max = Math.max(...avgValues);
                     return (
                       <div className="text-xs text-gray-400 mb-2 p-2 bg-gray-800 rounded">
-                        <div className="font-semibold text-gray-300 mb-1">Opponent Strength (sum of opponent seeds):</div>
+                        <div className="font-semibold text-gray-300 mb-1">Avg Opponent Seed:</div>
                         <div className="flex flex-wrap gap-1">
                           {Array.from({ length: teamCount }, (_, i) => i).map(t => (
-                            <span key={t} title={`Seed ${t + 1}: opponents sum to ${sums[t] || 0}`}
-                              className={`px-1 rounded ${sums[t] === min || sums[t] === max ? 'text-yellow-300' : ''}`}>
-                              {t + 1}→{sums[t] || 0}
+                            <span key={t} title={`Seed ${t + 1}: avg opponent seed ${avgs[t]} (${counts[t] || 0} games)`}
+                              className={`px-1 rounded ${Number(avgs[t]) === min || Number(avgs[t]) === max ? 'text-yellow-300' : ''}`}>
+                              {t + 1}→{avgs[t]}
                             </span>
                           ))}
                         </div>
-                        <div className="mt-1 text-gray-500">Range: {min}–{max}{teamCount % 2 === 1 ? ` | ${rrMatchups.length} rounds (${rrMatchups.filter(r => r.bye >= 0).length} byes)` : ''}</div>
+                        <div className="mt-1 text-gray-500">Range: {min.toFixed(1)}–{max.toFixed(1)}{teamCount % 2 === 1 ? ` | ${rrMatchups.length} rounds (${rrMatchups.filter(r => r.bye >= 0).length} byes)` : ''}</div>
+                        {teamCount % 2 === 1 && rrMatchups.some(r => r.bye >= 0) && (
+                          <div className="mt-2 border-t border-gray-700 pt-2">
+                            <div className="font-semibold text-gray-300 mb-1">Sits Out Per Round:</div>
+                            <div className="flex flex-wrap gap-2">
+                              {rrMatchups.map((r, i) => r.bye >= 0 ? (
+                                <span key={i} className="text-yellow-300">R{i + 1}: {teams[r.bye] ? (teams[r.bye].p1Name || '').split(' ')[0] + ' / ' + (teams[r.bye].p2Name || '').split(' ')[0] : `Seed ${r.bye + 1}`}</span>
+                              ) : null)}
+                            </div>
+                          </div>
+                        )}
+                        {(() => {
+                          const gp = new Array(teamCount).fill(0);
+                          rrMatchups.forEach(r => r.matches.forEach(({ t1, t2 }) => { gp[t1]++; gp[t2]++; }));
+                          const minG = Math.min(...gp);
+                          const maxG = Math.max(...gp);
+                          if (minG === maxG) return null;
+                          return (
+                            <div className="mt-2 border-t border-gray-700 pt-2">
+                              <div className="font-semibold text-gray-300 mb-1">Games Per Team:</div>
+                              <div className="flex flex-wrap gap-1">
+                                {gp.map((g, i) => (
+                                  <span key={i} className={`px-1 rounded ${g === minG ? 'text-red-300' : g === maxG ? 'text-green-300' : ''}`}>
+                                    {i + 1}→{g}
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="mt-1 text-gray-500">Range: {minG}–{maxG} games</div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })()}
@@ -3258,11 +3527,11 @@
           {phase === 'bracket' && (() => {
             const hasBracketDataForPreview = Object.keys(bracketScores).length > 0 || Object.keys(bracketOverrides).length > 0;
             const bracketPreview = !allSeedingComplete && matchupsGenerated && !hasBracketDataForPreview;
-            console.log('BRACKET DEBUG:', { allSeedingComplete, matchupsGenerated, hasBracketDataForPreview, bracketPreview, winnersLen: bracketTeams.winners?.length, losersLen: bracketTeams.losers?.length, matchKeys: Object.keys(bracketMatches), displayStandingsLen: displayStandings.length, poolsLen: Object.keys(pools).length, seedingMatchesLen: seedingMatches.flatMap(r => r.matches).length, seedingScoresLen: Object.keys(seedingScores).length });
             // Helper to render a bracket match by ID
             const renderMatch = (id) => {
               let m = bracketMatches[id];
               if (!m || m.bye) return null;
+              if (bracketOverrides[id]?.hidden) return null;
               // Patch: prefer score teams over bracket-generated teams (handles off-bracket matches)
               const sc = bracketScores[id];
               if (sc) {
@@ -3295,7 +3564,7 @@
 
             // Column helper: renders a labeled column of matches
             const col = (label, ids, opts = {}) => {
-              const validIds = ids.filter(id => bracketMatches[id] && !bracketMatches[id].bye);
+              const validIds = ids.filter(id => bracketMatches[id] && !bracketMatches[id].bye && !bracketOverrides[id]?.hidden);
               if (!validIds.length) return null;
               return (
                 <div className={`space-y-2 w-44 flex-shrink-0 ${opts.pt || ''}`}>
@@ -3458,74 +3727,114 @@
               {/* ====== DOUBLE ELIMINATION LAYOUT ====== */}
               {bracketType === 'double' && (
                 <>
-                  <div className="flex gap-3 pb-4">
-                    {col('W-QF', ['wqf1','wqf2','wqf3','wqf4'])}
-                    {col('W-SF', ['wsf1','wsf2'], { pt: 'pt-10', gap: 'h-12' })}
-                    <div className="w-44 flex-shrink-0 pt-20">
-                      <div className="text-xs text-gray-500 text-center">W-Final</div>
-                      {renderMatch('wf')}
-                    </div>
-                    <div className="w-56 flex-shrink-0 pt-16">
-                      <h3 className="text-yellow-400 font-semibold mb-2 text-center text-sm">🏆 Grand Final</h3>
-                      {renderMatch('gf')}
-                      {bracketMatches['gf2'] && (
-                        <div className="mt-2">
-                          <div className="text-xs text-yellow-400 text-center mb-1">Game to 15</div>
-                          {renderMatch('gf2')}
+                  {(() => {
+                    // Build bracket tree: QF → SF → Final → GF
+                    // Each SF centers between its two QF feeders; Final centers between SFs
+                    const qfIds = ['wqf1','wqf2','wqf3','wqf4'];
+                    const qfVisible = qfIds.filter(id => bracketMatches[id] && !bracketMatches[id].bye);
+                    // SF feeders: wsf1 ← wqf1+wqf2, wsf2 ← wqf3+wqf4
+                    const sfTop = ['wqf1','wqf2'].filter(id => bracketMatches[id] && !bracketMatches[id].bye);
+                    const sfBot = ['wqf3','wqf4'].filter(id => bracketMatches[id] && !bracketMatches[id].bye);
+                    const hasWsf1 = bracketMatches['wsf1'] && !bracketMatches['wsf1']?.bye;
+                    const hasWsf2 = bracketMatches['wsf2'] && !bracketMatches['wsf2']?.bye;
+
+                    // Render a bracket group: feeders on left, result centered on right
+                    // Returns the QF column + SF column as a vertical flex tree
+                    return (
+                      <div className="flex gap-3 pb-4 items-start">
+                        {/* W-QF + W-SF as bracket tree */}
+                        <div className="flex gap-3 items-start">
+                          {/* QF column */}
+                          <div className="w-44 flex-shrink-0">
+                            <div className="text-xs text-gray-500 text-center mb-1">W-QF</div>
+                            <div className="flex flex-col">
+                              {/* Top half: wqf1, wqf2 */}
+                              <div className="flex flex-col gap-2">
+                                {sfTop.map(id => <React.Fragment key={id}>{renderMatch(id)}</React.Fragment>)}
+                              </div>
+                              {/* Spacer between halves */}
+                              {sfTop.length > 0 && sfBot.length > 0 && <div className="h-6"></div>}
+                              {/* Bottom half: wqf3, wqf4 */}
+                              <div className="flex flex-col gap-2">
+                                {sfBot.map(id => <React.Fragment key={id}>{renderMatch(id)}</React.Fragment>)}
+                              </div>
+                            </div>
+                          </div>
+                          {/* SF column — each SF vertically centered to its QF group */}
+                          <div className="w-44 flex-shrink-0 flex flex-col justify-around" style={{ alignSelf: 'stretch' }}>
+                            <div className="text-xs text-gray-500 text-center mb-1">W-SF</div>
+                            <div className="flex flex-col justify-around flex-1">
+                              {hasWsf1 && <div>{renderMatch('wsf1')}</div>}
+                              {hasWsf2 && <div>{renderMatch('wsf2')}</div>}
+                            </div>
+                          </div>
                         </div>
-                      )}
-                      {gfWinner && (
-                        <div className="mt-3 bg-gradient-to-r from-yellow-700 to-yellow-600 p-3 rounded text-center border-2 border-yellow-400">
-                          <div className="text-xs text-yellow-200">🥇 CHAMPION — ${currentPayouts.first}</div>
-                          {(gfWinner?.name || 'TBD').split(' / ').map((p, i) => (
-                            <div key={i} className="text-sm font-bold text-white">{p}</div>
-                          ))}
+                        {/* W-Final — centered to full height */}
+                        <div className="w-44 flex-shrink-0 flex flex-col justify-center" style={{ alignSelf: 'stretch' }}>
+                          <div className="text-xs text-gray-500 text-center">W-Final</div>
+                          {renderMatch('wf')}
                         </div>
-                      )}
-                      {getBracketMatchLoser(finalMatchId) && (
-                        <div className="mt-2 bg-gradient-to-r from-gray-500 to-gray-400 p-2 rounded text-center border border-gray-300">
-                          <div className="text-xs text-gray-200">🥈 2nd Place — ${currentPayouts.second}</div>
-                          {(getBracketMatchLoser(finalMatchId)?.name || 'TBD').split(' / ').map((p, i) => (
-                            <div key={i} className="text-xs font-semibold text-white">{p}</div>
-                          ))}
+                        {/* Grand Final + results */}
+                        <div className="w-56 flex-shrink-0 flex flex-col justify-center" style={{ alignSelf: 'stretch' }}>
+                          <h3 className="text-yellow-400 font-semibold mb-2 text-center text-sm">🏆 Grand Final</h3>
+                          {renderMatch('gf')}
+                          {bracketMatches['gf2'] && (
+                            <div className="mt-2">
+                              <div className="text-xs text-yellow-400 text-center mb-1">Game to 15</div>
+                              {renderMatch('gf2')}
+                            </div>
+                          )}
+                          {gfWinner && (
+                            <div className="mt-3 bg-gradient-to-r from-yellow-700 to-yellow-600 p-3 rounded text-center border-2 border-yellow-400">
+                              <div className="text-xs text-yellow-200">🥇 CHAMPION — ${currentPayouts.first}</div>
+                              {(gfWinner?.name || 'TBD').split(' / ').map((p, i) => (
+                                <div key={i} className="text-sm font-bold text-white">{p}</div>
+                              ))}
+                            </div>
+                          )}
+                          {getBracketMatchLoser(finalMatchId) && (
+                            <div className="mt-2 bg-gradient-to-r from-gray-500 to-gray-400 p-2 rounded text-center border border-gray-300">
+                              <div className="text-xs text-gray-200">🥈 2nd Place — ${currentPayouts.second}</div>
+                              {(getBracketMatchLoser(finalMatchId)?.name || 'TBD').split(' / ').map((p, i) => (
+                                <div key={i} className="text-xs font-semibold text-white">{p}</div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </div>
+                      </div>
+                    );
+                  })()}
 
                   <h2 className="text-lg font-semibold text-red-400 mb-2">Losers Bracket</h2>
-                  <div className="flex gap-3 pb-4 overflow-x-auto">
+                  <div className="flex gap-3 pb-4 overflow-x-auto items-center">
                     {(() => {
                       // Dynamically render losers bracket rounds from bracketMatches
                       const losersRounds = {};
                       Object.values(bracketMatches).forEach(m => {
                         if (m.id === 'lsf' || m.id === 'lf' || m.id === 'gf' || m.id === 'gf2') return;
                         if (!m.id.startsWith('lr')) return;
-                        // Detect off-bracket matches: score teams differ from bracket teams
-                        const sc = bracketScores[m.id];
-                        let roundMatch = (sc?.roundLabel || m.round).replace(' (bye)', '');
-                        if (sc?.t1 && m.t1 && sc.t1.seed !== m.t1.seed) roundMatch = 'Elim.';
+                        let roundMatch = m.round.replace(' (bye)', '');
                         if (!losersRounds[roundMatch]) losersRounds[roundMatch] = [];
                         losersRounds[roundMatch].push(m.id);
                       });
                       const sortedRounds = Object.keys(losersRounds).sort((a, b) => {
-                        const numA = a === 'Elim.' ? 1.5 : (parseFloat(a.replace('L-R', '')) || 0);
-                        const numB = b === 'Elim.' ? 1.5 : (parseFloat(b.replace('L-R', '')) || 0);
+                        const numA = parseFloat(a.replace('L-R', '')) || 0;
+                        const numB = parseFloat(b.replace('L-R', '')) || 0;
                         return numA - numB;
                       });
                       return sortedRounds.map((round, i) => {
-                        const pt = i >= 2 ? 'pt-10' : '';
-                        const gap = losersRounds[round].length <= 2 ? 'h-6' : undefined;
-                        return col(round, losersRounds[round], { pt, gap });
+                        const currCount = losersRounds[round].filter(id => bracketMatches[id] && !bracketMatches[id].bye).length;
+                        const gap = currCount <= 2 ? 'h-6' : undefined;
+                        return col(round, losersRounds[round], { gap });
                       });
                     })()}
                     {bracketMatches.lsf && (
-                    <div className="w-44 flex-shrink-0 pt-14">
+                    <div className="w-44 flex-shrink-0">
                       <div className="text-xs text-gray-500 text-center">L-Semi</div>
                       {renderMatch('lsf')}
                     </div>
                     )}
-                    <div className="w-44 flex-shrink-0 pt-14">
+                    <div className="w-44 flex-shrink-0">
                       <div className="text-xs text-gray-500 text-center">L-Final</div>
                       {renderMatch('lf')}
                       {getBracketMatchTeam('lf') && (
