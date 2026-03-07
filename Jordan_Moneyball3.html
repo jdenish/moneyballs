@@ -145,7 +145,7 @@
           [{t1:9,t2:0},{t1:12,t2:8},{t1:1,t2:11},{t1:2,t2:7},{t1:14,t2:5},{t1:13,t2:6},{t1:10,t2:4}]
         ],
         bt:'double',b3:false,ps:4,cc:7,
-        p:{},mg:true,oc:{},
+        p:{},mg:true,oc:{},bo:{lr2m1:{hidden:true}},
         bso:{winners:[
           {seed:2,name:'Garrison Eaby / Matt Meadows'},{seed:7,name:'Bruno Casino Remondo / Drew Von Bargen'},
           {seed:4,name:'Brandon Fritze / Alex Tong'},{seed:5,name:'Alex Szczepkowszki / Steven Edelbach'},
@@ -3307,6 +3307,7 @@
             const renderMatch = (id) => {
               let m = bracketMatches[id];
               if (!m || m.bye) return null;
+              if (bracketOverrides[id]?.hidden) return null;
               // Patch: prefer score teams over bracket-generated teams (handles off-bracket matches)
               const sc = bracketScores[id];
               if (sc) {
@@ -3339,7 +3340,7 @@
 
             // Column helper: renders a labeled column of matches
             const col = (label, ids, opts = {}) => {
-              const validIds = ids.filter(id => bracketMatches[id] && !bracketMatches[id].bye);
+              const validIds = ids.filter(id => bracketMatches[id] && !bracketMatches[id].bye && !bracketOverrides[id]?.hidden);
               if (!validIds.length) return null;
               return (
                 <div className={`space-y-2 w-44 flex-shrink-0 ${opts.pt || ''}`}>
