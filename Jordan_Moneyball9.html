@@ -2193,6 +2193,11 @@
           const sc = bracketScores[id];
           if (sc) {
             const updated = { ...m };
+            // Un-bye matches that have score data with two teams (tournament was played differently)
+            if (m.bye && sc.t1 && sc.t2 && (sc.s1 || sc.g)) {
+              updated.bye = false;
+              updated.round = m.round.replace(' (bye)', '');
+            }
             if (sc.t1) updated.t1 = sc.t1;
             if (sc.t2) updated.t2 = sc.t2;
             // If score teams differ from bracket teams in L-R2, it's an off-bracket match
