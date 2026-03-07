@@ -3054,6 +3054,36 @@
                           ))}
                         </div>
                         <div className="mt-1 text-gray-500">Range: {min}–{max}{teamCount % 2 === 1 ? ` | ${rrMatchups.length} rounds (${rrMatchups.filter(r => r.bye >= 0).length} byes)` : ''}</div>
+                        {teamCount % 2 === 1 && rrMatchups.some(r => r.bye >= 0) && (
+                          <div className="mt-2 border-t border-gray-700 pt-2">
+                            <div className="font-semibold text-gray-300 mb-1">Sits Out Per Round:</div>
+                            <div className="flex flex-wrap gap-2">
+                              {rrMatchups.map((r, i) => r.bye >= 0 ? (
+                                <span key={i} className="text-yellow-300">R{i + 1}: {teams[r.bye] ? (teams[r.bye].p1Name || '').split(' ')[0] + ' / ' + (teams[r.bye].p2Name || '').split(' ')[0] : `Seed ${r.bye + 1}`}</span>
+                              ) : null)}
+                            </div>
+                          </div>
+                        )}
+                        {(() => {
+                          const gp = new Array(teamCount).fill(0);
+                          rrMatchups.forEach(r => r.matches.forEach(({ t1, t2 }) => { gp[t1]++; gp[t2]++; }));
+                          const minG = Math.min(...gp);
+                          const maxG = Math.max(...gp);
+                          if (minG === maxG) return null;
+                          return (
+                            <div className="mt-2 border-t border-gray-700 pt-2">
+                              <div className="font-semibold text-gray-300 mb-1">Games Per Team:</div>
+                              <div className="flex flex-wrap gap-1">
+                                {gp.map((g, i) => (
+                                  <span key={i} className={`px-1 rounded ${g === minG ? 'text-red-300' : g === maxG ? 'text-green-300' : ''}`}>
+                                    {i + 1}→{g}
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="mt-1 text-gray-500">Range: {minG}–{maxG} games</div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })()}
