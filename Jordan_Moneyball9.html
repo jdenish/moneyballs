@@ -3714,40 +3714,83 @@
               {/* ====== DOUBLE ELIMINATION LAYOUT ====== */}
               {bracketType === 'double' && (
                 <>
-                  <div className="flex gap-3 pb-4">
-                    {col('W-QF', ['wqf1','wqf2','wqf3','wqf4'])}
-                    {col('W-SF', ['wsf1','wsf2'], { pt: 'pt-10', gap: 'h-12' })}
-                    <div className="w-44 flex-shrink-0 pt-20">
-                      <div className="text-xs text-gray-500 text-center">W-Final</div>
-                      {renderMatch('wf')}
-                    </div>
-                    <div className="w-56 flex-shrink-0 pt-16">
-                      <h3 className="text-yellow-400 font-semibold mb-2 text-center text-sm">🏆 Grand Final</h3>
-                      {renderMatch('gf')}
-                      {bracketMatches['gf2'] && (
-                        <div className="mt-2">
-                          <div className="text-xs text-yellow-400 text-center mb-1">Game to 15</div>
-                          {renderMatch('gf2')}
+                  {(() => {
+                    // Build bracket tree: QF → SF → Final → GF
+                    // Each SF centers between its two QF feeders; Final centers between SFs
+                    const qfIds = ['wqf1','wqf2','wqf3','wqf4'];
+                    const qfVisible = qfIds.filter(id => bracketMatches[id] && !bracketMatches[id].bye);
+                    // SF feeders: wsf1 ← wqf1+wqf2, wsf2 ← wqf3+wqf4
+                    const sfTop = ['wqf1','wqf2'].filter(id => bracketMatches[id] && !bracketMatches[id].bye);
+                    const sfBot = ['wqf3','wqf4'].filter(id => bracketMatches[id] && !bracketMatches[id].bye);
+                    const hasWsf1 = bracketMatches['wsf1'] && !bracketMatches['wsf1']?.bye;
+                    const hasWsf2 = bracketMatches['wsf2'] && !bracketMatches['wsf2']?.bye;
+
+                    // Render a bracket group: feeders on left, result centered on right
+                    // Returns the QF column + SF column as a vertical flex tree
+                    return (
+                      <div className="flex gap-3 pb-4 items-start">
+                        {/* W-QF + W-SF as bracket tree */}
+                        <div className="flex gap-3 items-start">
+                          {/* QF column */}
+                          <div className="w-44 flex-shrink-0">
+                            <div className="text-xs text-gray-500 text-center mb-1">W-QF</div>
+                            <div className="flex flex-col">
+                              {/* Top half: wqf1, wqf2 */}
+                              <div className="flex flex-col gap-2">
+                                {sfTop.map(id => <React.Fragment key={id}>{renderMatch(id)}</React.Fragment>)}
+                              </div>
+                              {/* Spacer between halves */}
+                              {sfTop.length > 0 && sfBot.length > 0 && <div className="h-6"></div>}
+                              {/* Bottom half: wqf3, wqf4 */}
+                              <div className="flex flex-col gap-2">
+                                {sfBot.map(id => <React.Fragment key={id}>{renderMatch(id)}</React.Fragment>)}
+                              </div>
+                            </div>
+                          </div>
+                          {/* SF column — each SF vertically centered to its QF group */}
+                          <div className="w-44 flex-shrink-0 flex flex-col justify-around" style={{ alignSelf: 'stretch' }}>
+                            <div className="text-xs text-gray-500 text-center mb-1">W-SF</div>
+                            <div className="flex flex-col justify-around flex-1">
+                              {hasWsf1 && <div>{renderMatch('wsf1')}</div>}
+                              {hasWsf2 && <div>{renderMatch('wsf2')}</div>}
+                            </div>
+                          </div>
                         </div>
-                      )}
-                      {gfWinner && (
-                        <div className="mt-3 bg-gradient-to-r from-yellow-700 to-yellow-600 p-3 rounded text-center border-2 border-yellow-400">
-                          <div className="text-xs text-yellow-200">🥇 CHAMPION — ${currentPayouts.first}</div>
-                          {(gfWinner?.name || 'TBD').split(' / ').map((p, i) => (
-                            <div key={i} className="text-sm font-bold text-white">{p}</div>
-                          ))}
+                        {/* W-Final — centered to full height */}
+                        <div className="w-44 flex-shrink-0 flex flex-col justify-center" style={{ alignSelf: 'stretch' }}>
+                          <div className="text-xs text-gray-500 text-center">W-Final</div>
+                          {renderMatch('wf')}
                         </div>
-                      )}
-                      {getBracketMatchLoser(finalMatchId) && (
-                        <div className="mt-2 bg-gradient-to-r from-gray-500 to-gray-400 p-2 rounded text-center border border-gray-300">
-                          <div className="text-xs text-gray-200">🥈 2nd Place — ${currentPayouts.second}</div>
-                          {(getBracketMatchLoser(finalMatchId)?.name || 'TBD').split(' / ').map((p, i) => (
-                            <div key={i} className="text-xs font-semibold text-white">{p}</div>
-                          ))}
+                        {/* Grand Final + results */}
+                        <div className="w-56 flex-shrink-0 flex flex-col justify-center" style={{ alignSelf: 'stretch' }}>
+                          <h3 className="text-yellow-400 font-semibold mb-2 text-center text-sm">🏆 Grand Final</h3>
+                          {renderMatch('gf')}
+                          {bracketMatches['gf2'] && (
+                            <div className="mt-2">
+                              <div className="text-xs text-yellow-400 text-center mb-1">Game to 15</div>
+                              {renderMatch('gf2')}
+                            </div>
+                          )}
+                          {gfWinner && (
+                            <div className="mt-3 bg-gradient-to-r from-yellow-700 to-yellow-600 p-3 rounded text-center border-2 border-yellow-400">
+                              <div className="text-xs text-yellow-200">🥇 CHAMPION — ${currentPayouts.first}</div>
+                              {(gfWinner?.name || 'TBD').split(' / ').map((p, i) => (
+                                <div key={i} className="text-sm font-bold text-white">{p}</div>
+                              ))}
+                            </div>
+                          )}
+                          {getBracketMatchLoser(finalMatchId) && (
+                            <div className="mt-2 bg-gradient-to-r from-gray-500 to-gray-400 p-2 rounded text-center border border-gray-300">
+                              <div className="text-xs text-gray-200">🥈 2nd Place — ${currentPayouts.second}</div>
+                              {(getBracketMatchLoser(finalMatchId)?.name || 'TBD').split(' / ').map((p, i) => (
+                                <div key={i} className="text-xs font-semibold text-white">{p}</div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </div>
+                      </div>
+                    );
+                  })()}
 
                   <h2 className="text-lg font-semibold text-red-400 mb-2">Losers Bracket</h2>
                   <div className="flex gap-3 pb-4 overflow-x-auto items-center">
