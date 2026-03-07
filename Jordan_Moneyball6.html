@@ -826,6 +826,7 @@
               if (data && Object.keys(data).length > 0) {
                 loadSharedState(data, { spectator: false });
                 setNpointId(liveId);
+                setLiveMode(false);
               } else {
                 setSpectatorMode(true);
                 setPhase('import');
