@@ -1694,10 +1694,19 @@
           const real = displayStandings.find(t => t.seed === team.seed);
           return real || team;
         };
-        const rawW = rrIncomplete ? Array.from({ length: winnersCount }, (_, i) => makePlaceholder(i + 1)) : (bracketTeams.winners || []);
-        const rawL = rrIncomplete ? Array.from({ length: teamCount - winnersCount }, (_, i) => makePlaceholder(winnersCount + i + 1)) : (bracketTeams.losers || []);
-        const w = rawW.map(resolveFromStandings);
-        const l = rawL.map(resolveFromStandings);
+        // Always use displayStandings when available, regardless of rrIncomplete
+        const useStandings = displayStandings.length >= teamCount;
+        let w, l;
+        if (useStandings) {
+          w = displayStandings.slice(0, winnersCount);
+          l = displayStandings.slice(winnersCount);
+        } else if (rrIncomplete) {
+          w = Array.from({ length: winnersCount }, (_, i) => makePlaceholder(i + 1));
+          l = Array.from({ length: teamCount - winnersCount }, (_, i) => makePlaceholder(winnersCount + i + 1));
+        } else {
+          w = (bracketTeams.winners || []).map(resolveFromStandings);
+          l = (bracketTeams.losers || []).map(resolveFromStandings);
+        }
         console.log('BRACKET BUILD:', { rrIncomplete, winnersCount, standingsOverride, displayStandingsOrder: displayStandings.map(t => `${t.name?.split('/')[0]?.trim()}(s${t.seed})`).join(', '), wOrder: w.map(t => `${t.name?.split('/')[0]?.trim()}(s${t.seed})`).join(', '), lOrder: l.map(t => `${t.name?.split('/')[0]?.trim()}(s${t.seed})`).join(', ') });
 
         // ========= SINGLE ELIMINATION =========
