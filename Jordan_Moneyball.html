@@ -1686,12 +1686,19 @@
         const rrIncomplete = !allSeedingComplete && matchupsGenerated && (rrGames > 0 || Object.keys(pools).length > 0) && !hasBracketData;
         const makePlaceholder = (seed) => ({ seed, name: `#${seed} Seed`, placeholder: true });
 
-        const w = rrIncomplete ? Array.from({ length: winnersCount }, (_, i) => makePlaceholder(i + 1)) : (bracketTeams.winners || []);
-        const l = rrIncomplete ? Array.from({ length: teamCount - winnersCount }, (_, i) => makePlaceholder(winnersCount + i + 1)) : (bracketTeams.losers || []);
+        const resolveFromStandings = (team) => {
+          if (!team || !team.placeholder) return team;
+          const real = displayStandings.find(t => t.seed === team.seed);
+          return real || team;
+        };
+        const rawW = rrIncomplete ? Array.from({ length: winnersCount }, (_, i) => makePlaceholder(i + 1)) : (bracketTeams.winners || []);
+        const rawL = rrIncomplete ? Array.from({ length: teamCount - winnersCount }, (_, i) => makePlaceholder(winnersCount + i + 1)) : (bracketTeams.losers || []);
+        const w = rawW.map(resolveFromStandings);
+        const l = rawL.map(resolveFromStandings);
 
         // ========= SINGLE ELIMINATION =========
         if (bracketType === 'single') {
-          const seTeams = rrIncomplete ? Array.from({ length: teamCount }, (_, i) => makePlaceholder(i + 1)) : displayStandings.slice(0, teamCount);
+          const seTeams = (rrIncomplete ? Array.from({ length: teamCount }, (_, i) => makePlaceholder(i + 1)) : displayStandings.slice(0, teamCount)).map(resolveFromStandings);
           if (seTeams.length < 2) return {};
           const matches = {};
           const n = seTeams.length;
