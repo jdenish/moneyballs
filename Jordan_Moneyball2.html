@@ -1957,12 +1957,14 @@
           matches.gf2 = { id: 'gf2', t1: matches.gf.t1, t2: matches.gf.t2, round: 'Game to 15' };
         }
         // Apply team overrides: if bracketOverrides has t1/t2, replace displayed teams
-        Object.entries(bracketOverrides).forEach(([id, ov]) => {
-          if (matches[id]) {
-            if (ov.t1) matches[id] = { ...matches[id], t1: resolveTeam(ov.t1) };
-            if (ov.t2) matches[id] = { ...matches[id], t2: resolveTeam(ov.t2) };
-          }
-        });
+        try {
+          Object.entries(bracketOverrides).forEach(([id, ov]) => {
+            if (matches[id]) {
+              if (ov.t1) matches[id] = { ...matches[id], t1: resolveTeam(ov.t1) };
+              if (ov.t2) matches[id] = { ...matches[id], t2: resolveTeam(ov.t2) };
+            }
+          });
+        } catch (e) { console.error('Team override error:', e); }
         return matches;
       }, [bracketTeams, displayStandings, bracketType, teamCount, bo3Finals, getBracketMatchTeam, getBracketMatchLoser, allSeedingComplete, matchupsGenerated, rrGames, pools, winnersCount, bracketScores, bracketOverrides]);
 
