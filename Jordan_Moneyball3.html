@@ -1843,8 +1843,8 @@
         // Losers bracket — general algorithm for any loser count (0-8)
         // Crossed drops to prevent rematches: wqf3/4 → top half, wqf1/2 → bottom half
         const L = l.length;
-        const wqfDropsTop = ['wqf3', 'wqf4'];
-        const wqfDropsBottom = ['wqf1', 'wqf2'];
+        const wqfDropsTop = ['wqf3', 'wqf4'].filter(id => !matches[id]?.bye);
+        const wqfDropsBottom = ['wqf1', 'wqf2'].filter(id => !matches[id]?.bye);
 
         if (L === 0) {
           // All teams in winners — losers bracket from W-QF drops only
