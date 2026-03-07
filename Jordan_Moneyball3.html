@@ -1969,12 +1969,20 @@
           matches.gf2 = { id: 'gf2', t1: matches.gf.t1, t2: matches.gf.t2, round: 'Game to 15' };
         }
         // Post-process: fill in match teams from bracketScores (fixes chain resolution gaps)
+        // Also detect off-bracket matches (score teams differ from bracket teams) and relabel round
         for (const [id, m] of Object.entries(matches)) {
           const sc = bracketScores[id];
           if (sc) {
             const updated = { ...m };
             if (sc.t1 && (!m.t1 || !m.t1.name)) updated.t1 = sc.t1;
             if (sc.t2 && (!m.t2 || !m.t2.name)) updated.t2 = sc.t2;
+            // If score teams differ from bracket teams, it's an off-bracket match
+            if (sc.t1 && m.t1 && sc.t1.seed !== m.t1.seed) {
+              updated.round = 'L-R1.5';
+              updated.t1 = sc.t1;
+              updated.t2 = sc.t2;
+            }
+            if (sc.roundLabel) updated.round = sc.roundLabel;
             matches[id] = updated;
           }
         }
