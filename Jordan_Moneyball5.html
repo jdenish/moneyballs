@@ -3250,8 +3250,15 @@
             console.log('BRACKET DEBUG:', { allSeedingComplete, matchupsGenerated, hasBracketDataForPreview, bracketPreview, winnersLen: bracketTeams.winners?.length, losersLen: bracketTeams.losers?.length, matchKeys: Object.keys(bracketMatches), displayStandingsLen: displayStandings.length, poolsLen: Object.keys(pools).length, seedingMatchesLen: seedingMatches.flatMap(r => r.matches).length, seedingScoresLen: Object.keys(seedingScores).length });
             // Helper to render a bracket match by ID
             const renderMatch = (id) => {
-              const m = bracketMatches[id];
+              let m = bracketMatches[id];
               if (!m || m.bye) return null;
+              // Patch: ensure match teams are populated from bracketScores
+              const sc = bracketScores[id];
+              if (sc && (!m.t1 || !m.t2)) {
+                m = { ...m };
+                if (!m.t1 && sc.t1) m.t1 = sc.t1;
+                if (!m.t2 && sc.t2) m.t2 = sc.t2;
+              }
               return (
                 <BracketMatch
                   key={id}
