@@ -2,7 +2,7 @@
 
 ## Overview
 
-A 8-16 team doubles pickleball tournament with configurable round robin seeding (0-7 games, optional pools) followed by single or double elimination bracket. Supports variable team counts, pool sizes, bracket formats, and smart court assignment.
+A 8-20 team doubles pickleball tournament with configurable round robin seeding (0-7 games, optional pools) followed by single or double elimination bracket. Supports variable team counts, pool sizes, bracket formats, and smart court assignment.
 
 ---
 
@@ -26,7 +26,7 @@ A 8-16 team doubles pickleball tournament with configurable round robin seeding 
 
 ## Tournament Format
 
-### Supported Team Counts: 8-16
+### Supported Team Counts: 8-20
 
 | Teams | Default Winners | Default Losers | Payouts (1st / 2nd / 3rd) |
 |-------|-----------------|----------------|---------------------------|
@@ -39,6 +39,18 @@ A 8-16 team doubles pickleball tournament with configurable round robin seeding 
 | 14 | 8 | 6 | $440 / $200 / $60 |
 | 15 | 8 | 7 | $480 / $200 / $80 |
 | 16 | 8 | 8 | $500 / $220 / $100 |
+| 17 | 8 | 9 | $540 / $240 / $100 |
+| 18 | 8 | 10 | $580 / $260 / $100 |
+| 19 | 8 | 11 | $620 / $260 / $120 |
+| 20 | 8 | 12 | $660 / $280 / $120 |
+
+#### Winners > 8: W-R1 Play-In Round
+When the organizer configures more than 8 winners (max 12), a **W-R1 play-in round** is added before W-QF:
+- Seeds 5-12 play 4 play-in matches: 8v9, 7v10, 6v11, 5v12
+- Winners advance to W-QF against seeds 1-4
+- Losers drop to a new **L-R1.5 merge round** between L-R1 and L-R2
+- W-R1 losers use crossed drops for rematch prevention (same as W-QF/W-SF drops)
+- Byes are used when fewer than 8 extra seeds exist (e.g., 9W has 1 play-in match, 10W has 2)
 
 ### Configurable RR Games (0-7)
 On the Setup page, choose **0-7 RR games** or **Pools** mode:
@@ -224,7 +236,7 @@ The app tracks who has paid via **$ buttons** on the Setup page (green = paid, g
 
 ### Single Elimination (with 3rd Place Match)
 
-Generated dynamically for 8-16 teams using standard seeding (1v16, 8v9, 4v13, 5v12, 2v15, 7v10, 3v14, 6v11):
+Generated dynamically for 8-20 teams using standard seeding (1v16, 8v9, 4v13, 5v12, 2v15, 7v10, 3v14, 6v11):
 
 - **8 teams:** QF(4) → SF(2) → Final + 3rd Place
 - **9-16 teams:** Play-in round (byes for top seeds) → QF(4) → SF(2) → Final + 3rd Place
@@ -316,7 +328,7 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 2. **Tournament View** - Opens when clicking a tournament card or via `#t=` hash URL. Shows "All Tournaments" back button and Quick Save in header.
 
 ### Tabs/Phases (within Tournament View)
-1. **Import** - Select team count (8-16), paste team list, validates count on import
+1. **Import** - Select team count (8-20), paste team list, validates count on import
 2. **Setup** - Edit teams, configure RR format (0-7 games or Pools with size 3-6), bracket type (single/double), finals format (Bo3/single), court count, winners bracket size, drag to reorder seeding, paid tracking, randomize matchups
 3. **Round Robin** - Enter scores for seeding games, shows pool assignments with color-coded labels when using pools. Dynamic column layout (up to 4 columns, wraps for 5+). Hidden when 0 RR games.
 4. **Standings** - Live rankings with W-L, PF, PA, PD, pool indicator, drag-and-drop manual reorder
@@ -331,7 +343,7 @@ Files are deployed to GitHub Pages via the GitHub API using a Personal Access To
 - **localStorage Persistence** - Tournament state loads automatically from localStorage on next visit. Priority: localStorage → embedded state → preloaded teams.
 - **URL Routing** - Default URL → home page; `#t=ID` → organizer mode; `?s=` → spectator; `?live=` → viewer; `?live=&score=1` → scorekeeper
 - **Tournament Registry** - `TOURNAMENTS` array defines all tournaments with embedded data for completed events and preloaded teams for upcoming ones
-- **8-16 Team Support** - Variable team counts with automatic format and payout adjustments
+- **8-20 Team Support** - Variable team counts with automatic format and payout adjustments
 - **Team Count Selector** - Select expected teams on Import page, auto-detects from paste (>= 8 teams), validates on import
 - **Configurable RR Games (0-7)** - Skip RR entirely (0), seed-balanced (2), pools (3 for 12/16), or random with repeat-avoidance (3-7)
 - **Configurable Pool System** - Pool sizes 3-6, snake draft assignment, intra-pool round robin via circle method
@@ -616,7 +628,7 @@ The app is a single HTML file with an integrated home page. Tournament data is m
 ### Phase 1: Current App ✅
 - [x] Tournament manager app
 - [x] Import teams, DUPR tracking
-- [x] Team count selector with validation (8-16 teams)
+- [x] Team count selector with validation (8-20 teams)
 - [x] Configurable RR games (0-7) with seed-balanced, random, and pool modes
 - [x] Configurable pool system (pool sizes 3-6, snake draft, circle method RR)
 - [x] Seed-balanced matchups (2 RR games option)
@@ -641,7 +653,7 @@ The app is a single HTML file with an integrated home page. Tournament data is m
 - [x] Bracket reset game (gf2) when losers bracket team wins Grand Final Bo3
 - [x] Paid tracking (private, hidden from spectators)
 - [x] Standings recalculate on JSON load
-- [x] Payouts displayed in app (header, bracket, results, download) for 8-16 teams
+- [x] Payouts displayed in app (header, bracket, results, download) for 8-20 teams
 - [x] Live spectator updates via npoint.io (publish button, stable live URL, reload-based)
 - [x] Home page with tournament card grid, medal winners, and directions
 - [x] Multi-tournament support with tournament registry
