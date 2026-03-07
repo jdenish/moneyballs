@@ -147,6 +147,7 @@
         date: 'March 6, 2026',
         title: 'Moneyball #3',
         status: 'completed',
+        externalUrl: 'Jordan_Moneyball9.html?view=dfcb1e4d2c3ffd923261',
         results: {
           first: 'Brandon Fritze / Alex Tong',
           second: 'Garrison Eaby / Matt Meadows',
@@ -341,6 +342,10 @@
       const loadTournament = useCallback((id) => {
         const tournament = TOURNAMENTS.find(t => t.id === id);
         if (!tournament) { setView('home'); return; }
+        if (tournament.externalUrl) {
+          window.location.href = tournament.externalUrl;
+          return;
+        }
         setActiveTournamentId(id);
         setView('tournament');
         window.location.hash = `t=${id}`;
