@@ -163,7 +163,7 @@
           lr1m1:{a:8,b:13,s1:'15',s2:'6'},lr1m2:{a:15,b:14,s1:'8',s2:'15'},lr1m3:{a:3,b:11,s1:'15',s2:'10'},lr1m4:{a:10,b:12,s1:'15',s2:'10'},
           wsf1:{a:2,b:1,s1:'13',s2:'15'},wsf2:{a:6,b:4,s1:'10',s2:'15'},
           wf:{a:1,b:4,g:[{s1:'8',s2:'11'},{s1:'2',s2:'11'}]},
-          lr2m1:{a:8,b:7,s1:'5',s2:'15'},lr2m2:{a:8,b:14,s1:'15',s2:'12'},lr2m3:{a:3,b:10,s1:'15',s2:'1'},
+          lr2m1:{a:8,b:7,s1:'5',s2:'15'},lr2m2:{a:8,b:14,s1:'15',s2:'12',rl:'L-R2'},lr2m4:{a:3,b:10,s1:'15',s2:'1',rl:'L-R2'},
           lr3m1:{a:7,b:9,s1:'15',s2:'5'},lr3m2:{a:3,b:5,s1:'13',s2:'15'},
           lr4m1:{a:7,b:2,s1:'11',s2:'15'},lr4m2:{a:5,b:6,s1:'10',s2:'15'},
           lsf:{a:2,b:6,s1:'15',s2:'11'},lf:{a:2,b:1,s1:'15',s2:'10'},
@@ -650,11 +650,11 @@
           };
           const full = {};
           Object.entries(d.bs).forEach(([id, s]) => {
-            if (s.g) {
-              full[id] = { t1: getTeam(s.a), t2: getTeam(s.b), games: s.g };
-            } else {
-              full[id] = { t1: getTeam(s.a), t2: getTeam(s.b), s1: s.s1, s2: s.s2 };
-            }
+            const entry = s.g
+              ? { t1: getTeam(s.a), t2: getTeam(s.b), games: s.g }
+              : { t1: getTeam(s.a), t2: getTeam(s.b), s1: s.s1, s2: s.s2 };
+            if (s.rl) entry.roundLabel = s.rl;
+            full[id] = entry;
           });
           setBracketScores(full);
         }
@@ -1843,8 +1843,8 @@
         // Losers bracket — general algorithm for any loser count (0-8)
         // Crossed drops to prevent rematches: wqf3/4 → top half, wqf1/2 → bottom half
         const L = l.length;
-        const wqfDropsTop = ['wqf3', 'wqf4'].filter(id => !matches[id]?.bye);
-        const wqfDropsBottom = ['wqf1', 'wqf2'].filter(id => !matches[id]?.bye);
+        const wqfDropsTop = ['wqf3', 'wqf4'];
+        const wqfDropsBottom = ['wqf1', 'wqf2'];
 
         if (L === 0) {
           // All teams in winners — losers bracket from W-QF drops only
@@ -2019,9 +2019,15 @@
               updated.bye = false;
               updated.round = m.round.replace(' (bye)', '');
             }
-            // Always prefer score teams over bracket-generated teams
-            if (sc.t1) updated.t1 = sc.t1;
-            if (sc.t2) updated.t2 = sc.t2;
+            if (sc.t1 && (!m.t1 || !m.t1.name)) updated.t1 = sc.t1;
+            if (sc.t2 && (!m.t2 || !m.t2.name)) updated.t2 = sc.t2;
+            // If score teams differ from bracket teams, override with score teams
+            if (sc.t1 && sc.t2 && sc.s1 !== '' && sc.s2 !== '' && m.round?.startsWith('L-R') &&
+                ((m.t1 && sc.t1.seed !== m.t1.seed) || (m.t2 && sc.t2.seed !== m.t2.seed) ||
+                 (!m.t1 && !m.t2))) {
+              updated.t1 = sc.t1;
+              updated.t2 = sc.t2;
+            }
             if (sc.roundLabel) updated.round = sc.roundLabel;
             matches[id] = updated;
           }
@@ -3538,13 +3544,16 @@
                       Object.values(bracketMatches).forEach(m => {
                         if (m.id === 'lsf' || m.id === 'lf' || m.id === 'gf' || m.id === 'gf2') return;
                         if (!m.id.startsWith('lr')) return;
-                        let roundMatch = m.round.replace(' (bye)', '');
+                        // Detect off-bracket matches: score teams differ from bracket teams
+                        const sc = bracketScores[m.id];
+                        let roundMatch = (sc?.roundLabel || m.round).replace(' (bye)', '');
+                        if (!sc?.roundLabel && sc?.t1 && m.t1 && sc.t1.seed !== m.t1.seed) roundMatch = 'Elim.';
                         if (!losersRounds[roundMatch]) losersRounds[roundMatch] = [];
                         losersRounds[roundMatch].push(m.id);
                       });
                       const sortedRounds = Object.keys(losersRounds).sort((a, b) => {
-                        const numA = parseFloat(a.replace('L-R', '')) || 0;
-                        const numB = parseFloat(b.replace('L-R', '')) || 0;
+                        const numA = a === 'Elim.' ? 1.5 : (parseFloat(a.replace('L-R', '')) || 0);
+                        const numB = b === 'Elim.' ? 1.5 : (parseFloat(b.replace('L-R', '')) || 0);
                         return numA - numB;
                       });
                       return sortedRounds.map((round, i) => {
