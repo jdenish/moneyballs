@@ -166,7 +166,8 @@
           wf:{a:1,b:4,g:[{s1:'8',s2:'11'},{s1:'2',s2:'11'}]},
           lr2m2:{a:6,b:14,s1:'15',s2:'12',rl:'L-R2'},lr2m4:{a:3,b:10,s1:'15',s2:'1',rl:'L-R2'},
           lr3m1:{a:6,b:8,s1:'5',s2:'15'},lr3m2:{a:3,b:5,s1:'13',s2:'15'},
-          lr4m1:{a:8,b:2,s1:'11',s2:'15'},lr4m2:{a:5,b:7,s1:'10',s2:'15'},lr4m3:{a:8,b:9,s1:'15',s2:'5'},
+          lr4m3:{a:8,b:9,s1:'15',s2:'5'},
+          lr5m1:{a:8,b:2,s1:'11',s2:'15'},lr5m2:{a:5,b:7,s1:'10',s2:'15'},
           lsf:{a:2,b:7,s1:'15',s2:'11'},lf:{a:2,b:1,s1:'15',s2:'10'},
           gf:{a:4,b:2,g:[{s1:'11',s2:'8'},{s1:'6',s2:'11'},{s1:'11',s2:'0'}]}
         }
@@ -3350,12 +3351,12 @@
               const validIds = ids.filter(id => bracketMatches[id] && !bracketMatches[id].bye && !bracketOverrides[id]?.hidden);
               if (!validIds.length) return null;
               return (
-                <div className={`w-44 flex-shrink-0 ${opts.pt || ''} ${opts.center ? 'flex flex-col justify-around' : 'space-y-2'}`} style={opts.center ? { minHeight: opts.center } : undefined}>
-                  <div className="text-xs text-gray-500 text-center">{label}</div>
+                <div key={label} className={`w-44 flex-shrink-0 flex flex-col ${opts.center ? 'justify-around' : 'justify-start gap-2'}`}>
+                  <div className="text-xs text-gray-500 text-center flex-shrink-0">{label}</div>
                   {validIds.map((id, idx) => (
                     <React.Fragment key={id}>
-                      {renderMatch(id)}
-                      {!opts.center && opts.gap && idx < validIds.length - 1 && <div className={opts.gap}></div>}
+                      <div className="flex-shrink-0">{renderMatch(id)}</div>
+                      {!opts.center && opts.gap && idx < validIds.length - 1 && <div className={`${opts.gap} flex-shrink-0`}></div>}
                     </React.Fragment>
                   ))}
                 </div>
@@ -3546,10 +3547,11 @@
                   </div>
 
                   <h2 className="text-lg font-semibold text-red-400 mb-2">Losers Bracket</h2>
-                  <div className="flex gap-3 pb-4 overflow-x-auto">
+                  <div className="flex gap-3 pb-4 overflow-x-auto items-stretch">
                     {(() => {
                       // Dynamically render losers bracket rounds from bracketMatches
                       const losersRounds = {};
+                      let maxCount = 0;
                       Object.values(bracketMatches).forEach(m => {
                         if (m.id === 'lsf' || m.id === 'lf' || m.id === 'gf' || m.id === 'gf2') return;
                         if (!m.id.startsWith('lr')) return;
@@ -3565,13 +3567,16 @@
                         const numB = b === 'Elim.' ? 1.5 : (parseFloat(b.replace('L-R', '')) || 0);
                         return numA - numB;
                       });
+                      // Find max visible match count across rounds for centering reference
+                      sortedRounds.forEach(round => {
+                        const cnt = losersRounds[round].filter(id => bracketMatches[id] && !bracketMatches[id].bye && !bracketOverrides[id]?.hidden).length;
+                        if (cnt > maxCount) maxCount = cnt;
+                      });
                       return sortedRounds.map((round, i) => {
-                        const prevCount = i > 0 ? losersRounds[sortedRounds[i-1]]?.filter(id => bracketMatches[id] && !bracketMatches[id].bye && !bracketOverrides[id]?.hidden).length : 0;
                         const curCount = losersRounds[round].filter(id => bracketMatches[id] && !bracketMatches[id].bye && !bracketOverrides[id]?.hidden).length;
-                        const pt = i >= 2 ? 'pt-10' : '';
                         const gap = curCount <= 2 ? 'h-6' : undefined;
-                        const center = (i > 0 && curCount < prevCount) ? `${prevCount * 90}px` : undefined;
-                        return col(round, losersRounds[round], { pt, gap, center });
+                        const center = curCount < maxCount;
+                        return col(round, losersRounds[round], { gap, center });
                       });
                     })()}
                     {bracketMatches.lsf && (
