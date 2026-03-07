@@ -481,6 +481,39 @@ Spectators can view the latest tournament state at a **stable URL** — no more 
 - Backup: `saves/moneyballs-2026-02-20.json`
 - npoint ID: `03e278b07afb818ff144`
 
+### Moneyball #3 — March 6, 2026 (15 teams)
+- 🥇 **Brandon / Tong** ($480)
+- 🥈 **Garrison / Mark** ($200)
+- 🥉 **Troy / Cooper** ($80)
+- Format: 3 RR games (pools) → Double Elimination (7W/8L)
+- First tournament with odd team count (15) and odd winners (7)
+- npoint ID: `dfcb1e4d2c3ffd923261`
+- Backup: `saves/moneyballs-2026-03-06.json`
+
+---
+
+## Lessons Learned — Tournament #3 (Mar 6, 2026, 15 teams)
+
+### What Worked
+- **Spectator view link** (`?view=`) — players could follow the bracket without needing a password
+- **Bracket reset detection** — correctly identified when GF reset was/wasn't needed
+- **Live npoint publishing** — stable URL worked well again
+
+### Bugs Found & Fixed During Tournament
+1. **W-QF bye losers dropping to losers bracket** — With 7 winners, wqf1 was a bye but the code still tried to drop "wqf1 loser" into the losers bracket (null team). **Fixed:** filter bye matches from `wqfDropsTop`/`wqfDropsBottom` arrays.
+2. **L=0 path with <4 W-QF losers** — The `L===0` losers bracket path hardcoded 4 W-QF losers. With odd winners, there can be 2-3. **Fixed:** branch on `allWqfDrops.length` (4, 3, or 2) with separate bracket structures for each.
+3. **Chain resolution failures** — Losers bracket scores couldn't be entered because `getBracketMatchTeam`/`getBracketMatchLoser` returned null for matches with null team references. **Fixed:** post-processing always overwrites match teams from `bracketScores` data.
+4. **Off-bracket match detection too aggressive** — Grouping code was reclassifying L-R1 matches as off-bracket (L-R1.5). **Fixed:** restricted off-bracket detection to only `m.round === 'L-R2'` in the useMemo post-processing.
+5. **GF2 data causing wrong champion** — A consolation game's data was interpreted as a bracket reset, awarding champion to wrong team. **Fixed:** removed stale gf2 data from npoint.
+6. **?live= link requires password** — Spectators couldn't view without the organizer password. **Fixed:** created `?view=` parameter for password-free spectator mode.
+7. **RR fairness biased by game count** — With 15 teams, some teams played 3 games and some played 4. Sum-based opponent strength metric penalized teams playing more games. **Fixed:** switched to average opponent seed.
+8. **W-SF loser missing in 2-drop L=0 case** — When only 2 W-QF losers dropped (4-6 winners, 0 losers), the bracket only merged 1 of 2 W-SF losers. **Fixed:** added lr3m1 merge round before L-Semi.
+
+### Key Takeaways
+- **Always test with odd team counts** — 15 teams (7W/8L) exposed multiple bracket bugs that never appeared with 16 (8W/8L)
+- **TDD for bracket logic** — wrote comprehensive tests covering all W/L splits from 4W/0L to 8W/8L (20 configurations, 195 assertions). Tests verify: no fromLoser refs to bye matches, correct W-QF/W-SF loser counts, all initial losers present, no orphaned matches.
+- **Bracket test file:** `/tmp/moneyballs-tests/bracket.test.js`
+
 ---
 
 ## Sample Team List Format
@@ -563,6 +596,7 @@ The app is a single HTML file with an integrated home page. Tournament data is m
 | `Jordan_Moneyball.html#t=2026-02-20` | Open specific tournament in organizer (edit) mode |
 | `Jordan_Moneyball.html?s=...` | Spectator mode (compressed state in URL) |
 | `Jordan_Moneyball.html?live=abc123` | Live viewer mode (read-only, fetches from npoint.io) |
+| `Jordan_Moneyball.html?view=abc123` | Spectator view (no password, fetches from npoint.io) |
 
 ### Adding a New Tournament
 1. Add entry to `TOURNAMENTS` array with `id`, `date`, `title`, `status`, and optionally `preloadedTeams`
@@ -641,6 +675,28 @@ The app is a single HTML file with an integrated home page. Tournament data is m
 - [ ] Score validation (must reach 11 or 15)
 - [ ] Mobile-responsive improvements
 - [ ] Social sharing (share tournament results to Twitter/Instagram)
+
+### Spectator View (No Password)
+Added `?view=` URL parameter for password-free spectator access:
+- `?view=<npoint-id>` — fetches tournament state from npoint.io and displays in read-only mode
+- No password prompt (unlike `?live=` which opens organizer mode)
+- Intended for sharing with players/spectators during and after the tournament
+
+### Odd Winner Counts & W-QF Bye Handling
+When the number of winners is not 8 (e.g., 5, 6, or 7 winners), some W-QF matches become byes:
+
+| Winners | W-QF Byes | W-QF Losers Dropping |
+|---------|-----------|---------------------|
+| 8 | 0 | 4 (all) |
+| 7 | 1 (wqf1) | 3 |
+| 6 | 2 (wqf1, wqf3) | 2 |
+| 5 | 3 (wqf1, wqf3, wqf4) | 1 |
+| 4 | 2 (wqf3, wqf4) | 2 |
+
+**Critical rule:** Bye matches have no loser — `fromLoser` references to bye matches must be filtered out. The losers bracket dynamically adapts: fewer W-QF drops means fewer L-R2 matches, but both W-SF losers always enter.
+
+### RR Matchup Fairness for Odd Team Counts
+When team count is odd (e.g., 15 teams), some teams play one fewer game per round (they sit out). The RR optimizer now uses **average opponent seed** instead of **sum of opponent seeds** to normalize fairness across teams with different game counts. Teams that sit out each round are displayed on the Setup page.
 
 ---
 
