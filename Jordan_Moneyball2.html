@@ -1,0 +1,3550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Jordan's Moneyballs</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/pako@2.1.0/dist/pako.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useMemo, useCallback, memo, useEffect } = React;
+
+    // Embedded tournament save data (slim share format) for completed tournaments
+    const TOURNAMENT_STATES = {
+      '2026-02-06': {
+        tc:16,rg:3,rp:11,wc:8,
+        t:[
+          {p1Name:'Oscar Serra',p1Dupr:'',p2Name:'Sanil Jagtiani',p2Dupr:''},
+          {p1Name:'Jack Hared',p1Dupr:'',p2Name:'Preston Gordon',p2Dupr:''},
+          {p1Name:'Matvey Radionov',p1Dupr:'',p2Name:'Matt Meadows',p2Dupr:''},
+          {p1Name:'Lukas Choi',p1Dupr:'',p2Name:'William Hayes',p2Dupr:''},
+          {p1Name:'Jordan Denish',p1Dupr:'',p2Name:'Alex Tong',p2Dupr:''},
+          {p1Name:'Conor Landrigan',p1Dupr:'',p2Name:'Geoff Watson',p2Dupr:''},
+          {p1Name:'Cody Sadreameli',p1Dupr:'',p2Name:'Dan Wach',p2Dupr:''},
+          {p1Name:'Jeff Comer',p1Dupr:'',p2Name:'Kenoa Tio',p2Dupr:''},
+          {p1Name:'Matthew Matro',p1Dupr:'',p2Name:'Zach Bowe',p2Dupr:''},
+          {p1Name:'Bruno Casino Remondo',p1Dupr:'',p2Name:'Drew Von Bargen',p2Dupr:''},
+          {p1Name:'Austin Gow',p1Dupr:'',p2Name:'Peter Weaver',p2Dupr:''},
+          {p1Name:'Austin Keefer',p1Dupr:'',p2Name:'Mason McCabe',p2Dupr:''},
+          {p1Name:'Alex Boory',p1Dupr:'',p2Name:'Ronald Marchese',p2Dupr:''},
+          {p1Name:'Shashank Kamdar',p1Dupr:'',p2Name:'Zachary Lessner',p2Dupr:''},
+          {p1Name:'Kevin Herod',p1Dupr:'',p2Name:'Jameson Mays',p2Dupr:''},
+          {p1Name:'Matthew Chen',p1Dupr:'',p2Name:'Johny Mario',p2Dupr:''}
+        ],
+        ss:{g1m0:{s1:'11',s2:'1'},g1m1:{s1:'11',s2:'4'},g1m2:{s1:'9',s2:'11'},g1m3:{s1:'11',s2:'7'},g1m4:{s1:'11',s2:'4'},g1m5:{s1:'11',s2:'8'},g1m6:{s1:'13',s2:'11'},g1m7:{s1:'13',s2:'11'},g2m0:{s1:'11',s2:'5'},g2m1:{s1:'11',s2:'2'},g2m2:{s1:'11',s2:'2'},g2m3:{s1:'13',s2:'11'},g2m4:{s1:'13',s2:'11'},g2m5:{s1:'4',s2:'11'},g2m6:{s1:'7',s2:'11'},g2m7:{s1:'11',s2:'5'},g3m0:{s1:'11',s2:'0'},g3m1:{s1:'11',s2:'5'},g3m2:{s1:'11',s2:'7'},g3m3:{s1:'11',s2:'9'},g3m4:{s1:'11',s2:'4'},g3m5:{s1:'11',s2:'1'},g3m6:{s1:'11',s2:'1'},g3m7:{s1:'11',s2:'9'}},
+        bo:{},
+        rm:[
+          [{t1:0,t2:8},{t1:7,t2:15},{t1:1,t2:9},{t1:6,t2:14},{t1:2,t2:10},{t1:5,t2:13},{t1:3,t2:11},{t1:4,t2:12}],
+          [{t1:0,t2:7},{t1:8,t2:15},{t1:1,t2:6},{t1:9,t2:14},{t1:2,t2:5},{t1:10,t2:13},{t1:3,t2:4},{t1:11,t2:12}],
+          [{t1:0,t2:15},{t1:7,t2:8},{t1:1,t2:14},{t1:6,t2:9},{t1:2,t2:13},{t1:5,t2:10},{t1:3,t2:12},{t1:4,t2:11}]
+        ],
+        bt:'double',b3:true,ps:0,cc:8,
+        p:{0:0,1:1,2:2,3:3,4:3,5:2,6:1,7:0,8:0,9:1,10:2,11:3,12:3,13:2,14:1,15:0},
+        mg:true,oc:{},bso:null,ph:'bracket',
+        bs:{
+          wqf1:{a:1,b:7,s1:'15',s2:'6'},wqf2:{a:2,b:6,s1:'15',s2:'5'},wqf3:{a:3,b:4,s1:'15',s2:'4'},wqf4:{a:5,b:8,s1:'11',s2:'15'},
+          lr1m1:{a:10,b:16,s1:'15',s2:'4'},lr1m2:{a:9,b:15,s1:'11',s2:'15'},lr1m3:{a:12,b:11,s1:'13',s2:'15'},lr1m4:{a:14,b:13,s1:'14',s2:'16'},
+          wsf1:{a:1,b:2,s1:'15',s2:'1'},wsf2:{a:3,b:8,s1:'15',s2:'4'},
+          wf:{a:1,b:3,g:[{s1:'11',s2:'4'},{s1:'12',s2:'10'}]},
+          lr2m1:{a:10,b:7,s1:'15',s2:'8'},lr2m2:{a:15,b:6,s1:'15',s2:'13'},lr2m3:{a:11,b:4,s1:'12',s2:'15'},lr2m4:{a:13,b:5,s1:'4',s2:'15'},
+          lr3m1:{a:10,b:15,s1:'15',s2:'3'},lr3m2:{a:4,b:5,s1:'8',s2:'15'},
+          lr4m1:{a:10,b:2,s1:'15',s2:'17'},lr4m2:{a:5,b:8,s1:'11',s2:'15'},
+          lsf:{a:2,b:8,s1:'15',s2:'6'},lf:{a:2,b:3,s1:'13',s2:'15'},
+          gf:{a:1,b:3,g:[{s1:'11',s2:'6'},{s1:'11',s2:'3'}]}
+        }
+      },
+      '2026-02-20': {
+        tc:16,rg:3,rp:11,wc:8,
+        t:[
+          {p1Name:'Troy Clemmer',p1Dupr:'',p2Name:'Brandon Fritze',p2Dupr:''},
+          {p1Name:'Garrison Eaby',p1Dupr:'',p2Name:'Michael Benash',p2Dupr:''},
+          {p1Name:'Matt Meadows',p1Dupr:'',p2Name:'Matvey Radionov',p2Dupr:''},
+          {p1Name:'Jack Hared',p1Dupr:'',p2Name:'Ram Kotnana',p2Dupr:''},
+          {p1Name:'Jordan Denish',p1Dupr:'',p2Name:'Alex Tong',p2Dupr:''},
+          {p1Name:'Alex Szczepkowski',p1Dupr:'',p2Name:'Jase Volz',p2Dupr:''},
+          {p1Name:'Tyler Arsenault',p1Dupr:'',p2Name:'Zach Bowe',p2Dupr:''},
+          {p1Name:'Bruno Casino Remondo',p1Dupr:'',p2Name:'Drew Von Bargen',p2Dupr:''},
+          {p1Name:'Dylan Ashbach',p1Dupr:'',p2Name:'Steven Fernandez',p2Dupr:''},
+          {p1Name:'Matt Korsak',p1Dupr:'',p2Name:'Cody Sadreameli',p2Dupr:''},
+          {p1Name:'Brandon Fooks',p1Dupr:'',p2Name:'Kenoa Tio',p2Dupr:''},
+          {p1Name:'Lukas Choi',p1Dupr:'',p2Name:'Zachary Lessner',p2Dupr:''},
+          {p1Name:'Austin Keefer',p1Dupr:'',p2Name:'Mason McCabe',p2Dupr:''},
+          {p1Name:'Kevin Herod',p1Dupr:'',p2Name:'Jameson Mays',p2Dupr:''},
+          {p1Name:'Samuel Darla',p1Dupr:'',p2Name:'Ashwin Korde',p2Dupr:''},
+          {p1Name:'Matthew Chen',p1Dupr:'',p2Name:'Johny Mario',p2Dupr:''}
+        ],
+        ss:{g1m0:{s1:'11',s2:'3'},g1m1:{s1:'11',s2:'3'},g1m2:{s1:'11',s2:'1'},g1m3:{s1:'6',s2:'11'},g1m4:{s1:'11',s2:'5'},g1m5:{s1:'11',s2:'3'},g1m6:{s1:'11',s2:'5'},g1m7:{s1:'11',s2:'13'},g2m0:{s1:'12',s2:'10'},g2m1:{s1:'2',s2:'11'},g2m2:{s1:'11',s2:'4'},g2m3:{s1:'4',s2:'11'},g2m4:{s1:'11',s2:'6'},g2m5:{s1:'8',s2:'11'},g2m6:{s1:'11',s2:'2'},g2m7:{s1:'9',s2:'11'},g3m0:{s1:'13',s2:'11'},g3m1:{s1:'11',s2:'3'},g3m2:{s1:'11',s2:'2'},g3m3:{s1:'11',s2:'6'},g3m4:{s1:'11',s2:'1'},g3m5:{s1:'11',s2:'1'},g3m6:{s1:'11',s2:'2'},g3m7:{s1:'11',s2:'7'}},
+        bo:{},
+        rm:[
+          [{t1:0,t2:15},{t1:7,t2:8},{t1:1,t2:14},{t1:6,t2:9},{t1:2,t2:13},{t1:5,t2:10},{t1:3,t2:12},{t1:4,t2:11}],
+          [{t1:0,t2:8},{t1:15,t2:7},{t1:1,t2:9},{t1:14,t2:6},{t1:2,t2:10},{t1:13,t2:5},{t1:3,t2:11},{t1:12,t2:4}],
+          [{t1:0,t2:7},{t1:8,t2:15},{t1:1,t2:6},{t1:9,t2:14},{t1:2,t2:5},{t1:10,t2:13},{t1:3,t2:4},{t1:11,t2:12}]
+        ],
+        bt:'double',b3:true,ps:4,cc:8,
+        p:{0:0,1:1,2:2,3:3,4:3,5:2,6:1,7:0,8:0,9:1,10:2,11:3,12:3,13:2,14:1,15:0},
+        mg:true,oc:{},
+        bso:{winners:[
+          {seed:2,name:'Garrison Eaby / Michael Benash'},{seed:4,name:'Jack Hared / Ram Kotnana'},
+          {seed:3,name:'Matt Meadows / Matvey Radionov'},{seed:1,name:'Troy Clemmer / Brandon Fritze'},
+          {seed:10,name:'Matt Korsak / Cody Sadreameli'},{seed:8,name:'Bruno Casino Remondo / Drew Von Bargen'},
+          {seed:6,name:'Alex Szczepkowski / Jase Volz'},{seed:12,name:'Lukas Choi / Zachary Lessner'}
+        ],losers:[
+          {seed:9,name:'Dylan Ashbach / Steven Fernandez'},{seed:11,name:'Brandon Fooks / Kenoa Tio'},
+          {seed:7,name:'Tyler Arsenault / Zach Bowe'},{seed:5,name:'Jordan Denish / Alex Tong'},
+          {seed:13,name:'Austin Keefer / Mason McCabe'},{seed:14,name:'Kevin Herod / Jameson Mays'},
+          {seed:15,name:'Samuel Darla / Ashwin Korde'},{seed:16,name:'Matthew Chen / Johny Mario'}
+        ]},
+        ph:'bracket',
+        bs:{
+          wqf1:{a:2,b:12,s1:'15',s2:'1'},wqf2:{a:1,b:10,s1:'15',s2:'8'},wqf3:{a:4,b:6,s1:'15',s2:'8'},wqf4:{a:3,b:8,s1:'15',s2:'13'},
+          lr1m1:{a:9,b:16,s1:'15',s2:'7'},lr1m2:{a:5,b:13,s1:'15',s2:'6'},lr1m3:{a:11,b:15,s1:'15',s2:'4'},lr1m4:{a:11,b:14,s1:'8',s2:'15'},
+          wsf1:{a:2,b:1,s1:'16',s2:'14'},wsf2:{a:4,b:3,s1:'15',s2:'12'},
+          wf:{a:2,b:4,g:[{s1:'3',s2:'11'},{s1:'9',s2:'11'}]},
+          lr2m1:{a:9,b:7,s1:'15',s2:'8'},lr2m2:{a:5,b:8,s1:'15',s2:'13'},lr2m3:{a:11,b:12,s1:'10',s2:'15'},lr2m4:{a:14,b:10,s1:'14',s2:'16'},
+          lr3m1:{a:9,b:5,s1:'13',s2:'15'},lr3m2:{a:12,b:10,s1:'9',s2:'15'},
+          lr4m1:{a:5,b:1,s1:'9',s2:'15'},lr4m2:{a:5,b:3,s1:'11',s2:'15'},
+          lsf:{a:1,b:3,s1:'8',s2:'15'},lf:{a:3,b:2,s1:'15',s2:'10'},
+          gf:{a:4,b:3,g:[{s1:'11',s2:'4'},{s1:'9',s2:'11'},{s1:'1',s2:'11'}]},
+          gf2:{a:4,b:3,s1:'7',s2:'15'}
+        }
+      }
+    };
+
+    const TOURNAMENTS = [
+      {
+        id: '2026-02-06',
+        date: 'February 6, 2026',
+        title: 'Moneyball #1',
+        status: 'completed',
+        results: {
+          first: 'Oscar Serra / Sanil Jagtiani',
+          second: 'Matvey Radionov / Matt Meadows',
+          third: 'Jack Hared / Preston Gordon'
+        }
+      },
+      {
+        id: '2026-02-20',
+        date: 'February 20, 2026',
+        title: 'Moneyball #2',
+        status: 'completed',
+        results: {
+          first: 'Matt Meadows / Matvey Radionov',
+          second: 'Jack Hared / Ram Kotnana',
+          third: 'Garrison Eaby / Michael Benash'
+        }
+      },
+      {
+        id: '2026-03-06',
+        date: 'March 6, 2026',
+        title: 'Moneyball #3',
+        status: 'upcoming',
+        teamCount: 15,
+        preloadedTeams: [
+          { p1Name: 'Troy Clemmer', p2Name: 'Kristen Clemmer' },
+          { p1Name: 'Garrison Eaby', p2Name: 'Matt Meadows' },
+          { p1Name: 'Frank Anthony Davis', p2Name: 'Roger Mosteller' },
+          { p1Name: 'Brandon Fritze', p2Name: 'Alex Tong' },
+          { p1Name: 'Alex Szczepkowszki', p2Name: 'Steven Edelbach' },
+          { p1Name: 'Mark Kilimnik', p2Name: 'Conor Landrigan' },
+          { p1Name: 'Bruno Casino Remondo', p2Name: 'Drew Von Bargen' },
+          { p1Name: 'Dylan Ashbach', p2Name: 'Steven Fernandez' },
+          { p1Name: 'Matthew Matro', p2Name: 'Zach Bowe' },
+          { p1Name: 'Vaughn McClelland', p2Name: 'Nick Mirabelli' },
+          { p1Name: 'Austin Keefer', p2Name: 'Ian Hansen' },
+          { p1Name: 'Jameson Mays', p2Name: 'Mason McCabe' },
+          { p1Name: 'Alex Boory', p2Name: 'Ronald Marchese' },
+          { p1Name: 'Ashwin Korde', p2Name: 'Zachary Lessner' },
+          { p1Name: 'Johnny Mario', p2Name: 'Dan Schwab' }
+        ]
+      },
+      {
+        id: '2026-03-27',
+        date: 'March 27, 2026',
+        title: 'Moneyball #4',
+        status: 'upcoming',
+        teamCount: 16
+      }
+    ];
+
+    // Move components outside App to prevent recreation on each render
+
+    const SeedingMatch = memo(({ match, score, isOnCourt, courtNum, onScoreChange, onToggleCourt, onSetCourt, courtCount, readOnly, poolColor }) => {
+      const isComplete = score.s1 !== undefined && score.s2 !== undefined && score.s1 !== '' && score.s2 !== '';
+      const t1Won = isComplete && parseInt(score.s1) > parseInt(score.s2);
+      const t2Won = isComplete && parseInt(score.s2) > parseInt(score.s1);
+
+      return (
+        <div className={`p-2 rounded border ${isComplete ? 'bg-gray-800 border-green-600' : isOnCourt ? 'bg-orange-900/50 border-orange-500' : 'bg-gray-800 border-gray-600'}`} style={poolColor ? { borderLeftWidth: '3px', borderLeftColor: poolColor } : undefined}>
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-gray-500 text-xs">{isOnCourt ? `Court ${courtNum}` : `Ct ${match.court}`}</span>
+            {!isComplete && !readOnly && onToggleCourt && (
+              <div className="flex items-center gap-1">
+                {isOnCourt && onSetCourt && (
+                  <select
+                    value={courtNum || ''}
+                    onChange={(e) => onSetCourt(parseInt(e.target.value))}
+                    className="text-xs bg-gray-700 rounded px-1 py-0.5 w-12"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {Array.from({ length: courtCount || 8 }, (_, i) => (
+                      <option key={i + 1} value={i + 1}>{i + 1}</option>
+                    ))}
+                  </select>
+                )}
+                <button
+                  onClick={onToggleCourt}
+                  className={`text-xs px-2 py-0.5 rounded ${isOnCourt ? 'bg-orange-600' : 'bg-gray-700 hover:bg-orange-700'}`}
+                >
+                  {isOnCourt ? '🏓 On Court' : 'Send'}
+                </button>
+              </div>
+            )}
+          </div>
+          <div className={`flex items-center gap-2 ${t1Won ? 'text-green-400' : 'text-gray-300'}`}>
+            <span className="text-xs bg-gray-700 px-1 rounded">{match.t1.seed}</span>
+            <span className="flex-1 text-xs">{match.t1.name.split(' / ').map(n => n.split(' ')[0]).join(' / ')}</span>
+            {readOnly ? (
+              <span className="w-12 text-center text-sm font-mono">{score.s1 || '-'}</span>
+            ) : (
+              <input
+                type="number"
+                className="w-12 bg-gray-700 text-center rounded text-sm"
+                value={score.s1 || ''}
+                onChange={(e) => onScoreChange('s1', e.target.value)}
+              />
+            )}
+          </div>
+          <div className={`flex items-center gap-2 mt-1 ${t2Won ? 'text-green-400' : 'text-gray-300'}`}>
+            <span className="text-xs bg-gray-700 px-1 rounded">{match.t2.seed}</span>
+            <span className="flex-1 text-xs">{match.t2.name.split(' / ').map(n => n.split(' ')[0]).join(' / ')}</span>
+            {readOnly ? (
+              <span className="w-12 text-center text-sm font-mono">{score.s2 || '-'}</span>
+            ) : (
+              <input
+                type="number"
+                className="w-12 bg-gray-700 text-center rounded text-sm"
+                value={score.s2 || ''}
+                onChange={(e) => onScoreChange('s2', e.target.value)}
+              />
+            )}
+          </div>
+        </div>
+      );
+    });
+
+    const BracketMatch = memo(({ match, score, override, isOnCourt, courtNum, showOverride, onScoreChange, onBo3ScoreChange, onToggleCourt, onSetCourt, courtCount, onOverride, onClearOverride, winner, readOnly }) => {
+      if (!match) return null;
+      const t1 = match.t1;
+      const t2 = match.t2;
+      const isReady = t1 && t2;
+      const hasBo3Games = score.games && score.games.length > 0;
+
+      // Bo3 completion logic
+      let bo3T1Wins = 0, bo3T2Wins = 0;
+      if (hasBo3Games) {
+        score.games.forEach(g => {
+          const s1v = parseInt(g.s1), s2v = parseInt(g.s2);
+          if (!isNaN(s1v) && !isNaN(s2v)) { if (s1v > s2v) bo3T1Wins++; else if (s2v > s1v) bo3T2Wins++; }
+        });
+      }
+      const bo3Complete = bo3T1Wins >= 2 || bo3T2Wins >= 2;
+
+      // How many game inputs to show for Bo3
+      const numBo3Games = (() => {
+        if (!match.bo3 || readOnly || override || !isReady) return 0;
+        const games = score.games || [];
+        if (bo3Complete) return games.length;
+        if (games.length === 0) return 1;
+        const allDone = games.every(g => g.s1 !== '' && g.s2 !== '' && g.s1 !== undefined && g.s2 !== undefined && parseInt(g.s1) !== parseInt(g.s2));
+        if (allDone) return Math.min(games.length + 1, 3);
+        return games.length;
+      })();
+      const isBo3Input = match.bo3 && !readOnly && isReady && !override;
+
+      const isComplete = override || (isReady && (
+        (match.bo3 ? bo3Complete : false) ||
+        (!match.bo3 && score.s1 !== undefined && score.s2 !== undefined && score.s1 !== '' && score.s2 !== '')
+      ));
+      const t1Won = winner && t1 && winner.seed === t1.seed;
+      const t2Won = winner && t2 && winner.seed === t2.seed;
+
+      return (
+        <div className={`p-2 rounded border ${isComplete ? 'bg-gray-800 border-green-600' : isOnCourt ? 'bg-orange-900/50 border-orange-500' : isReady ? 'bg-gray-800 border-yellow-500' : 'bg-gray-800 border-gray-700'} ${match.bo3 ? 'ring-2 ring-yellow-500' : ''}`}>
+          <div className="text-xs text-gray-500 mb-1 flex justify-between">
+            <span>{match.round}{isOnCourt ? ` · Ct ${courtNum}` : ''}</span>
+            <div className="flex gap-1 items-center">
+              {match.bo3 && <span className="text-yellow-400">Bo3</span>}
+              {override && !readOnly && <span className="text-orange-400 cursor-pointer" onClick={onClearOverride}>⟲</span>}
+              {isReady && !isComplete && !readOnly && onToggleCourt && (
+                <>
+                  {isOnCourt && onSetCourt && (
+                    <select
+                      value={courtNum || ''}
+                      onChange={(e) => onSetCourt(parseInt(e.target.value))}
+                      className="text-xs bg-gray-700 rounded px-1 py-0.5 w-10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {Array.from({ length: courtCount || 8 }, (_, i) => (
+                        <option key={i + 1} value={i + 1}>{i + 1}</option>
+                      ))}
+                    </select>
+                  )}
+                  <button
+                    onClick={onToggleCourt}
+                    className={`text-xs px-1 py-0.5 rounded ${isOnCourt ? 'bg-orange-600' : 'bg-gray-700 hover:bg-orange-700'}`}
+                  >
+                    {isOnCourt ? '🏓' : 'Send'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          <div className={`flex items-start gap-1 ${t1Won ? 'text-green-400 font-bold' : 'text-gray-300'}`}>
+            <div className="flex-1 min-w-0">
+              {t1 ? t1.name.split(' / ').map((p, i) => (
+                <div key={i} className="text-xs leading-tight truncate">{p}</div>
+              )) : <div className="text-xs">TBD</div>}
+            </div>
+            {isBo3Input ? (
+              <div className="flex gap-1 flex-shrink-0">
+                {Array.from({ length: numBo3Games }, (_, gi) => {
+                  const g = (score.games || [])[gi] || { s1: '', s2: '' };
+                  return <input key={gi} type="number" className="w-8 bg-gray-700 text-center rounded text-sm" value={g.s1 || ''} onChange={(e) => onBo3ScoreChange(gi, 's1', e.target.value)} />;
+                })}
+              </div>
+            ) : hasBo3Games ? (
+              <div className="flex gap-1 flex-shrink-0">
+                {score.games.map((g, i) => (
+                  <span key={i} className="w-7 bg-gray-700 text-center rounded text-sm">{g.s1}</span>
+                ))}
+              </div>
+            ) : readOnly ? (
+              <span className="w-10 text-center text-sm font-mono flex-shrink-0">{score.s1 || '-'}</span>
+            ) : isReady && !override && (
+              <input
+                type="number"
+                className="w-10 bg-gray-700 text-center rounded text-sm flex-shrink-0"
+                value={score.s1 || ''}
+                onChange={(e) => onScoreChange('s1', e.target.value)}
+              />
+            )}
+            {showOverride && isReady && !override && !isBo3Input && !hasBo3Games && !readOnly && (
+              <button className="text-xs bg-gray-700 px-1 rounded hover:bg-green-700 flex-shrink-0" onClick={() => onOverride(t1)}>W</button>
+            )}
+          </div>
+          <div className={`flex items-start gap-1 mt-1 pt-1 border-t border-gray-700 ${t2Won ? 'text-green-400 font-bold' : 'text-gray-300'}`}>
+            <div className="flex-1 min-w-0">
+              {t2 ? t2.name.split(' / ').map((p, i) => (
+                <div key={i} className="text-xs leading-tight truncate">{p}</div>
+              )) : <div className="text-xs">TBD</div>}
+            </div>
+            {isBo3Input ? (
+              <div className="flex gap-1 flex-shrink-0">
+                {Array.from({ length: numBo3Games }, (_, gi) => {
+                  const g = (score.games || [])[gi] || { s1: '', s2: '' };
+                  return <input key={gi} type="number" className="w-8 bg-gray-700 text-center rounded text-sm" value={g.s2 || ''} onChange={(e) => onBo3ScoreChange(gi, 's2', e.target.value)} />;
+                })}
+              </div>
+            ) : hasBo3Games ? (
+              <div className="flex gap-1 flex-shrink-0">
+                {score.games.map((g, i) => (
+                  <span key={i} className="w-7 bg-gray-700 text-center rounded text-sm">{g.s2}</span>
+                ))}
+              </div>
+            ) : readOnly ? (
+              <span className="w-10 text-center text-sm font-mono flex-shrink-0">{score.s2 || '-'}</span>
+            ) : isReady && !override && (
+              <input
+                type="number"
+                className="w-10 bg-gray-700 text-center rounded text-sm flex-shrink-0"
+                value={score.s2 || ''}
+                onChange={(e) => onScoreChange('s2', e.target.value)}
+              />
+            )}
+            {showOverride && isReady && !override && !isBo3Input && !hasBo3Games && !readOnly && (
+              <button className="text-xs bg-gray-700 px-1 rounded hover:bg-green-700 flex-shrink-0" onClick={() => onOverride(t2)}>W</button>
+            )}
+          </div>
+        </div>
+      );
+    });
+
+    const TeamInput = memo(({ index, color, team, dupr, onChange, onDragStart, onDragOver, onDrop, isDragging, isDragOver, readOnly }) => {
+      return (
+        <div
+          draggable
+          onDragStart={(e) => onDragStart(e, index)}
+          onDragOver={(e) => onDragOver(e, index)}
+          onDrop={(e) => onDrop(e, index)}
+          onDragEnd={(e) => e.target.style.opacity = 1}
+          className={`flex items-center gap-2 mb-2 bg-gray-800 p-2 rounded cursor-move border-2 transition-all ${
+            isDragOver ? 'border-yellow-400 bg-gray-700' : 'border-transparent'
+          } ${isDragging ? 'opacity-50' : ''}`}
+        >
+          <div className="flex flex-col items-center gap-1">
+            <span className={`${color} w-5 font-bold text-sm text-center`}>{index + 1}</span>
+            <span className="text-gray-500 text-xs">☰</span>
+          </div>
+          <div className="flex-1 flex flex-col gap-1">
+            <div className="flex gap-1 items-center">
+              {!readOnly && <button
+                onClick={(e) => { e.stopPropagation(); onChange('p1Paid', !team.p1Paid); }}
+                onDragStart={(e) => e.stopPropagation()}
+                draggable={false}
+                className={`w-6 h-6 rounded text-xs font-bold flex-shrink-0 ${team.p1Paid ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-500 border border-gray-600'}`}
+                title={team.p1Paid ? 'Paid' : 'Not paid'}
+              >$</button>}
+              <input
+                className="flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm"
+                placeholder="Player 1"
+                value={team.p1Name}
+                onChange={(e) => onChange('p1Name', e.target.value)}
+                onDragStart={(e) => e.stopPropagation()}
+                draggable={false}
+              />
+              <input
+                className="w-12 bg-gray-700 border border-gray-600 rounded px-1 py-1 text-xs text-center"
+                placeholder="4.5"
+                type="number"
+                step="0.01"
+                value={team.p1Dupr}
+                onChange={(e) => onChange('p1Dupr', e.target.value)}
+                onDragStart={(e) => e.stopPropagation()}
+                draggable={false}
+              />
+            </div>
+            <div className="flex gap-1 items-center">
+              {!readOnly && <button
+                onClick={(e) => { e.stopPropagation(); onChange('p2Paid', !team.p2Paid); }}
+                onDragStart={(e) => e.stopPropagation()}
+                draggable={false}
+                className={`w-6 h-6 rounded text-xs font-bold flex-shrink-0 ${team.p2Paid ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-500 border border-gray-600'}`}
+                title={team.p2Paid ? 'Paid' : 'Not paid'}
+              >$</button>}
+              <input
+                className="flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm"
+                placeholder="Player 2"
+                value={team.p2Name}
+                onChange={(e) => onChange('p2Name', e.target.value)}
+                onDragStart={(e) => e.stopPropagation()}
+                draggable={false}
+              />
+              <input
+                className="w-12 bg-gray-700 border border-gray-600 rounded px-1 py-1 text-xs text-center"
+                placeholder="4.5"
+                type="number"
+                step="0.01"
+                value={team.p2Dupr}
+                onChange={(e) => onChange('p2Dupr', e.target.value)}
+                onDragStart={(e) => e.stopPropagation()}
+                draggable={false}
+              />
+            </div>
+          </div>
+          <span className={`w-12 text-right text-sm font-mono font-bold ${dupr ? 'text-green-400' : 'text-gray-600'}`}>
+            {dupr || '—'}
+          </span>
+        </div>
+      );
+    });
+
+    const CourtStatus = memo(({ onCourtMatches, nextUpMatches, onToggleCourt, onCourt }) => (
+      <div className="mb-4 grid md:grid-cols-2 gap-2">
+        <div className="bg-orange-900/30 border border-orange-500 rounded p-2">
+          <div className="text-orange-400 text-xs font-semibold mb-1">🏓 On Court ({onCourtMatches.length})</div>
+          {onCourtMatches.length === 0 ? (
+            <div className="text-gray-500 text-xs">No matches on court</div>
+          ) : (
+            <div className="space-y-1">
+              {onCourtMatches.sort((a, b) => (onCourt[a.id] || 99) - (onCourt[b.id] || 99)).map(m => (
+                <div key={m.id} className="text-xs text-orange-300">
+                  <span className="font-mono text-orange-400">Ct{onCourt[m.id]}</span> {m.round || ''}: {m.t1?.name?.split(' / ').map(p => p.split(' ')[0]).join(' / ')} vs {m.t2?.name?.split(' / ').map(p => p.split(' ')[0]).join(' / ')}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="bg-gray-800 border border-gray-600 rounded p-2">
+          <div className="text-gray-400 text-xs font-semibold mb-1">⏳ Next Up ({nextUpMatches.length})</div>
+          {nextUpMatches.length === 0 ? (
+            <div className="text-gray-500 text-xs">All done!</div>
+          ) : (
+            <div className="space-y-1">
+              {nextUpMatches.slice(0, 6).map(m => (
+                <div key={m.id} className="text-xs text-gray-300 flex justify-between">
+                  <span>{m.round || `Ct${m.court}`}: {m.t1?.name?.split(' / ').map(p => p.split(' ')[0]).join(' / ')} vs {m.t2?.name?.split(' / ').map(p => p.split(' ')[0]).join(' / ')}</span>
+                  <button onClick={() => onToggleCourt(m.id)} className="text-orange-400 hover:text-orange-300">Send→</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    ));
+
+    function App() {
+      const [view, setView] = useState('home');
+      const [activeTournamentId, setActiveTournamentId] = useState(null);
+      const [quickSaveStatus, setQuickSaveStatus] = useState('');
+      const [authenticated, setAuthenticated] = useState(() => sessionStorage.getItem('mb_auth') === '1');
+      const [passwordInput, setPasswordInput] = useState('');
+      const [passwordError, setPasswordError] = useState(false);
+      const [phase, setPhase] = useState('import');
+      const [importText, setImportText] = useState('');
+      const [teamCount, setTeamCount] = useState(16);
+      const [rrGames, setRrGames] = useState(3); // 2 or 3 RR games
+      const [rrPointTarget, setRrPointTarget] = useState(11); // Games to 11 or 15
+      const [winnersCount, setWinnersCount] = useState(8); // How many teams go to winners bracket
+      const [teams, setTeams] = useState(Array.from({ length: 16 }, () => ({ p1Name: '', p1Dupr: '', p2Name: '', p2Dupr: '' })));
+      const [seedingScores, setSeedingScores] = useState({});
+      const [bracketScores, setBracketScores] = useState({});
+      const [bracketOverrides, setBracketOverrides] = useState({});
+      const [matchupsGenerated, setMatchupsGenerated] = useState(false);
+      const [rrMatchups, setRrMatchups] = useState([]); // [{matches: [...], bye: idx|-1}, ...]
+      // Normalize old format (array of arrays) to new format ({matches, bye})
+      const normalizeMatchups = (rounds) => {
+        if (!rounds || !rounds.length) return rounds;
+        return rounds.map(r => Array.isArray(r) ? { matches: r, bye: -1 } : r);
+      };
+      const [pools, setPools] = useState({});
+      const [bracketType, setBracketType] = useState('double'); // 'double' or 'single'
+      const [bo3Finals, setBo3Finals] = useState(false);
+      const [poolSize, setPoolSize] = useState(4); // 0 = no pools, 3-6 = pool size
+      const [bracketSwaps, setBracketSwaps] = useState([]);
+      const [swapSelections, setSwapSelections] = useState({});
+      const [onCourt, setOnCourt] = useState({}); // { matchId: courtNumber } (0 or absent = not on court)
+      const [courtCount, setCourtCount] = useState(Math.floor(teamCount / 2));
+      const [showOverride, setShowOverride] = useState(false);
+      const [bracketSeedOverride, setBracketSeedOverride] = useState(null);
+      const [selectedSwapTeam, setSelectedSwapTeam] = useState(null);
+      const [standingsOverride, setStandingsOverride] = useState(null); // Array of seed numbers for manual reorder
+      const [standingsDragIndex, setStandingsDragIndex] = useState(null);
+      const [standingsDragOverIndex, setStandingsDragOverIndex] = useState(null);
+      const [dragIndex, setDragIndex] = useState(null);
+      const [dragOverIndex, setDragOverIndex] = useState(null);
+      const [spectatorMode, setSpectatorMode] = useState(false);
+      const [editMode, setEditMode] = useState(false);
+      const [linkCopied, setLinkCopied] = useState(false);
+      const [npointId, setNpointId] = useState('');
+      const [publishStatus, setPublishStatus] = useState(''); // '', 'publishing', 'published', 'error'
+      const [liveMode, setLiveMode] = useState(false); // true when loaded via ?live= param
+
+      const checkPassword = useCallback(() => {
+        if (passwordInput === 'dink4cash') {
+          setAuthenticated(true);
+          sessionStorage.setItem('mb_auth', '1');
+          setPasswordError(false);
+          setPasswordInput('');
+        } else {
+          setPasswordError(true);
+        }
+      }, [passwordInput]);
+
+      // Default winners count based on team count
+      const defaultWinnersCount = { 8: 8, 9: 8, 10: 8, 11: 8, 12: 12, 13: 8, 14: 8, 15: 8, 16: 8 };
+
+      const payouts = {
+        8: { first: 200, second: 100, third: 40, total: 340 },
+        9: { first: 240, second: 100, third: 40, total: 380 },
+        10: { first: 260, second: 120, third: 40, total: 420 },
+        11: { first: 300, second: 140, third: 40, total: 480 },
+        12: { first: 360, second: 160, third: 60, total: 580 },
+        13: { first: 400, second: 180, third: 60, total: 640 },
+        14: { first: 440, second: 200, third: 60, total: 700 },
+        15: { first: 480, second: 200, third: 80, total: 760 },
+        16: { first: 500, second: 220, third: 100, total: 820 }
+      };
+      const currentPayouts = payouts[teamCount] || payouts[16];
+
+      // Load shared state from URL or embedded data (handles both old and slim formats)
+      // opts.spectator: if false, don't set spectator mode (for organizer loading)
+      const loadSharedState = (d, opts = {}) => {
+        // Support both old keys (teamCount) and slim keys (tc)
+        const v = (old, slim) => d[old] || d[slim];
+        if (v('teamCount', 'tc')) setTeamCount(v('teamCount', 'tc'));
+        if (v('rrGames', 'rg')) setRrGames(v('rrGames', 'rg'));
+        if (v('rrPointTarget', 'rp')) setRrPointTarget(v('rrPointTarget', 'rp'));
+        if (v('winnersCount', 'wc')) setWinnersCount(v('winnersCount', 'wc'));
+        if (v('teams', 't')) setTeams(v('teams', 't'));
+        if (v('seedingScores', 'ss')) setSeedingScores(v('seedingScores', 'ss'));
+        if (v('bracketOverrides', 'bo')) setBracketOverrides(v('bracketOverrides', 'bo'));
+        // Handle both old (g1/g2/g3) and new (rm) matchup formats
+        if (v('rrMatchups', 'rm')) {
+          setRrMatchups(normalizeMatchups(v('rrMatchups', 'rm')));
+        } else {
+          const g1 = v('game1Matchups', 'g1'), g2 = v('game2Matchups', 'g2'), g3 = v('game3Matchups', 'g3');
+          const reconstructed = [];
+          if (g1 && g1.length) reconstructed.push(g1);
+          if (g2 && g2.length) reconstructed.push(g2);
+          if (g3 && g3.length) reconstructed.push(g3);
+          if (reconstructed.length) setRrMatchups(normalizeMatchups(reconstructed));
+        }
+        if (v('bracketType', 'bt')) setBracketType(v('bracketType', 'bt'));
+        if (v('bo3Finals', 'b3') !== undefined) setBo3Finals(v('bo3Finals', 'b3'));
+        if (v('poolSize', 'ps')) setPoolSize(v('poolSize', 'ps'));
+        if (v('courtCount', 'cc')) setCourtCount(v('courtCount', 'cc'));
+        if (v('pools', 'p')) setPools(v('pools', 'p'));
+        if (v('matchupsGenerated', 'mg')) setMatchupsGenerated(v('matchupsGenerated', 'mg'));
+        if (v('onCourt', 'oc')) setOnCourt(v('onCourt', 'oc'));
+        // bracketSeedOverride intentionally NOT loaded — always rebuild from standings
+        if (v('standingsOverride', 'so')) setStandingsOverride(v('standingsOverride', 'so'));
+        // Restore bracket scores: expand slim format back to full team objects
+        if (d.bracketScores) {
+          setBracketScores(d.bracketScores);
+        } else if (d.bs) {
+          const teams = v('teams', 't') || [];
+          const getTeam = (seed) => {
+            if (!seed) return null;
+            const idx = seed - 1;
+            const t = teams[idx];
+            return t ? { seed, name: `${t.p1Name} / ${t.p2Name}` } : null;
+          };
+          const full = {};
+          Object.entries(d.bs).forEach(([id, s]) => {
+            if (s.g) {
+              full[id] = { t1: getTeam(s.a), t2: getTeam(s.b), games: s.g };
+            } else {
+              full[id] = { t1: getTeam(s.a), t2: getTeam(s.b), s1: s.s1, s2: s.s2 };
+            }
+          });
+          setBracketScores(full);
+        }
+        if (opts.spectator !== false) setSpectatorMode(true);
+        setPhase(v('phase', 'ph') || 'bracket');
+      };
+
+      // Load a tournament by ID (organizer mode from home page)
+      const loadTournament = useCallback((id) => {
+        const tournament = TOURNAMENTS.find(t => t.id === id);
+        if (!tournament) { setView('home'); return; }
+
+        setActiveTournamentId(id);
+        setView('tournament');
+        setSpectatorMode(false);
+        setEditMode(false);
+        window.location.hash = `t=${id}`;
+
+        // For completed tournaments, prefer embedded state (official results)
+        if (tournament.status === 'completed' && TOURNAMENT_STATES[id]) {
+          loadSharedState(TOURNAMENT_STATES[id], { spectator: false });
+          return;
+        }
+
+        // Try localStorage first, but skip if preloaded team count changed
+        const saved = localStorage.getItem(`moneyball_${id}`);
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            // For upcoming tournaments, clear localStorage only if team count changed
+            if (tournament.preloadedTeams && tournament.status === 'upcoming') {
+              const savedTeamCount = data.tc || data.teamCount;
+              if (savedTeamCount !== tournament.preloadedTeams.length) {
+                localStorage.removeItem(`moneyball_${id}`);
+                throw new Error('Team count changed, reloading preloaded teams with fresh defaults');
+              }
+            }
+            // Use loadProgress-style restoration
+            if (data.teamCount) setTeamCount(data.teamCount);
+            if (data.rrGames) setRrGames(data.rrGames);
+            if (data.rrPointTarget) setRrPointTarget(data.rrPointTarget);
+            if (data.winnersCount) setWinnersCount(data.winnersCount);
+            if (data.teams) setTeams(data.teams);
+            if (data.seedingScores) setSeedingScores(data.seedingScores);
+            if (data.bracketScores) setBracketScores(data.bracketScores);
+            if (data.bracketOverrides) setBracketOverrides(data.bracketOverrides);
+            if (data.rrMatchups) {
+              setRrMatchups(normalizeMatchups(data.rrMatchups));
+            } else {
+              const reconstructed = [];
+              if (data.game1Matchups?.length) reconstructed.push(data.game1Matchups);
+              if (data.game2Matchups?.length) reconstructed.push(data.game2Matchups);
+              if (data.game3Matchups?.length) reconstructed.push(data.game3Matchups);
+              if (reconstructed.length) setRrMatchups(normalizeMatchups(reconstructed));
+            }
+            if (data.bracketType) setBracketType(data.bracketType);
+            if (data.bo3Finals !== undefined) setBo3Finals(data.bo3Finals);
+            if (data.poolSize) setPoolSize(data.poolSize);
+            if (data.courtCount) setCourtCount(data.courtCount);
+            if (data.npointId) setNpointId(data.npointId);
+            if (data.pools) setPools(data.pools);
+            if (data.matchupsGenerated) setMatchupsGenerated(data.matchupsGenerated);
+            if (data.onCourt) setOnCourt(data.onCourt);
+            // bracketSeedOverride intentionally NOT loaded — always rebuild from standings
+            setStandingsOverride(data.standingsOverride || data.so || null);
+            // Auto-detect phase
+            const hasBracket = data.bracketScores && Object.keys(data.bracketScores).length > 0;
+            const hasBracketOverrides = data.bracketOverrides && Object.keys(data.bracketOverrides).length > 0;
+            if (hasBracket || hasBracketOverrides) {
+              setPhase('bracket');
+            } else if (data.seedingScores && Object.keys(data.seedingScores).length > 0) {
+              setPhase('roundrobin');
+            } else if (data.matchupsGenerated) {
+              setPhase('roundrobin');
+            } else if (data.teams?.some(t => t.p1Name)) {
+              setPhase('setup');
+            } else {
+              setPhase('import');
+            }
+            return;
+          } catch (e) {
+            console.error('Failed to load from localStorage', e);
+          }
+        }
+
+        // Fall back to embedded state (completed tournaments)
+        if (TOURNAMENT_STATES[id]) {
+          loadSharedState(TOURNAMENT_STATES[id], { spectator: false });
+          return;
+        }
+
+        // Fall back to preloaded teams (upcoming tournaments)
+        if (tournament.preloadedTeams) {
+          setTeamCount(tournament.preloadedTeams.length);
+          setTeams(tournament.preloadedTeams);
+          setPhase('import');
+          setImportText(tournament.preloadedTeams.map(t => `${t.p1Name} / ${t.p2Name}`).join('\n'));
+          setSeedingScores({});
+          setBracketScores({});
+          setBracketOverrides({});
+          setMatchupsGenerated(false);
+          setRrMatchups([]);
+          setPools({});
+          // Default to pools of 4 only for team counts divisible by 4, otherwise no pools (random RR)
+          const tc = tournament.preloadedTeams.length;
+          setPoolSize(tc % 4 === 0 ? 4 : 0);
+          setCourtCount(Math.floor(tc / 2));
+          setOnCourt({});
+          setBracketSeedOverride(null);
+          setStandingsOverride(null);
+        }
+      }, []);
+
+      // Enter edit mode for completed tournaments — loads from localStorage
+      const enterEditMode = useCallback(() => {
+        if (!activeTournamentId) return;
+        const saved = localStorage.getItem(`moneyball_${activeTournamentId}`);
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            if (data.teamCount) setTeamCount(data.teamCount);
+            if (data.rrGames) setRrGames(data.rrGames);
+            if (data.rrPointTarget) setRrPointTarget(data.rrPointTarget);
+            if (data.winnersCount) setWinnersCount(data.winnersCount);
+            if (data.teams) setTeams(data.teams);
+            if (data.seedingScores) setSeedingScores(data.seedingScores);
+            if (data.bracketScores) setBracketScores(data.bracketScores);
+            if (data.bracketOverrides) setBracketOverrides(data.bracketOverrides);
+            if (data.rrMatchups) {
+              setRrMatchups(normalizeMatchups(data.rrMatchups));
+            } else {
+              const reconstructed = [];
+              if (data.game1Matchups?.length) reconstructed.push(data.game1Matchups);
+              if (data.game2Matchups?.length) reconstructed.push(data.game2Matchups);
+              if (data.game3Matchups?.length) reconstructed.push(data.game3Matchups);
+              if (reconstructed.length) setRrMatchups(normalizeMatchups(reconstructed));
+            }
+            if (data.bracketType) setBracketType(data.bracketType);
+            if (data.bo3Finals !== undefined) setBo3Finals(data.bo3Finals);
+            if (data.poolSize) setPoolSize(data.poolSize);
+            if (data.courtCount) setCourtCount(data.courtCount);
+            if (data.npointId) setNpointId(data.npointId);
+            if (data.pools) setPools(data.pools);
+            if (data.matchupsGenerated) setMatchupsGenerated(data.matchupsGenerated);
+            if (data.onCourt) setOnCourt(data.onCourt);
+            // bracketSeedOverride intentionally NOT loaded — always rebuild from standings
+            setStandingsOverride(data.standingsOverride || data.so || null);
+            const hasBracket = data.bracketScores && Object.keys(data.bracketScores).length > 0;
+            const hasBracketOverrides = data.bracketOverrides && Object.keys(data.bracketOverrides).length > 0;
+            if (hasBracket || hasBracketOverrides) setPhase('bracket');
+            else if (data.seedingScores && Object.keys(data.seedingScores).length > 0) setPhase('roundrobin');
+            else if (data.matchupsGenerated) setPhase('roundrobin');
+            else if (data.teams?.some(t => t.p1Name)) setPhase('setup');
+            else setPhase('import');
+          } catch (e) {
+            console.error('Failed to load from localStorage for edit mode', e);
+          }
+        }
+        setEditMode(true);
+      }, [activeTournamentId]);
+
+      // Exit edit mode — reload official embedded state
+      const exitEditMode = useCallback(() => {
+        if (!activeTournamentId) return;
+        if (TOURNAMENT_STATES[activeTournamentId]) {
+          loadSharedState(TOURNAMENT_STATES[activeTournamentId], { spectator: false });
+        }
+        setEditMode(false);
+      }, [activeTournamentId, loadSharedState]);
+
+      const goHome = useCallback(() => {
+        setView('home');
+        setActiveTournamentId(null);
+        window.location.hash = '';
+      }, []);
+
+      const createNewTournament = useCallback(() => {
+        setActiveTournamentId(null);
+        setView('tournament');
+        setPhase('import');
+        setTeamCount(16);
+        setTeams(Array.from({ length: 16 }, () => ({ p1Name: '', p1Dupr: '', p2Name: '', p2Dupr: '' })));
+        setImportText('');
+        setSeedingScores({});
+        setBracketScores({});
+        setBracketOverrides({});
+        setMatchupsGenerated(false);
+        setRrMatchups([]);
+        setPools({});
+        setOnCourt({});
+        setBracketSeedOverride(null);
+        setStandingsOverride(null);
+        setSpectatorMode(false);
+        window.location.hash = '';
+      }, []);
+
+      React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const sharedState = params.get('s');
+        const liveId = params.get('live');
+        const hash = window.location.hash;
+        if (liveId) {
+          // Live mode: fetch state from npoint
+          setView('tournament');
+          setLiveMode(true);
+          fetch(`https://api.npoint.io/${liveId}`)
+            .then(r => r.json())
+            .then(data => {
+              if (data && Object.keys(data).length > 0) {
+                loadSharedState(data);
+              } else {
+                setSpectatorMode(true);
+                setPhase('import');
+              }
+            })
+            .catch(e => { console.error('Failed to load live state', e); setSpectatorMode(true); });
+        } else if (sharedState) {
+          // Share link (spectator)
+          setView('tournament');
+          try {
+            let decoded;
+            try {
+              let base64 = sharedState.replace(/-/g, '+').replace(/_/g, '/');
+              while (base64.length % 4) base64 += '=';
+              const binary = atob(base64);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+              const decompressed = pako.inflate(bytes, { to: 'string' });
+              decoded = JSON.parse(decompressed);
+            } catch (compressError) {
+              decoded = JSON.parse(atob(sharedState));
+            }
+            loadSharedState(decoded);
+          } catch (e) {
+            console.error('Failed to load shared state', e);
+          }
+        } else if (hash.startsWith('#t=')) {
+          // Hash link: load specific tournament (organizer mode)
+          const tournamentId = hash.substring(3);
+          loadTournament(tournamentId);
+        } else {
+          // Default: show home page
+          setView('home');
+        }
+      }, []);
+
+      const shareLink = useCallback(() => {
+        // Build slim state for sharing (strip redundant team objects from bracket scores)
+        const state = {
+          tc: teamCount, rg: rrGames, rp: rrPointTarget, wc: winnersCount,
+          t: teams.map(({ p1Paid, p2Paid, ...rest }) => rest), ss: seedingScores, bo: bracketOverrides,
+          rm: rrMatchups, bt: bracketType, b3: bo3Finals, ps: poolSize, cc: courtCount,
+          p: pools, mg: matchupsGenerated, oc: onCourt, bso: bracketSeedOverride, ph: phase,
+          so: standingsOverride
+        };
+        // Slim bracket scores: store only seeds + scores (no full team objects)
+        if (Object.keys(bracketScores).length > 0) {
+          const slim = {};
+          Object.entries(bracketScores).forEach(([id, s]) => {
+            if (s.games) {
+              slim[id] = { a: s.t1?.seed, b: s.t2?.seed, g: s.games };
+            } else {
+              slim[id] = { a: s.t1?.seed, b: s.t2?.seed, s1: s.s1, s2: s.s2 };
+            }
+          });
+          state.bs = slim;
+        }
+        const jsonStr = JSON.stringify(state);
+        const compressed = pako.deflate(jsonStr);
+        // Chunked base64 to avoid call stack overflow
+        let binary = '';
+        for (let i = 0; i < compressed.length; i++) binary += String.fromCharCode(compressed[i]);
+        const base64 = btoa(binary);
+        const urlSafe = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        const url = `${window.location.origin}${window.location.pathname}?s=${urlSafe}`;
+        navigator.clipboard.writeText(url).then(() => {
+          setLinkCopied(true);
+          setTimeout(() => setLinkCopied(false), 2000);
+        });
+      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, rrMatchups, bracketType, bo3Finals, poolSize, courtCount, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase, standingsOverride]);
+
+      const buildPublishState = useCallback(() => {
+        const state = {
+          tc: teamCount, rg: rrGames, rp: rrPointTarget, wc: winnersCount,
+          t: teams.map(({ p1Paid, p2Paid, ...rest }) => rest), ss: seedingScores, bo: bracketOverrides,
+          rm: rrMatchups, bt: bracketType, b3: bo3Finals, ps: poolSize, cc: courtCount,
+          p: pools, mg: matchupsGenerated, oc: onCourt, bso: bracketSeedOverride, ph: phase,
+          so: standingsOverride
+        };
+        if (Object.keys(bracketScores).length > 0) {
+          const slim = {};
+          Object.entries(bracketScores).forEach(([id, s]) => {
+            if (s.games) {
+              slim[id] = { a: s.t1?.seed, b: s.t2?.seed, g: s.games };
+            } else {
+              slim[id] = { a: s.t1?.seed, b: s.t2?.seed, s1: s.s1, s2: s.s2 };
+            }
+          });
+          state.bs = slim;
+        }
+        return state;
+      }, [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, rrMatchups, bracketType, bo3Finals, poolSize, courtCount, pools, matchupsGenerated, onCourt, bracketSeedOverride, phase, standingsOverride]);
+
+      const publishToNpoint = useCallback(() => {
+        if (!npointId) return;
+        setPublishStatus('publishing');
+
+        const state = buildPublishState();
+        fetch(`https://api.npoint.io/${npointId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state)
+        })
+          .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            setPublishStatus('published');
+            setTimeout(() => setPublishStatus(''), 2000);
+          })
+          .catch(e => {
+            console.error('Publish failed', e);
+            setPublishStatus('error');
+            setTimeout(() => setPublishStatus(''), 3000);
+          });
+      }, [npointId, buildPublishState]);
+
+      const copyLiveLink = useCallback(() => {
+        if (!npointId) return;
+        const url = `${window.location.origin}${window.location.pathname}?live=${npointId}`;
+        navigator.clipboard.writeText(url).then(() => {
+          setLinkCopied(true);
+          setTimeout(() => setLinkCopied(false), 2000);
+        });
+      }, [npointId]);
+
+      const handleDragStart = useCallback((e, index) => {
+        setDragIndex(index);
+        e.dataTransfer.effectAllowed = 'move';
+      }, []);
+
+      const handleDragOver = useCallback((e, index) => {
+        e.preventDefault();
+        setDragOverIndex(index);
+      }, []);
+
+      const handleDrop = useCallback((e, dropIndex) => {
+        e.preventDefault();
+        if (dragIndex === null || dragIndex === dropIndex) {
+          setDragIndex(null);
+          setDragOverIndex(null);
+          return;
+        }
+        setTeams(prev => {
+          const newTeams = [...prev];
+          const [draggedTeam] = newTeams.splice(dragIndex, 1);
+          newTeams.splice(dropIndex, 0, draggedTeam);
+          return newTeams;
+        });
+        setDragIndex(null);
+        setDragOverIndex(null);
+      }, [dragIndex]);
+
+      const handleStandingsDragStart = useCallback((e, index) => {
+        setStandingsDragIndex(index);
+        e.dataTransfer.effectAllowed = 'move';
+      }, []);
+
+      const handleStandingsDragOver = useCallback((e, index) => {
+        e.preventDefault();
+        setStandingsDragOverIndex(index);
+      }, []);
+
+      const handleStandingsDrop = useCallback((e, dropIndex) => {
+        e.preventDefault();
+        if (standingsDragIndex === null || standingsDragIndex === dropIndex) {
+          setStandingsDragIndex(null);
+          setStandingsDragOverIndex(null);
+          return;
+        }
+        const current = standingsOverride || standings.map(t => t.seed);
+        const newOrder = [...current];
+        const [dragged] = newOrder.splice(standingsDragIndex, 1);
+        newOrder.splice(dropIndex, 0, dragged);
+        setStandingsOverride(newOrder);
+        setBracketSeedOverride(null); // Clear bracket override when standings change
+        setStandingsDragIndex(null);
+        setStandingsDragOverIndex(null);
+      }, [standingsDragIndex, standingsOverride, standings]);
+
+      const getTeamDupr = useCallback((team) => {
+        const p1 = parseFloat(team.p1Dupr) || 0;
+        const p2 = parseFloat(team.p2Dupr) || 0;
+        if (!team.p1Dupr && !team.p2Dupr) return null;
+        return (p1 + p2).toFixed(2);
+      }, []);
+
+      const getTeamName = useCallback((team) => {
+        if (!team.p1Name && !team.p2Name) return '';
+        if (!team.p2Name) return team.p1Name;
+        if (!team.p1Name) return team.p2Name;
+        return `${team.p1Name} / ${team.p2Name}`;
+      }, []);
+
+      const teamsValid = teams.every(t => t.p1Name && t.p2Name);
+
+      const parseImportText = useCallback(() => {
+        const lines = importText.split('\n').filter(l => l.trim());
+        const parsed = lines.map(line => {
+          const cleaned = line.replace(/^[\s\*\-\d\.\)\:]+/, '').trim();
+          const parts = cleaned.split(/\s*\/\s*/);
+          if (parts.length >= 2) {
+            return { p1Name: parts[0].trim(), p1Dupr: '', p2Name: parts[1].trim(), p2Dupr: '' };
+          }
+          return null;
+        }).filter(Boolean);
+
+        if (parsed.length !== teamCount) {
+          alert(`Expected ${teamCount} teams, found ${parsed.length}.`);
+        } else {
+          setWinnersCount(defaultWinnersCount[teamCount] || 8);
+          setTeams(parsed);
+          setPhase('setup');
+        }
+      }, [importText, teamCount]);
+
+      const generateRandomMatchups = useCallback(() => {
+        const shuffle = (arr) => {
+          const a = [...arr];
+          for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+          }
+          return a;
+        };
+
+        // Generate round-robin schedule for a group of team indices
+        const generatePoolRR = (poolTeamsList) => {
+          const n = poolTeamsList.length;
+          if (n < 2) return [];
+          const rounds = [];
+          // Circle method for round-robin scheduling
+          const teams = [...poolTeamsList];
+          const numRounds = n % 2 === 0 ? n - 1 : n;
+          const half = Math.floor(n / 2);
+          // If odd, add a dummy
+          if (n % 2 === 1) teams.push(-1);
+          const fixed = teams[0];
+          const rotating = teams.slice(1);
+          for (let r = 0; r < numRounds; r++) {
+            const roundMatches = [];
+            const current = [fixed, ...rotating];
+            for (let i = 0; i < current.length / 2; i++) {
+              const t1 = current[i];
+              const t2 = current[current.length - 1 - i];
+              if (t1 !== -1 && t2 !== -1) {
+                roundMatches.push({ t1, t2 });
+              }
+            }
+            rounds.push(roundMatches);
+            // Rotate: move last to front of rotating array
+            rotating.unshift(rotating.pop());
+          }
+          return rounds;
+        };
+
+        // 0 RR games: skip directly to bracket
+        if (rrGames === 0) {
+          setRrMatchups([]);
+          setPools({});
+          setMatchupsGenerated(true);
+          setSeedingScores({});
+          return;
+        }
+
+        // Pool-based matchups (poolSize 3-6)
+        if (poolSize >= 3) {
+          const numPools = Math.round(teamCount / poolSize);
+          const poolAssignments = {};
+          const poolTeamsList = Array.from({ length: numPools }, () => []);
+
+          // Snake draft
+          for (let i = 0; i < teamCount; i++) {
+            const row = Math.floor(i / numPools);
+            let poolIdx = i % numPools;
+            if (row % 2 === 1) poolIdx = numPools - 1 - poolIdx;
+            poolTeamsList[poolIdx].push(i);
+            poolAssignments[i] = poolIdx;
+          }
+
+          setPools(poolAssignments);
+
+          // Generate full round-robin within each pool
+          const allPoolRounds = poolTeamsList.map(pt => generatePoolRR(pt));
+          const maxRounds = Math.max(...allPoolRounds.map(r => r.length));
+
+          const rounds = [];
+          for (let r = 0; r < maxRounds; r++) {
+            const roundMatches = [];
+            allPoolRounds.forEach(poolRounds => {
+              if (r < poolRounds.length) {
+                roundMatches.push(...poolRounds[r]);
+              }
+            });
+            rounds.push(roundMatches);
+          }
+
+          setRrMatchups(rounds);
+          setMatchupsGenerated(true);
+          setSeedingScores({});
+          return;
+        }
+
+        // No pools: generate matchups based on rrGames count
+        setPools({});
+
+        if (rrGames === 1) {
+          // 1 game: random pairs
+          const allTeams = shuffle(Array.from({ length: teamCount }, (_, i) => i));
+          const matches = [];
+          for (let i = 0; i < allTeams.length - 1; i += 2) {
+            matches.push({ t1: allTeams[i], t2: allTeams[i + 1] });
+          }
+          setRrMatchups([{ matches, bye: -1 }]);
+        } else if (rrGames === 2) {
+          // 2 games: seed-balanced
+          const allTeams = Array.from({ length: teamCount }, (_, i) => i);
+          const g1 = [];
+          for (let i = 0; i < teamCount - 1; i += 2) {
+            g1.push({ t1: allTeams[i], t2: allTeams[i + 1] });
+          }
+          const g2 = [];
+          const used = new Set();
+          for (let i = 0; i < teamCount; i++) {
+            if (used.has(i)) continue;
+            const opponent = i + 2 < teamCount && !used.has(i + 2) ? i + 2 :
+                            (i + 1 < teamCount && !used.has(i + 1) ? i + 1 : null);
+            if (opponent !== null) {
+              g2.push({ t1: i, t2: opponent });
+              used.add(i);
+              used.add(opponent);
+            }
+          }
+          setRrMatchups([{ matches: shuffle(g1), bye: -1 }, { matches: shuffle(g2), bye: -1 }]);
+        } else {
+          // 3+ games: sum-balanced matchups via random perfect matching
+          const n = teamCount;
+          const isOdd = n % 2 === 1;
+          // For odd teams: add 1 extra round so everyone plays at least rrGames
+          // (n-1 teams play rrGames+1, 1 bye per round, rrGames+1 byes distributed)
+          const numRounds = isOdd ? rrGames + 1 : rrGames;
+          const pairN = isOdd ? n + 1 : n; // phantom team index = n for odd
+          const half = pairN / 2;
+
+          const randomMatching = (played, byeCounts) => {
+            for (let a = 0; a < 200; a++) {
+              const indices = shuffle(Array.from({ length: pairN }, (_, i) => i));
+              const rm = [];
+              let byeTeam = -1;
+              let ok = true;
+              for (let i = 0; i < pairN; i += 2) {
+                const a2 = indices[i], b2 = indices[i + 1];
+                if (isOdd && (a2 === n || b2 === n)) {
+                  // One of these is the phantom — the other gets a bye
+                  byeTeam = a2 === n ? b2 : a2;
+                  continue;
+                }
+                if (played[a2].has(b2)) { ok = false; break; }
+                rm.push({ t1: a2, t2: b2 });
+              }
+              if (!ok) continue;
+              // Prefer distributing byes: skip if this team already has max byes
+              if (isOdd && byeTeam >= 0) {
+                const maxByes = Math.ceil(numRounds / n);
+                if (byeCounts[byeTeam] >= maxByes + 1) continue;
+              }
+              if (rm.length === half - (isOdd ? 1 : 0)) return { matches: rm, bye: byeTeam };
+            }
+            return null;
+          };
+
+          let best = null;
+          for (let trial = 0; trial < 10000; trial++) {
+            const played = {};
+            const byeCounts = new Array(n).fill(0);
+            for (let i = 0; i < n; i++) played[i] = new Set();
+            const rounds = [];
+            let valid = true;
+            for (let round = 0; round < numRounds; round++) {
+              const result = randomMatching(played, byeCounts);
+              if (!result) { valid = false; break; }
+              result.matches.forEach(({ t1, t2 }) => { played[t1].add(t2); played[t2].add(t1); });
+              if (result.bye >= 0) byeCounts[result.bye]++;
+              rounds.push({ matches: result.matches, bye: result.bye });
+            }
+            if (!valid) continue;
+            // For odd: ensure no team has more than 2 byes (ideally max 1)
+            if (isOdd) {
+              const maxByeCount = Math.max(...byeCounts);
+              if (maxByeCount > 1) continue; // each team byes at most once
+            }
+            // Compute games per team
+            const gamesPlayed = new Array(n).fill(0);
+            rounds.forEach(r => r.matches.forEach(({ t1, t2 }) => { gamesPlayed[t1]++; gamesPlayed[t2]++; }));
+            // Everyone must play at least rrGames
+            if (gamesPlayed.some(g => g < rrGames)) continue;
+            const sums = new Array(n).fill(0);
+            rounds.forEach(r => r.matches.forEach(({ t1, t2 }) => {
+              sums[t1] += t2 + 1; sums[t2] += t1 + 1;
+            }));
+            const avg = sums.reduce((a, b) => a + b, 0) / n;
+            const maxDev = Math.max(...sums.map(s => Math.abs(s - avg)));
+            if (!best || maxDev < best.maxDev) {
+              best = { maxDev, rounds, gamesPlayed, byeCounts };
+              if (maxDev <= 2) break;
+            }
+          }
+
+          if (!best) {
+            // Fallback: simple repeat-avoidance
+            const rounds = [];
+            const played = {};
+            for (let i = 0; i < n; i++) played[i] = new Set();
+            for (let round = 0; round < numRounds; round++) {
+              const available = shuffle(Array.from({ length: n }, (_, i) => i));
+              const rm = [];
+              let byeTeam = -1;
+              if (isOdd) {
+                // Pick team with fewest byes so far
+                const byeCounts = new Array(n).fill(0);
+                rounds.forEach(r => { if (r.bye >= 0) byeCounts[r.bye]++; });
+                const minByes = Math.min(...available.map(t => byeCounts[t]));
+                const candidates = available.filter(t => byeCounts[t] === minByes);
+                byeTeam = candidates[Math.floor(Math.random() * candidates.length)];
+                available.splice(available.indexOf(byeTeam), 1);
+              }
+              while (available.length >= 2) {
+                const t1 = available.shift();
+                let t2Idx = available.findIndex(t => !played[t1].has(t));
+                if (t2Idx === -1) t2Idx = 0;
+                const t2 = available.splice(t2Idx, 1)[0];
+                played[t1].add(t2); played[t2].add(t1);
+                rm.push({ t1, t2 });
+              }
+              rounds.push({ matches: rm, bye: byeTeam });
+            }
+            best = { rounds };
+          }
+
+          setRrMatchups(best.rounds.map(r => ({ matches: shuffle([...r.matches]), bye: r.bye })));
+        }
+
+        setMatchupsGenerated(true);
+        setSeedingScores({});
+      }, [teamCount, rrGames, poolSize]);
+
+      const teamData = useMemo(() => {
+        return teams.map((t, i) => ({
+          seed: i + 1,
+          name: getTeamName(t),
+          dupr: getTeamDupr(t)
+        }));
+      }, [teams, getTeamName, getTeamDupr]);
+
+      // seedingMatches is now an array of { matches: [...], bye: teamIdx }
+      const seedingMatches = useMemo(() => {
+        const t = teamData;
+        if (matchupsGenerated && rrMatchups.length > 0) {
+          return rrMatchups.map((round, roundIdx) => ({
+            matches: round.matches.map((m, i) => ({
+              id: `g${roundIdx + 1}m${i}`,
+              t1: t[m.t1],
+              t2: t[m.t2],
+              court: i + 1
+            })),
+            bye: round.bye >= 0 ? t[round.bye] : null
+          }));
+        }
+        return [];
+      }, [teamData, matchupsGenerated, rrMatchups]);
+
+      const standings = useMemo(() => {
+        const stats = {};
+        teamData.forEach(t => {
+          stats[t.seed] = { ...t, wins: 0, losses: 0, pf: 0, pa: 0, h2h: {}, pool: pools[t.seed - 1] };
+        });
+
+        // 0 RR games: return teams in import order
+        if (rrGames === 0) {
+          return Object.values(stats);
+        }
+
+        seedingMatches.flatMap(r => r.matches).forEach(m => {
+          const score = seedingScores[m.id];
+          if (score && score.s1 !== '' && score.s2 !== '' && score.s1 !== undefined && score.s2 !== undefined) {
+            const s1 = parseInt(score.s1);
+            const s2 = parseInt(score.s2);
+            if (!isNaN(s1) && !isNaN(s2)) {
+              stats[m.t1.seed].pf += s1;
+              stats[m.t1.seed].pa += s2;
+              stats[m.t2.seed].pf += s2;
+              stats[m.t2.seed].pa += s1;
+
+              if (s1 > s2) {
+                stats[m.t1.seed].wins++;
+                stats[m.t2.seed].losses++;
+                stats[m.t1.seed].h2h[m.t2.seed] = { result: 1, pf: s1, pa: s2 };
+                stats[m.t2.seed].h2h[m.t1.seed] = { result: -1, pf: s2, pa: s1 };
+              } else if (s2 > s1) {
+                stats[m.t2.seed].wins++;
+                stats[m.t1.seed].losses++;
+                stats[m.t2.seed].h2h[m.t1.seed] = { result: 1, pf: s2, pa: s1 };
+                stats[m.t1.seed].h2h[m.t2.seed] = { result: -1, pf: s1, pa: s2 };
+              }
+            }
+          }
+        });
+
+        // 3-way tiebreaker: group h2h within tied teams, then group PD, then overall PD
+        // Only uses H2H when ALL teams in the group played each other (same pool)
+        const resolveTiedGroup = (group) => {
+          if (group.length <= 1) return group;
+
+          // Check if all teams in the group played each other
+          let allPlayedEachOther = true;
+          for (let i = 0; i < group.length && allPlayedEachOther; i++) {
+            for (let j = i + 1; j < group.length && allPlayedEachOther; j++) {
+              if (!group[i].h2h[group[j].seed]) {
+                allPlayedEachOther = false;
+              }
+            }
+          }
+
+          if (!allPlayedEachOther) {
+            // Cross-pool tie: can't use H2H, sort by overall PD then original seed
+            return [...group].sort((a, b) => ((b.pf - b.pa) - (a.pf - a.pa)) || (a.seed - b.seed));
+          }
+
+          // All played each other: use group H2H wins, then group PD, then overall PD
+          const withG = group.map(t => {
+            let gW = 0, gPf = 0, gPa = 0;
+            group.forEach(o => {
+              if (t.seed === o.seed) return;
+              const h = t.h2h[o.seed];
+              if (h) {
+                if (h.result === 1) gW++;
+                gPf += h.pf || 0;
+                gPa += h.pa || 0;
+              }
+            });
+            return { ...t, gW, gPd: gPf - gPa };
+          });
+          withG.sort((a, b) => {
+            if (b.gW !== a.gW) return b.gW - a.gW;
+            if (b.gPd !== a.gPd) return b.gPd - a.gPd;
+            if ((b.pf - b.pa) !== (a.pf - a.pa)) return (b.pf - b.pa) - (a.pf - a.pa);
+            return a.seed - b.seed; // Original seed as final tiebreaker
+          });
+          const result = [];
+          let si = 0;
+          while (si < withG.length) {
+            let sj = si + 1;
+            while (sj < withG.length && withG[sj].gW === withG[si].gW && withG[sj].gPd === withG[si].gPd) sj++;
+            const sub = withG.slice(si, sj);
+            if (sub.length > 1 && sub.length < group.length) {
+              result.push(...resolveTiedGroup(sub));
+            } else {
+              result.push(...sub);
+            }
+            si = sj;
+          }
+          return result;
+        };
+        const allTeams = Object.values(stats).sort((a, b) => b.wins - a.wins);
+        const resolved = [];
+        let gi = 0;
+        while (gi < allTeams.length) {
+          let gj = gi + 1;
+          while (gj < allTeams.length && allTeams[gj].wins === allTeams[gi].wins) gj++;
+          resolved.push(...resolveTiedGroup(allTeams.slice(gi, gj)));
+          gi = gj;
+        }
+        return resolved;
+      }, [teamData, seedingScores, seedingMatches, rrGames]);
+
+      // Apply manual standings reorder if set, keeping fresh stats from computed standings
+      const displayStandings = useMemo(() => {
+        if (!standingsOverride) return standings;
+        const ordered = standingsOverride
+          .map(seed => standings.find(t => t.seed === seed))
+          .filter(Boolean);
+        // Add any teams not in the override
+        standings.forEach(t => {
+          if (!ordered.find(o => o.seed === t.seed)) ordered.push(t);
+        });
+        return ordered;
+      }, [standingsOverride, standings]);
+
+      const bracketTeams = useMemo(() => {
+        if (bracketSeedOverride) {
+          return { winners: bracketSeedOverride.winners, losers: bracketSeedOverride.losers, swaps: [] };
+        }
+        if (displayStandings.length < teamCount) return { winners: [], losers: [], swaps: [] };
+
+        // Split into winners and losers based on configured winnersCount
+        // When pools are used, guarantee top N from each pool make winners bracket
+        const losersCount = teamCount - winnersCount;
+        let winners, losers;
+        const uniquePools = [...new Set(Object.values(pools))];
+        if (uniquePools.length > 1 && winnersCount > 0) {
+          const perPool = Math.floor(winnersCount / uniquePools.length);
+          const winnersSet = new Set();
+          // Take top N from each pool (by overall standings order)
+          const poolCounts = {};
+          uniquePools.forEach(p => poolCounts[p] = 0);
+          for (const team of displayStandings) {
+            const p = team.pool;
+            if (p !== undefined && poolCounts[p] !== undefined && poolCounts[p] < perPool) {
+              winnersSet.add(team.seed);
+              poolCounts[p]++;
+            }
+          }
+          // If winnersCount doesn't divide evenly, fill remaining spots by overall rank
+          for (const team of displayStandings) {
+            if (winnersSet.size >= winnersCount) break;
+            if (!winnersSet.has(team.seed)) winnersSet.add(team.seed);
+          }
+          winners = displayStandings.filter(t => winnersSet.has(t.seed));
+          losers = displayStandings.filter(t => !winnersSet.has(t.seed));
+        } else {
+          winners = displayStandings.slice(0, winnersCount);
+          losers = displayStandings.slice(winnersCount);
+        }
+
+        const swaps = [];
+
+        // Apply no-repeat constraint: no same-pool matchups in round 1
+        // Standard matchups by seed: 1v8, 4v5, 2v7, 3v6 (for 8 teams)
+        const applyNoRepeat = (teams, bracketName) => {
+          if (teams.length < 2) return teams;
+          const result = [...teams];
+
+          // Get matchups based on team count
+          const getMatchups = (n) => {
+            if (n <= 4) return [[0, n-1], [1, n-2]].filter(m => m[1] >= 0 && m[0] < m[1]);
+            if (n <= 6) return [[0, n-1], [1, n-2], [2, n-3]].filter(m => m[1] >= 0 && m[0] < m[1]);
+            if (n <= 8) return [[0, 7], [3, 4], [1, 6], [2, 5]].filter(m => m[1] < n);
+            return [[0, 7], [3, 4], [1, 6], [2, 5]];
+          };
+
+          const matchups = getMatchups(result.length);
+
+          // Check each matchup for same-pool conflict
+          for (const [i, j] of matchups) {
+            if (i >= result.length || j >= result.length) continue;
+            const t1 = result[i];
+            const t2 = result[j];
+
+            // Check if same pool (only if pools are assigned)
+            if (t1.pool !== undefined && t2.pool !== undefined && t1.pool === t2.pool) {
+              // Find someone to swap with (not seed 1, and not from same pool as opponent)
+              for (let k = j + 1; k < result.length; k++) {
+                if (result[k].pool !== t1.pool) {
+                  // Also check that swapping doesn't create a new conflict
+                  const otherMatchup = matchups.find(m => m.includes(k));
+                  if (otherMatchup) {
+                    const otherIdx = otherMatchup[0] === k ? otherMatchup[1] : otherMatchup[0];
+                    if (otherIdx < result.length && result[otherIdx].pool === t2.pool) continue; // Would create new conflict
+                  }
+
+                  swaps.push({
+                    description: `${bracketName}: Swapped seed ${j + 1} (${t2.name}) with seed ${k + 1} (${result[k].name}) to avoid pool rematch`,
+                    side: bracketName === 'Winners' ? 'winners' : 'losers',
+                    j,
+                    k
+                  });
+                  [result[j], result[k]] = [result[k], result[j]];
+                  break;
+                }
+              }
+            }
+          }
+          return result;
+        };
+
+        // Save un-swapped version before applying no-repeat
+        const unswappedWinners = [...winners];
+        const unswappedLosers = [...losers];
+
+        winners = applyNoRepeat(winners, 'Winners');
+        losers = applyNoRepeat(losers, 'Losers');
+
+        return { winners, losers, swaps, unswappedWinners, unswappedLosers };
+      }, [displayStandings, teamCount, winnersCount, bracketSeedOverride, pools]);
+
+      // Sync bracketSwaps state from bracketTeams (useEffect instead of setState in useMemo)
+      useEffect(() => {
+        if (bracketSeedOverride) {
+          setBracketSwaps([]);
+          setSwapSelections({});
+        } else if (bracketTeams.swaps?.length > 0) {
+          setBracketSwaps(bracketTeams.swaps);
+          setSwapSelections({});
+        }
+      }, [bracketTeams, bracketSeedOverride]);
+
+      const generateFakeSeedingScores = useCallback(() => {
+        const fakeScores = {};
+        seedingMatches.flatMap(r => r.matches).forEach(m => {
+          const seedDiff = m.t2.seed - m.t1.seed; // positive = t1 is better seed
+          const t1WinProb = 0.5 + (seedDiff * 0.03); // 3% advantage per seed difference
+          const t1Wins = Math.random() < t1WinProb;
+          const winScore = 11;
+          const loseScore = Math.floor(Math.random() * 8) + 2; // 2-9
+          fakeScores[m.id] = {
+            s1: t1Wins ? winScore : loseScore,
+            s2: t1Wins ? loseScore : winScore
+          };
+        });
+        setSeedingScores(fakeScores);
+      }, [seedingMatches]);
+
+      const generateFakeBracketScores = useCallback(() => {
+        const fakeScores = {};
+        const getWinner = (id) => {
+          const s = fakeScores[id];
+          if (!s) return null;
+          if (s.games) {
+            let t1W = 0, t2W = 0;
+            s.games.forEach(g => { if (g.s1 > g.s2) t1W++; else t2W++; });
+            return t1W > t2W ? s.t1 : s.t2;
+          }
+          return parseInt(s.s1) > parseInt(s.s2) ? s.t1 : s.t2;
+        };
+        const getLoser = (id) => {
+          const s = fakeScores[id];
+          if (!s) return null;
+          if (s.games) {
+            let t1W = 0, t2W = 0;
+            s.games.forEach(g => { if (g.s1 > g.s2) t1W++; else t2W++; });
+            return t1W > t2W ? s.t2 : s.t1;
+          }
+          return parseInt(s.s1) > parseInt(s.s2) ? s.t2 : s.t1;
+        };
+        const simulateMatch = (t1, t2) => {
+          if (!t1 || !t2) return null;
+          const seedDiff = t2.seed - t1.seed;
+          const t1WinProb = 0.5 + (seedDiff * 0.025);
+          const t1Wins = Math.random() < t1WinProb;
+          return { t1, t2, s1: t1Wins ? 15 : Math.floor(Math.random() * 10) + 4, s2: t1Wins ? Math.floor(Math.random() * 10) + 4 : 15 };
+        };
+        const simulateBo3 = (t1, t2) => {
+          if (!t1 || !t2) return null;
+          const seedDiff = t2.seed - t1.seed;
+          const t1WinProb = 0.5 + (seedDiff * 0.025);
+          const games = []; let t1W = 0, t2W = 0;
+          while (t1W < 2 && t2W < 2) {
+            const w = Math.random() < t1WinProb;
+            games.push({ s1: w ? 11 : Math.floor(Math.random() * 8) + 2, s2: w ? Math.floor(Math.random() * 8) + 2 : 11 });
+            if (w) t1W++; else t2W++;
+          }
+          return { t1, t2, games };
+        };
+
+        // Simulate all bracket matches in topological order
+        // Build dependency graph from bracketMatches
+        const matchOrder = bracketType === 'single'
+          ? ['se_r1m1','se_r1m2','se_r1m3','se_r1m4','se_qf1','se_qf2','se_qf3','se_qf4','se_sf1','se_sf2','se_f','se_3rd']
+          : Object.keys(bracketMatches).sort((a, b) => {
+              // Sort: winners first (wqf, wsf, wf), then losers (lr*), then lsf, lf, gf
+              const priority = (id) => {
+                if (id.startsWith('wqf')) return 10;
+                if (id.startsWith('wsf')) return 20;
+                if (id === 'wf') return 30;
+                if (id.startsWith('lr1')) return 40;
+                if (id.startsWith('lr2')) return 50;
+                if (id.startsWith('lr3')) return 60;
+                if (id.startsWith('lr4')) return 70;
+                if (id.startsWith('lr5')) return 80;
+                if (id.startsWith('lr6')) return 90;
+                if (id === 'lsf') return 100;
+                if (id === 'lf') return 110;
+                if (id === 'gf') return 120;
+                if (id === 'gf2') return 130;
+                return 200;
+              };
+              return priority(a) - priority(b);
+            });
+
+        matchOrder.forEach(id => {
+          const m = bracketMatches[id];
+          if (!m || m.bye) return;
+          // Resolve teams: use fakeScores winners where bracket feeds in
+          let t1 = m.t1, t2 = m.t2;
+          // For fed-in teams, check if they come from previous matches
+          const resolveTeam = (team, matchId) => {
+            if (team) return team;
+            // Try to find from bracket structure
+            return null;
+          };
+          t1 = resolveTeam(t1, id);
+          t2 = resolveTeam(t2, id);
+          if (!t1 || !t2) return;
+          fakeScores[id] = m.bo3 ? simulateBo3(t1, t2) : simulateMatch(t1, t2);
+        });
+
+        setBracketScores(fakeScores);
+      }, [bracketMatches, bracketType]);
+
+      // Resolve placeholder teams to real teams from standings by seed number
+      const resolveTeam = useCallback((team) => {
+        if (!team || !team.placeholder) return team;
+        const real = displayStandings.find(t => t.seed === team.seed);
+        return real || team;
+      }, [displayStandings]);
+
+      const getBracketMatchTeam = useCallback((id) => {
+        if (bracketOverrides[id] && bracketOverrides[id].winner) {
+          return resolveTeam(bracketOverrides[id].winner);
+        }
+        const score = bracketScores[id];
+        if (!score) return null;
+
+        // Handle Bo3 with games array
+        if (score.games && score.games.length > 0) {
+          let t1Wins = 0, t2Wins = 0;
+          score.games.forEach(g => {
+            const s1v = parseInt(g.s1), s2v = parseInt(g.s2);
+            if (!isNaN(s1v) && !isNaN(s2v)) {
+              if (s1v > s2v) t1Wins++;
+              else if (s2v > s1v) t2Wins++;
+            }
+          });
+          if (t1Wins >= 2) return resolveTeam(score.t1);
+          if (t2Wins >= 2) return resolveTeam(score.t2);
+          return null;
+        }
+
+        // Regular match
+        if (score.s1 === '' || score.s2 === '' || score.s1 === undefined || score.s2 === undefined) return null;
+        return parseInt(score.s1) > parseInt(score.s2) ? resolveTeam(score.t1) : resolveTeam(score.t2);
+      }, [bracketScores, bracketOverrides, resolveTeam]);
+
+      const getBracketMatchLoser = useCallback((id) => {
+        if (bracketOverrides[id] && bracketOverrides[id].loser) {
+          return resolveTeam(bracketOverrides[id].loser);
+        }
+        const score = bracketScores[id];
+        if (!score) return null;
+
+        // Handle Bo3 with games array
+        if (score.games && score.games.length > 0) {
+          let t1Wins = 0, t2Wins = 0;
+          score.games.forEach(g => {
+            const s1v = parseInt(g.s1), s2v = parseInt(g.s2);
+            if (!isNaN(s1v) && !isNaN(s2v)) {
+              if (s1v > s2v) t1Wins++;
+              else if (s2v > s1v) t2Wins++;
+            }
+          });
+          if (t1Wins >= 2) return resolveTeam(score.t2);
+          if (t2Wins >= 2) return resolveTeam(score.t1);
+          return null;
+        }
+
+        // Regular match
+        if (score.s1 === '' || score.s2 === '' || score.s1 === undefined || score.s2 === undefined) return null;
+        return parseInt(score.s1) > parseInt(score.s2) ? resolveTeam(score.t2) : resolveTeam(score.t1);
+      }, [bracketScores, bracketOverrides, resolveTeam]);
+
+      const bracketMatches = useMemo(() => {
+        // Before RR is complete, show empty bracket with seed placeholders
+        const hasBracketData = Object.keys(bracketScores).length > 0 || Object.keys(bracketOverrides).length > 0;
+        const rrIncomplete = !allSeedingComplete && matchupsGenerated && (rrGames > 0 || Object.keys(pools).length > 0) && !hasBracketData;
+        const makePlaceholder = (seed) => ({ seed, name: `#${seed} Seed`, placeholder: true });
+
+        const resolveFromStandings = (team) => {
+          if (!team || !team.placeholder) return team;
+          const real = displayStandings.find(t => t.seed === team.seed);
+          return real || team;
+        };
+        const rawW = rrIncomplete ? Array.from({ length: winnersCount }, (_, i) => makePlaceholder(i + 1)) : (bracketTeams.winners || []);
+        const rawL = rrIncomplete ? Array.from({ length: teamCount - winnersCount }, (_, i) => makePlaceholder(winnersCount + i + 1)) : (bracketTeams.losers || []);
+        const w = rawW.map(resolveFromStandings);
+        const l = rawL.map(resolveFromStandings);
+        console.log('BRACKET BUILD:', { rrIncomplete, winnersCount, standingsOverride, displayStandingsOrder: displayStandings.map(t => `${t.name?.split('/')[0]?.trim()}(s${t.seed})`).join(', '), wOrder: w.map(t => `${t.name?.split('/')[0]?.trim()}(s${t.seed})`).join(', '), lOrder: l.map(t => `${t.name?.split('/')[0]?.trim()}(s${t.seed})`).join(', ') });
+
+        // ========= SINGLE ELIMINATION =========
+        if (bracketType === 'single') {
+          const seTeams = (rrIncomplete ? Array.from({ length: teamCount }, (_, i) => makePlaceholder(i + 1)) : displayStandings.slice(0, teamCount)).map(resolveFromStandings);
+          if (seTeams.length < 2) return {};
+          const matches = {};
+          const n = seTeams.length;
+
+          // Standard 8-slot bracket with seeding: 1v8, 4v5, 2v7, 3v6
+          const qfSeeds = [[0,7],[3,4],[1,6],[2,5]];
+
+          if (n > 8) {
+            // Play-in round for seeds 9+
+            // Seeds 9-16 play in, winners face seeds 1-8 in QF
+            // Play-in matchups mirror QF seeding: 9v16, 12v13, 10v15, 11v14
+            const piSeeds = [[8,15],[11,12],[9,14],[10,13]];
+            piSeeds.forEach((pair, i) => {
+              const t1 = pair[0] < n ? seTeams[pair[0]] : null;
+              const t2 = pair[1] < n ? seTeams[pair[1]] : null;
+              if (t1 && t2) {
+                matches[`se_r1m${i+1}`] = { id: `se_r1m${i+1}`, t1, t2, round: 'R1', court: i + 1 };
+              } else if (t1) {
+                matches[`se_r1m${i+1}`] = { id: `se_r1m${i+1}`, t1, t2: null, round: 'R1 (bye)', bye: true };
+              }
+            });
+            // QF: top 8 seeds vs play-in winners
+            qfSeeds.forEach((pair, i) => {
+              const topSeed = seTeams[pair[0]];
+              const piId = `se_r1m${i+1}`;
+              const piMatch = matches[piId];
+              const opponent = pair[1] < 8 ? seTeams[pair[1]] : (piMatch?.bye ? piMatch?.t1 : getBracketMatchTeam(piId));
+              matches[`se_qf${i+1}`] = { id: `se_qf${i+1}`, t1: topSeed, t2: opponent, round: 'QF' };
+            });
+          } else {
+            // 8 or fewer teams: direct QF with byes
+            qfSeeds.forEach((pair, i) => {
+              const t1 = pair[0] < n ? seTeams[pair[0]] : null;
+              const t2 = pair[1] < n ? seTeams[pair[1]] : null;
+              if (t1 && t2) {
+                matches[`se_qf${i+1}`] = { id: `se_qf${i+1}`, t1, t2, round: 'QF', court: i + 1 };
+              } else if (t1) {
+                matches[`se_qf${i+1}`] = { id: `se_qf${i+1}`, t1, t2: null, round: 'QF (bye)', bye: true };
+              }
+            });
+          }
+
+          // SF
+          const getQfWinner = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
+          matches.se_sf1 = { id: 'se_sf1', t1: getQfWinner('se_qf1'), t2: getQfWinner('se_qf2'), round: 'SF' };
+          matches.se_sf2 = { id: 'se_sf2', t1: getQfWinner('se_qf3'), t2: getQfWinner('se_qf4'), round: 'SF' };
+
+          // Final
+          matches.se_f = { id: 'se_f', t1: getBracketMatchTeam('se_sf1'), t2: getBracketMatchTeam('se_sf2'), round: 'Final', bo3: true };
+
+          // 3rd place match
+          matches.se_3rd = { id: 'se_3rd', t1: getBracketMatchLoser('se_sf1'), t2: getBracketMatchLoser('se_sf2'), round: '3rd Place' };
+
+          return matches;
+        }
+
+        // ========= DOUBLE ELIMINATION =========
+        if (w.length < 4) return {};
+        const matches = {};
+
+        // Winners bracket
+        if (w.length >= 8) {
+          matches.wqf1 = { id: 'wqf1', t1: w[0], t2: w[7], round: 'W-QF', court: 1 };
+          matches.wqf2 = { id: 'wqf2', t1: w[3], t2: w[4], round: 'W-QF', court: 2 };
+          matches.wqf3 = { id: 'wqf3', t1: w[1], t2: w[6], round: 'W-QF', court: 3 };
+          matches.wqf4 = { id: 'wqf4', t1: w[2], t2: w[5], round: 'W-QF', court: 4 };
+        } else if (w.length >= 6) {
+          matches.wqf1 = { id: 'wqf1', t1: w[0], t2: w.length > 7 ? w[7] : null, round: w.length > 7 ? 'W-QF' : 'W-QF (bye)', bye: w.length <= 7 };
+          matches.wqf2 = { id: 'wqf2', t1: w[3], t2: w[4], round: 'W-QF', court: 2 };
+          matches.wqf3 = { id: 'wqf3', t1: w[1], t2: w.length > 6 ? w[6] : null, round: w.length > 6 ? 'W-QF' : 'W-QF (bye)', bye: w.length <= 6 };
+          matches.wqf4 = { id: 'wqf4', t1: w[2], t2: w[5], round: 'W-QF', court: 4 };
+        } else {
+          // 4-5 winners
+          matches.wqf1 = { id: 'wqf1', t1: w[0], t2: w.length > 3 ? w[3] : null, round: w.length > 3 ? 'W-QF' : 'W-QF (bye)', bye: w.length <= 3, court: 1 };
+          matches.wqf2 = { id: 'wqf2', t1: w[1], t2: w[2], round: 'W-QF', court: 2 };
+          matches.wqf3 = { id: 'wqf3', t1: w.length > 4 ? w[4] : null, t2: null, round: 'W-QF (bye)', bye: true };
+          matches.wqf4 = { id: 'wqf4', t1: null, t2: null, round: 'W-QF (bye)', bye: true };
+        }
+
+        const getWqfWinner = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
+        matches.wsf1 = { id: 'wsf1', t1: getWqfWinner('wqf1'), t2: getWqfWinner('wqf2'), round: 'W-SF' };
+        matches.wsf2 = { id: 'wsf2', t1: getWqfWinner('wqf3'), t2: getWqfWinner('wqf4'), round: 'W-SF' };
+        matches.wsf1 = { ...matches.wsf1, bo3: bo3Finals };
+        matches.wsf2 = { ...matches.wsf2, bo3: bo3Finals };
+        matches.wf = { id: 'wf', t1: getBracketMatchTeam('wsf1'), t2: getBracketMatchTeam('wsf2'), round: 'W-Final', bo3: true };
+
+        // Losers bracket — general algorithm for any loser count (0-8)
+        // Crossed drops to prevent rematches: wqf3/4 → top half, wqf1/2 → bottom half
+        const L = l.length;
+        const wqfDropsTop = ['wqf3', 'wqf4'];
+        const wqfDropsBottom = ['wqf1', 'wqf2'];
+
+        if (L === 0) {
+          // All teams in winners — losers bracket from W-QF drops only
+          matches.lr2m1 = { id: 'lr2m1', t1: getBracketMatchLoser('wqf1'), t2: getBracketMatchLoser('wqf2'), round: 'L-R2' };
+          matches.lr2m2 = { id: 'lr2m2', t1: getBracketMatchLoser('wqf3'), t2: getBracketMatchLoser('wqf4'), round: 'L-R2' };
+          matches.lr3m1 = { id: 'lr3m1', t1: getBracketMatchTeam('lr2m1'), t2: getBracketMatchLoser('wsf2'), round: 'L-R3' };
+          matches.lr3m2 = { id: 'lr3m2', t1: getBracketMatchTeam('lr2m2'), t2: getBracketMatchLoser('wsf1'), round: 'L-R3' };
+          matches.lsf = { id: 'lsf', t1: getBracketMatchTeam('lr3m1'), t2: getBracketMatchTeam('lr3m2'), round: 'L-Semi' };
+          matches.lf = { id: 'lf', t1: getBracketMatchTeam('lsf'), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
+        } else {
+          // === L-R1: Initial losers play each other ===
+          const lr1Pairings = [];
+          if (L <= 2) {
+            if (L === 1) lr1Pairings.push([0, null]);
+            else lr1Pairings.push([0, 1]);
+          } else if (L <= 4) {
+            lr1Pairings.push([0, L > 3 ? 3 : null]);
+            lr1Pairings.push([1, 2]);
+          } else if (L <= 6) {
+            lr1Pairings.push([0, L > 5 ? 5 : null]);
+            lr1Pairings.push([3, 4]);
+            lr1Pairings.push([1, 2]);
+          } else {
+            lr1Pairings.push([0, L > 7 ? 7 : null]);
+            lr1Pairings.push([3, 4]);
+            lr1Pairings.push([1, L > 6 ? 6 : null]);
+            lr1Pairings.push([2, 5]);
+          }
+
+          const lr1WinnerIds = [];
+          lr1Pairings.forEach(([i1, i2], idx) => {
+            const matchId = `lr1m${idx + 1}`;
+            if (i2 === null) {
+              matches[matchId] = { id: matchId, t1: l[i1], t2: null, round: 'L-R1 (bye)', bye: true, court: 5 + idx };
+            } else {
+              matches[matchId] = { id: matchId, t1: l[i1], t2: l[i2], round: 'L-R1', court: 5 + idx };
+            }
+            lr1WinnerIds.push(matchId);
+          });
+
+          const getLr1Win = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
+
+          // === L-R2: Merge L-R1 survivors with W-QF losers (crossed) ===
+          const topCount = Math.ceil(lr1WinnerIds.length / 2);
+          const topSurvivorIds = lr1WinnerIds.slice(0, topCount);
+          const bottomSurvivorIds = lr1WinnerIds.slice(topCount);
+
+          const lr2WinnerIds = [];
+          let lr2Idx = 1;
+
+          // Top half: survivors paired with wqfDropsTop
+          const topPairs = Math.max(topSurvivorIds.length, wqfDropsTop.length);
+          for (let i = 0; i < topPairs; i++) {
+            const matchId = `lr2m${lr2Idx++}`;
+            const survivor = i < topSurvivorIds.length ? getLr1Win(topSurvivorIds[i]) : null;
+            const drop = i < wqfDropsTop.length ? getBracketMatchLoser(wqfDropsTop[i]) : null;
+            if (survivor && drop) {
+              matches[matchId] = { id: matchId, t1: survivor, t2: drop, round: 'L-R2' };
+            } else {
+              matches[matchId] = { id: matchId, t1: survivor || drop, t2: null, round: 'L-R2 (bye)', bye: true };
+            }
+            lr2WinnerIds.push(matchId);
+          }
+
+          // Bottom half: survivors paired with wqfDropsBottom
+          const bottomPairs = Math.max(bottomSurvivorIds.length, wqfDropsBottom.length);
+          for (let i = 0; i < bottomPairs; i++) {
+            const matchId = `lr2m${lr2Idx++}`;
+            const survivor = i < bottomSurvivorIds.length ? getLr1Win(bottomSurvivorIds[i]) : null;
+            const drop = i < wqfDropsBottom.length ? getBracketMatchLoser(wqfDropsBottom[i]) : null;
+            if (survivor && drop) {
+              matches[matchId] = { id: matchId, t1: survivor, t2: drop, round: 'L-R2' };
+            } else {
+              matches[matchId] = { id: matchId, t1: survivor || drop, t2: null, round: 'L-R2 (bye)', bye: true };
+            }
+            lr2WinnerIds.push(matchId);
+          }
+
+          const getLrWin = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
+
+          // === Reduction rounds: halve survivors until 2 remain ===
+          let currentIds = lr2WinnerIds;
+          let roundNum = 3;
+
+          while (currentIds.length > 2) {
+            const nextIds = [];
+            let mNum = 1;
+            for (let i = 0; i < currentIds.length; i += 2) {
+              const matchId = `lr${roundNum}m${mNum++}`;
+              if (i + 1 < currentIds.length) {
+                matches[matchId] = { id: matchId, t1: getLrWin(currentIds[i]), t2: getLrWin(currentIds[i + 1]), round: `L-R${roundNum}` };
+              } else {
+                matches[matchId] = { id: matchId, t1: getLrWin(currentIds[i]), t2: null, round: `L-R${roundNum} (bye)`, bye: true };
+              }
+              nextIds.push(matchId);
+            }
+            currentIds = nextIds;
+            roundNum++;
+          }
+
+          // === Merge W-SF losers ===
+          const wsfDrops = ['wsf1', 'wsf2'];
+          const lr4Ids = [];
+          const mergeCount = Math.max(currentIds.length, wsfDrops.length);
+          for (let i = 0; i < mergeCount; i++) {
+            const matchId = `lr${roundNum}m${i + 1}`;
+            const survivor = i < currentIds.length ? getLrWin(currentIds[i]) : null;
+            const drop = i < wsfDrops.length ? getBracketMatchLoser(wsfDrops[i]) : null;
+            if (survivor && drop) {
+              matches[matchId] = { id: matchId, t1: survivor, t2: drop, round: `L-R${roundNum}` };
+            } else {
+              matches[matchId] = { id: matchId, t1: survivor || drop, t2: null, round: `L-R${roundNum} (bye)`, bye: true };
+            }
+            lr4Ids.push(matchId);
+          }
+          roundNum++;
+
+          // === Reduce to 1 survivor, then L-Final ===
+          let finalIds = lr4Ids;
+          while (finalIds.length > 1) {
+            if (finalIds.length === 2) {
+              matches.lsf = { id: 'lsf', t1: getLrWin(finalIds[0]), t2: getLrWin(finalIds[1]), round: 'L-Semi' };
+              finalIds = ['lsf'];
+            } else {
+              const nextIds = [];
+              let mNum = 1;
+              for (let i = 0; i < finalIds.length; i += 2) {
+                const matchId = `lr${roundNum}m${mNum++}`;
+                if (i + 1 < finalIds.length) {
+                  matches[matchId] = { id: matchId, t1: getLrWin(finalIds[i]), t2: getLrWin(finalIds[i + 1]), round: `L-R${roundNum}` };
+                } else {
+                  matches[matchId] = { id: matchId, t1: getLrWin(finalIds[i]), t2: null, round: `L-R${roundNum} (bye)`, bye: true };
+                }
+                nextIds.push(matchId);
+              }
+              finalIds = nextIds;
+              roundNum++;
+            }
+          }
+
+          matches.lf = { id: 'lf', t1: getLrWin(finalIds[0]), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
+        }
+
+        matches.gf = { id: 'gf', t1: getBracketMatchTeam('wf'), t2: getBracketMatchTeam('lf'), round: 'Grand Final', bo3: true };
+        // gf2: reset game to 15 when losers bracket winner wins the Bo3 Grand Final
+        const gfWinnerTeam = getBracketMatchTeam('gf');
+        const wfWinnerTeam = getBracketMatchTeam('wf');
+        if (gfWinnerTeam && wfWinnerTeam && gfWinnerTeam.seed !== wfWinnerTeam.seed) {
+          matches.gf2 = { id: 'gf2', t1: matches.gf.t1, t2: matches.gf.t2, round: 'Game to 15' };
+        } else if (bracketScores['gf2'] && bracketScores['gf2'].s1 !== undefined) {
+          // Also show if score data exists even if gf winner can't be determined yet
+          matches.gf2 = { id: 'gf2', t1: matches.gf.t1, t2: matches.gf.t2, round: 'Game to 15' };
+        }
+        return matches;
+      }, [bracketTeams, displayStandings, bracketType, teamCount, bo3Finals, getBracketMatchTeam, getBracketMatchLoser, allSeedingComplete, matchupsGenerated, rrGames, pools, winnersCount, bracketScores, bracketOverrides]);
+
+      const handleTeamChange = useCallback((index, field, value) => {
+        setTeams(prev => prev.map((t, i) => i === index ? { ...t, [field]: value } : t));
+      }, []);
+
+      const handleSeedingScore = useCallback((id, field, value) => {
+        setSeedingScores(prev => ({
+          ...prev,
+          [id]: { ...prev[id], [field]: value }
+        }));
+      }, []);
+
+      const handleBracketScore = useCallback((matchId, t1, t2, field, value) => {
+        setBracketScores(prev => ({
+          ...prev,
+          [matchId]: {
+            t1,
+            t2,
+            s1: field === 's1' ? value : (prev[matchId]?.s1 || ''),
+            s2: field === 's2' ? value : (prev[matchId]?.s2 || '')
+          }
+        }));
+      }, []);
+
+      const handleBo3Score = useCallback((matchId, t1, t2, gameIndex, field, value) => {
+        setBracketScores(prev => {
+          const existing = prev[matchId] || { t1, t2, games: [] };
+          const games = [...(existing.games || [])];
+          while (games.length <= gameIndex) games.push({ s1: '', s2: '' });
+          games[gameIndex] = { ...games[gameIndex], [field]: value };
+          return { ...prev, [matchId]: { t1, t2, games } };
+        });
+      }, []);
+
+      const handleBracketOverride = useCallback((id, winner, loser) => {
+        setBracketOverrides(prev => ({ ...prev, [id]: { winner, loser } }));
+      }, []);
+
+      const clearBracketOverride = useCallback((id) => {
+        setBracketOverrides(prev => {
+          const newOverrides = { ...prev };
+          delete newOverrides[id];
+          return newOverrides;
+        });
+      }, []);
+
+      const handleSeedSwap = useCallback((side, pos) => {
+        if (!selectedSwapTeam) {
+          setSelectedSwapTeam({ side, pos });
+          return;
+        }
+        if (selectedSwapTeam.side === side && selectedSwapTeam.pos === pos) {
+          setSelectedSwapTeam(null);
+          return;
+        }
+        const current = {
+          winners: [...(bracketSeedOverride?.winners || bracketTeams.winners)],
+          losers: [...(bracketSeedOverride?.losers || bracketTeams.losers)]
+        };
+        if (selectedSwapTeam.side === side) {
+          const arr = current[side];
+          [arr[selectedSwapTeam.pos], arr[pos]] = [arr[pos], arr[selectedSwapTeam.pos]];
+        } else {
+          const w = current.winners;
+          const l = current.losers;
+          if (selectedSwapTeam.side === 'winners') {
+            [w[selectedSwapTeam.pos], l[pos]] = [l[pos], w[selectedSwapTeam.pos]];
+          } else {
+            [l[selectedSwapTeam.pos], w[pos]] = [w[pos], l[selectedSwapTeam.pos]];
+          }
+        }
+        setBracketSeedOverride(current);
+        setBracketScores({});
+        setBracketOverrides({});
+        setSelectedSwapTeam(null);
+      }, [selectedSwapTeam, bracketSeedOverride, bracketTeams]);
+
+      const toggleOnCourt = useCallback((id) => {
+        setOnCourt(prev => {
+          if (prev[id]) {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+          }
+          const usedCourts = new Set(Object.values(prev).filter(Boolean));
+
+          // Fixed court assignment for pool-based RR matches
+          // Pool A → courts 1-2, Pool B → 3-4, etc.
+          const seedMatch = seedingMatches.flatMap(r => r.matches).find(m => m.id === id);
+          if (seedMatch && Object.keys(pools).length > 0) {
+            const poolIdx = pools[seedMatch.t1.seed - 1];
+            const numPools = Math.max(...Object.values(pools)) + 1;
+            const courtsPerPool = Math.max(1, Math.floor(courtCount / numPools));
+            const poolStart = poolIdx * courtsPerPool + 1;
+            const poolEnd = poolIdx === numPools - 1 ? courtCount : poolStart + courtsPerPool - 1;
+            for (let c = poolStart; c <= poolEnd; c++) {
+              if (!usedCourts.has(c)) return { ...prev, [id]: c };
+            }
+            // Pool courts full — stay on pool courts (use first pool court)
+            return { ...prev, [id]: poolStart };
+          }
+
+          // Default: lowest available court
+          let court = 1;
+          while (usedCourts.has(court) && court <= courtCount) court++;
+          if (court > courtCount) court = courtCount;
+          return { ...prev, [id]: court };
+        });
+      }, [courtCount, seedingMatches, pools]);
+
+      const setMatchCourt = useCallback((id, courtNum) => {
+        setOnCourt(prev => {
+          if (courtNum === 0 || courtNum === null) {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+          }
+          return { ...prev, [id]: courtNum };
+        });
+      }, []);
+
+      const allSeedingComplete = useMemo(() => {
+        // 0 RR games: always complete (skip to bracket)
+        if (rrGames === 0 && matchupsGenerated) return true;
+        const allMatches = seedingMatches.flatMap(r => r.matches);
+        if (!allMatches.length) return false;
+        return allMatches.every(m => {
+          const s = seedingScores[m.id];
+          return s && s.s1 !== '' && s.s2 !== '' && s.s1 !== undefined && s.s2 !== undefined;
+        });
+      }, [seedingMatches, seedingScores, rrGames, matchupsGenerated]);
+
+      const onCourtMatches = useMemo(() => {
+        const matches = [];
+        Object.keys(onCourt).forEach(id => {
+          if (onCourt[id]) {
+            const seedMatch = seedingMatches.flatMap(r => r.matches).find(m => m.id === id);
+            if (seedMatch) {
+              matches.push({ ...seedMatch, type: 'seeding' });
+              return;
+            }
+            if (bracketMatches[id]) {
+              matches.push({ ...bracketMatches[id], type: 'bracket' });
+            }
+          }
+        });
+        return matches;
+      }, [onCourt, seedingMatches, bracketMatches]);
+
+      const nextUpMatches = useMemo(() => {
+        const next = [];
+        if (phase === 'roundrobin') {
+          seedingMatches.flatMap(r => r.matches).forEach(m => {
+            const s = seedingScores[m.id];
+            const complete = s && s.s1 !== '' && s.s2 !== '' && s.s1 !== undefined && s.s2 !== undefined;
+            if (!complete && !onCourt[m.id]) {
+              next.push({ ...m, type: 'seeding' });
+            }
+          });
+        }
+        if (phase === 'bracket') {
+          const order = bracketType === 'single'
+            ? ['se_r1m1','se_r1m2','se_r1m3','se_r1m4','se_qf1','se_qf2','se_qf3','se_qf4','se_sf1','se_sf2','se_3rd','se_f']
+            : Object.keys(bracketMatches).sort((a, b) => {
+                const priority = (id) => {
+                  if (id.startsWith('wqf')) return 10;
+                  if (id.startsWith('lr1')) return 15;
+                  if (id.startsWith('wsf')) return 20;
+                  if (id.startsWith('lr2')) return 25;
+                  if (id.startsWith('lr3')) return 30;
+                  if (id === 'wf') return 35;
+                  if (id.startsWith('lr4')) return 40;
+                  if (id.startsWith('lr5')) return 45;
+                  if (id.startsWith('lr6')) return 50;
+                  if (id === 'lsf') return 60;
+                  if (id === 'lf') return 70;
+                  if (id === 'gf') return 80;
+                  if (id === 'gf2') return 90;
+                  return 200;
+                };
+                return priority(a) - priority(b);
+              });
+          order.forEach(id => {
+            const m = bracketMatches[id];
+            const s = bracketScores[id];
+            const o = bracketOverrides[id];
+            let complete = o || (s && s.s1 !== '' && s.s2 !== '' && s.s1 !== undefined && s.s2 !== undefined);
+            // Check Bo3 completion
+            if (!complete && s && s.games && s.games.length > 0) {
+              let t1w = 0, t2w = 0;
+              s.games.forEach(g => { const a = parseInt(g.s1), b = parseInt(g.s2); if (!isNaN(a) && !isNaN(b)) { if (a > b) t1w++; else if (b > a) t2w++; } });
+              complete = t1w >= 2 || t2w >= 2;
+            }
+            if (m && m.t1 && m.t2 && !complete && !onCourt[id]) {
+              next.push({ ...m, type: 'bracket' });
+            }
+          });
+        }
+        return next;
+      }, [phase, seedingMatches, seedingScores, bracketMatches, bracketScores, bracketOverrides, onCourt, bracketType]);
+
+      const getSaveData = useCallback(() => ({
+        teamCount, rrGames, rrPointTarget, winnersCount, teams,
+        seedingScores, bracketScores, bracketOverrides, matchupsGenerated,
+        rrMatchups, pools, onCourt, bracketSeedOverride, bracketType,
+        bo3Finals, poolSize, courtCount, npointId, standingsOverride
+      }), [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, matchupsGenerated, rrMatchups, pools, onCourt, bracketSeedOverride, bracketType, bo3Finals, poolSize, courtCount, npointId, standingsOverride]);
+
+      const saveProgress = useCallback(() => {
+        const data = getSaveData();
+        // Also persist to localStorage
+        if (activeTournamentId) {
+          localStorage.setItem(`moneyball_${activeTournamentId}`, JSON.stringify(data));
+        }
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `moneyballs-${activeTournamentId || new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }, [getSaveData, activeTournamentId]);
+
+      const quickSave = useCallback(() => {
+        if (!activeTournamentId) return;
+        const data = getSaveData();
+        localStorage.setItem(`moneyball_${activeTournamentId}`, JSON.stringify(data));
+        setQuickSaveStatus('saved');
+        setTimeout(() => setQuickSaveStatus(''), 1500);
+      }, [getSaveData, activeTournamentId]);
+
+      // Reset tournament: clear localStorage and reload from preloaded teams or embedded state
+      const resetTournament = useCallback(() => {
+        if (!activeTournamentId) return;
+        if (!confirm('Reset this tournament? This clears all locally saved progress and reloads the default state.')) return;
+        localStorage.removeItem(`moneyball_${activeTournamentId}`);
+        loadTournament(activeTournamentId);
+      }, [activeTournamentId, loadTournament]);
+
+      // Auto-save to localStorage whenever tournament state changes
+      // Skip auto-save for completed tournaments unless in edit mode
+      const isCompletedTournament = activeTournamentId && TOURNAMENTS.find(t => t.id === activeTournamentId)?.status === 'completed';
+      React.useEffect(() => {
+        if (!activeTournamentId || view !== 'tournament' || spectatorMode) return;
+        if (isCompletedTournament && !editMode) return;
+        const timer = setTimeout(() => {
+          const data = getSaveData();
+          localStorage.setItem(`moneyball_${activeTournamentId}`, JSON.stringify(data));
+        }, 1000); // debounce 1 second
+        return () => clearTimeout(timer);
+      }, [activeTournamentId, view, spectatorMode, editMode, isCompletedTournament, getSaveData]);
+
+      const loadProgress = useCallback((e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const data = JSON.parse(event.target.result);
+            if (data.teamCount) setTeamCount(data.teamCount);
+            if (data.rrGames) setRrGames(data.rrGames);
+            if (data.rrPointTarget) setRrPointTarget(data.rrPointTarget);
+            if (data.winnersCount) setWinnersCount(data.winnersCount);
+            if (data.teams) setTeams(data.teams);
+            if (data.seedingScores) setSeedingScores(data.seedingScores);
+            if (data.bracketScores) setBracketScores(data.bracketScores);
+            if (data.bracketOverrides) setBracketOverrides(data.bracketOverrides);
+            // Handle both old (game1/2/3Matchups) and new (rrMatchups) formats
+            if (data.rrMatchups) {
+              setRrMatchups(normalizeMatchups(data.rrMatchups));
+            } else {
+              const reconstructed = [];
+              if (data.game1Matchups && data.game1Matchups.length) reconstructed.push(data.game1Matchups);
+              if (data.game2Matchups && data.game2Matchups.length) reconstructed.push(data.game2Matchups);
+              if (data.game3Matchups && data.game3Matchups.length) reconstructed.push(data.game3Matchups);
+              if (reconstructed.length) setRrMatchups(normalizeMatchups(reconstructed));
+            }
+            if (data.bracketType) setBracketType(data.bracketType);
+            if (data.bo3Finals !== undefined) setBo3Finals(data.bo3Finals);
+            if (data.poolSize) setPoolSize(data.poolSize);
+            if (data.courtCount) setCourtCount(data.courtCount);
+            if (data.npointId) setNpointId(data.npointId);
+            if (data.pools) setPools(data.pools);
+            if (data.matchupsGenerated) setMatchupsGenerated(data.matchupsGenerated);
+            if (data.onCourt) setOnCourt(data.onCourt);
+            setStandingsOverride(null);
+
+            // If bracket scores exist, reconstruct original bracket seeding from the played matches
+            // so we don't recompute with new logic that might change positions
+            const hasBracketData = data.bracketScores && Object.keys(data.bracketScores).length > 0;
+            if (hasBracketData) {
+              const bs = data.bracketScores;
+              const tc = data.teamCount || 16;
+              const wc = data.winnersCount || 8;
+              const teams = data.teams || [];
+              // Resolve a seed number to a real team object
+              const resolve = (t) => {
+                if (!t) return null;
+                const seed = t.seed;
+                const tm = teams[seed - 1];
+                if (!tm) return t;
+                return { seed, name: tm.p1Name && tm.p2Name ? `${tm.p1Name} / ${tm.p2Name}` : `Team ${seed}` };
+              };
+              // Reconstruct winners order from W-QF: wqf1(w[0]vw[7]), wqf2(w[3]vw[4]), wqf3(w[1]vw[6]), wqf4(w[2]vw[5])
+              const winners = [
+                resolve(bs.wqf1?.t1), resolve(bs.wqf3?.t1), resolve(bs.wqf4?.t1), resolve(bs.wqf2?.t1),
+                resolve(bs.wqf2?.t2), resolve(bs.wqf4?.t2), resolve(bs.wqf3?.t2), resolve(bs.wqf1?.t2)
+              ].filter(Boolean);
+              // Reconstruct losers order from L-R1 matches (collect all direct team entries)
+              const loserSeeds = new Set();
+              ['lr1m1','lr1m2','lr1m3','lr1m4'].forEach(id => {
+                if (bs[id]?.t1?.seed) loserSeeds.add(bs[id].t1.seed);
+                if (bs[id]?.t2?.seed) loserSeeds.add(bs[id].t2.seed);
+              });
+              const losers = [...loserSeeds].sort((a, b) => a - b).map(s => resolve({ seed: s })).filter(Boolean);
+              if (winners.length >= 4) {
+                setBracketSeedOverride({ winners: winners.slice(0, wc), losers: losers.slice(0, tc - wc) });
+              } else {
+                setBracketSeedOverride(null);
+              }
+            } else {
+              setBracketSeedOverride(null);
+            }
+
+            // Auto-detect the right phase
+            const hasBracketOverrides = data.bracketOverrides && Object.keys(data.bracketOverrides).length > 0;
+            const hasOnCourtBracket = data.onCourt && Object.keys(data.onCourt).some(k => k.startsWith('w') || k.startsWith('l') || k === 'gf');
+            if (hasBracketData || hasBracketOverrides || hasOnCourtBracket) {
+              setPhase('bracket');
+            } else if (data.seedingScores && Object.keys(data.seedingScores).length > 0) {
+              const totalExpected = (data.rrGames || 3) * Math.floor((data.teamCount || 16) / 2);
+              const totalScored = Object.values(data.seedingScores).filter(s => s.s1 !== '' && s.s2 !== '' && s.s1 !== undefined && s.s2 !== undefined).length;
+              if (totalScored >= totalExpected) {
+                setPhase('bracket');
+              } else {
+                setPhase('roundrobin');
+              }
+            } else if (data.matchupsGenerated) {
+              setPhase('roundrobin');
+            } else if (data.teams && data.teams.some(t => t.p1Name)) {
+              setPhase('setup');
+            } else {
+              setPhase('import');
+            }
+          } catch (err) {
+            alert('Invalid file');
+          }
+        };
+        reader.readAsText(file);
+      }, []);
+
+      const downloadResults = useCallback(() => {
+        // Determine final match IDs based on bracket type
+        const finalId = bracketType === 'single' ? 'se_f' : 'gf';
+        const thirdId = bracketType === 'single' ? 'se_3rd' : 'lf';
+        const winner = getBracketMatchTeam(finalId);
+        const second = getBracketMatchLoser(finalId);
+        const third = bracketType === 'single' ? getBracketMatchTeam(thirdId) : getBracketMatchLoser(thirdId);
+        const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        let results = `JORDAN'S MONEYBALLS - ${date}\n`;
+        results += `==================================================\n\n`;
+        results += `🏆 FINAL STANDINGS (BRACKET)\n`;
+        results += `------------------------------\n`;
+        results += `🥇 1st ($${currentPayouts.first}): ${winner ? winner.name : 'TBD'}\n`;
+        results += `🥈 2nd ($${currentPayouts.second}): ${second ? second.name : 'TBD'}\n`;
+        results += `🥉 3rd ($${currentPayouts.third}): ${third ? third.name : 'TBD'}\n\n`;
+
+        results += `TEAMS (INITIAL SEEDING)\n`;
+        results += `------------------------------\n`;
+        teams.forEach((t, i) => {
+          results += `${i + 1}. ${getTeamName(t)}${getTeamDupr(t) ? ` (${getTeamDupr(t)})` : ''}\n`;
+        });
+
+        results += `\n==================================================\n`;
+        results += `ROUND ROBIN SCORES\n`;
+        results += `==================================================\n\n`;
+
+        seedingMatches.forEach((round, roundIdx) => {
+          if (roundIdx > 0) results += '\n';
+          results += `GAME ${roundIdx + 1}\n`;
+          if (round.bye) results += `BYE: ${round.bye.name}\n`;
+          results += `------------------------------\n`;
+          round.matches.forEach(m => {
+            const score = seedingScores[m.id];
+            if (score && score.s1 !== undefined && score.s2 !== undefined) {
+              const s1Won = parseInt(score.s1) > parseInt(score.s2);
+              results += `${s1Won ? '✓' : ' '} ${m.t1.name} ${score.s1}-${score.s2} ${m.t2.name} ${!s1Won ? '✓' : ''}\n`;
+            }
+          });
+        });
+
+        results += `\nROUND ROBIN STANDINGS\n`;
+        results += `------------------------------\n`;
+        displayStandings.forEach((t, i) => {
+          const bracket = bracketType === 'single' ? '' : (i < winnersCount ? '→ Winners' : '→ Losers');
+          results += `${i + 1}. ${t.name} ${t.wins}-${t.losses} (${t.pf - t.pa >= 0 ? '+' : ''}${t.pf - t.pa}) ${bracket}\n`;
+        });
+
+        results += `\n==================================================\n`;
+        results += `BRACKET SCORES\n`;
+        results += `==================================================\n\n`;
+
+        const formatBracketMatch = (id, label) => {
+          const match = bracketMatches[id];
+          const score = bracketScores[id];
+          if (!match || !match.t1 || !match.t2) return '';
+          if (!score) return `${label}: ${match.t1.name} vs ${match.t2.name} - Not played\n`;
+
+          if (match.bo3 && score.games && score.games.length > 0) {
+            const gameScores = score.games.map(g => `${g.s1}-${g.s2}`).join(', ');
+            const t1Wins = score.games.filter(g => g.s1 > g.s2).length;
+            const t2Wins = score.games.filter(g => g.s2 > g.s1).length;
+            const winner = t1Wins > t2Wins ? match.t1.name : match.t2.name;
+            return `${label}: ${match.t1.name} vs ${match.t2.name} (${gameScores}) → ${winner}\n`;
+          } else if (score.s1 !== undefined && score.s2 !== undefined) {
+            const winner = parseInt(score.s1) > parseInt(score.s2) ? match.t1.name : match.t2.name;
+            return `${label}: ${match.t1.name} ${score.s1}-${score.s2} ${match.t2.name} → ${winner}\n`;
+          }
+          return '';
+        };
+
+        // Dynamic bracket results based on bracket type
+        const matchIds = Object.keys(bracketMatches).sort();
+        if (bracketType === 'single') {
+          results += `SINGLE ELIMINATION BRACKET\n`;
+          results += `------------------------------\n`;
+          matchIds.forEach(id => {
+            const m = bracketMatches[id];
+            if (m) results += formatBracketMatch(id, m.round);
+          });
+        } else {
+          results += `WINNERS BRACKET\n`;
+          results += `------------------------------\n`;
+          matchIds.filter(id => id.startsWith('w')).forEach(id => {
+            const m = bracketMatches[id];
+            if (m) results += formatBracketMatch(id, m.round + (m.bo3 ? ' (Bo3)' : ''));
+          });
+          results += `\nLOSERS BRACKET\n`;
+          results += `------------------------------\n`;
+          matchIds.filter(id => id.startsWith('l')).forEach(id => {
+            const m = bracketMatches[id];
+            if (m) results += formatBracketMatch(id, m.round);
+          });
+          results += `\nGRAND FINAL (Bo3)\n`;
+          results += `------------------------------\n`;
+          results += formatBracketMatch('gf', 'Grand Final');
+          if (bracketMatches['gf2']) {
+            results += formatBracketMatch('gf2', 'Game to 15 (Reset)');
+          }
+        }
+
+        const blob = new Blob([results], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `moneyballs-results-${new Date().toISOString().split('T')[0]}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }, [teams, displayStandings, seedingMatches, seedingScores, bracketMatches, bracketScores, getTeamName, getTeamDupr, getBracketMatchTeam, getBracketMatchLoser, bracketType, bo3Finals]);
+
+      const finalMatchId = bracketType === 'single' ? 'se_f' : (bracketMatches['gf2'] ? 'gf2' : 'gf');
+      const thirdMatchId = bracketType === 'single' ? 'se_3rd' : 'lf';
+      const gfWinner = getBracketMatchTeam(finalMatchId);
+
+      return (
+        <div className="bg-gray-900 text-white p-4 min-h-screen">
+
+          {/* ============ HOME PAGE ============ */}
+          {view === 'home' && !authenticated && (
+            <div className="max-w-sm mx-auto mt-20 text-center">
+              <h1 className="text-3xl font-bold mb-2">🏓 Jordan's Moneyballs</h1>
+              <p className="text-gray-400 text-sm mb-8">Organizer Access</p>
+              <div className="bg-gray-800 rounded-lg p-6">
+                <p className="text-gray-300 text-sm mb-4">Enter password to manage tournaments</p>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={e => { setPasswordInput(e.target.value); setPasswordError(false); }}
+                  onKeyDown={e => e.key === 'Enter' && checkPassword()}
+                  placeholder="Password"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-center mb-3 focus:outline-none focus:border-orange-500"
+                  autoFocus
+                />
+                {passwordError && <p className="text-red-400 text-xs mb-3">Incorrect password</p>}
+                <button onClick={checkPassword} className="w-full bg-orange-600 hover:bg-orange-500 text-white py-2 rounded font-semibold">
+                  Enter
+                </button>
+              </div>
+              <p className="text-gray-600 text-xs mt-6">Spectators don't need a password — use your shared link.</p>
+            </div>
+          )}
+          {view === 'home' && authenticated && (
+            <div className="max-w-3xl mx-auto">
+              <h1 className="text-3xl font-bold text-center mb-2">🏓 Jordan's Moneyballs</h1>
+              <p className="text-center text-gray-400 text-sm mb-8">Pickleball Tournament Manager</p>
+
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+                {TOURNAMENTS.map(tournament => {
+                  const hasSaved = (() => { try { return !!localStorage.getItem(`moneyball_${tournament.id}`); } catch { return false; } })();
+                  return (
+                    <div
+                      key={tournament.id}
+                      onClick={() => loadTournament(tournament.id)}
+                      className="bg-gray-800 border border-gray-700 rounded-lg p-5 cursor-pointer hover:border-orange-500 hover:bg-gray-750 transition-all group"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-gray-400 text-sm">{tournament.date}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          tournament.status === 'completed' ? 'bg-green-900 text-green-400' :
+                          tournament.status === 'upcoming' ? 'bg-blue-900 text-blue-400' :
+                          'bg-yellow-900 text-yellow-400'
+                        }`}>
+                          {tournament.status}
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-white group-hover:text-orange-400 transition-colors">{tournament.title}</h3>
+                      {tournament.results && (
+                        <div className="mt-2 space-y-0.5">
+                          <div className="text-xs flex items-center gap-1"><span>🥇</span><span className="text-yellow-300">{tournament.results.first}</span></div>
+                          <div className="text-xs flex items-center gap-1"><span>🥈</span><span className="text-gray-300">{tournament.results.second}</span></div>
+                          <div className="text-xs flex items-center gap-1"><span>🥉</span><span className="text-amber-400">{tournament.results.third}</span></div>
+                        </div>
+                      )}
+                      {tournament.preloadedTeams && !tournament.results && (
+                        <p className="text-gray-500 text-xs mt-1">{tournament.preloadedTeams.length} teams registered</p>
+                      )}
+                      {hasSaved && (
+                        <p className="text-green-500 text-xs mt-1">Saved progress available</p>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Create New Tournament card */}
+                <div
+                  onClick={createNewTournament}
+                  className="bg-gray-800 border-2 border-dashed border-gray-600 rounded-lg p-5 cursor-pointer hover:border-orange-500 hover:bg-gray-750 transition-all flex flex-col items-center justify-center min-h-[120px]"
+                >
+                  <span className="text-3xl text-gray-500 mb-2">+</span>
+                  <span className="text-gray-400 text-sm font-semibold">New Tournament</span>
+                </div>
+              </div>
+
+              <div className="bg-gray-800 rounded-lg p-5 mt-2">
+                <h3 className="text-sm font-semibold text-gray-300 mb-3">How It Works</h3>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs text-gray-400">
+                  <div>
+                    <div className="text-orange-400 font-semibold mb-1">Organizer (You)</div>
+                    <ul className="space-y-1 list-disc list-inside">
+                      <li>Click a tournament to open it in edit mode</li>
+                      <li><strong className="text-gray-300">Quick Save</strong> saves progress to this browser</li>
+                      <li><strong className="text-gray-300">Save</strong> also downloads a JSON backup file</li>
+                      <li><strong className="text-gray-300">Share Link</strong> copies a snapshot link</li>
+                      <li><strong className="text-gray-300">Publish</strong> pushes scores to live link</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="text-blue-400 font-semibold mb-1">Spectators</div>
+                    <ul className="space-y-1 list-disc list-inside">
+                      <li>Open the <strong className="text-gray-300">📡 Live Link</strong> to see scores</li>
+                      <li>View-only — no editing allowed</li>
+                      <li>Reload the page for latest updates</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="text-purple-400 font-semibold mb-1">Live Mode Setup</div>
+                    <ol className="space-y-1 list-decimal list-inside">
+                      <li>Go to <strong className="text-gray-300">npoint.io</strong> → "Create JSON Bin"</li>
+                      <li>Leave default content, click "Save"</li>
+                      <li>Copy the ID from the URL</li>
+                      <li>Tournament → Setup → paste in "Live Spectator Link"</li>
+                      <li>Use the <strong className="text-gray-300">📡 Live Link</strong> from the toolbar</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============ TOURNAMENT VIEW ============ */}
+          {view === 'tournament' && !spectatorMode && !liveMode && !authenticated && (
+            <div className="max-w-sm mx-auto mt-20 text-center">
+              <h1 className="text-3xl font-bold mb-2">🏓 Jordan's Moneyballs</h1>
+              <p className="text-gray-400 text-sm mb-8">Organizer Access</p>
+              <div className="bg-gray-800 rounded-lg p-6">
+                <p className="text-gray-300 text-sm mb-4">Enter password to manage tournaments</p>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={e => { setPasswordInput(e.target.value); setPasswordError(false); }}
+                  onKeyDown={e => e.key === 'Enter' && checkPassword()}
+                  placeholder="Password"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-center mb-3 focus:outline-none focus:border-orange-500"
+                  autoFocus
+                />
+                {passwordError && <p className="text-red-400 text-xs mb-3">Incorrect password</p>}
+                <button onClick={checkPassword} className="w-full bg-orange-600 hover:bg-orange-500 text-white py-2 rounded font-semibold">
+                  Enter
+                </button>
+              </div>
+              <p className="text-gray-600 text-xs mt-6">Spectators don't need a password — use your shared link.</p>
+            </div>
+          )}
+          {view === 'tournament' && (spectatorMode || liveMode || authenticated) && (
+            <>
+          {/* Tournament header with back button */}
+          {!spectatorMode && !liveMode && (
+            <div className="flex items-center justify-between mb-3 max-w-6xl mx-auto">
+              <button onClick={goHome} className="text-sm text-gray-400 hover:text-white flex items-center gap-1">
+                ← All Tournaments
+              </button>
+              <div className="flex items-center gap-2">
+                {activeTournamentId && (
+                  <span className="text-gray-500 text-xs">
+                    {TOURNAMENTS.find(t => t.id === activeTournamentId)?.title || 'Tournament'}
+                  </span>
+                )}
+                {activeTournamentId && (
+                  <button
+                    onClick={quickSave}
+                    title="Save tournament progress to this browser's storage"
+                    className={`text-xs px-2 py-1 rounded ${quickSaveStatus === 'saved' ? 'bg-green-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+                  >
+                    {quickSaveStatus === 'saved' ? 'Saved!' : 'Quick Save'}
+                  </button>
+                )}
+                {activeTournamentId && (
+                  <button
+                    onClick={resetTournament}
+                    title="Clear locally saved data and reload default teams/state"
+                    className="text-xs px-2 py-1 rounded bg-red-900 hover:bg-red-800 text-red-200"
+                  >
+                    Clear Cache
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          <h1 className="text-2xl font-bold text-center mb-1">🏓 Jordan's Moneyballs</h1>
+          <p className="text-center text-gray-400 text-xs mb-2">$45/player • 🥇 ${currentPayouts.first} 🥈 ${currentPayouts.second} 🥉 ${currentPayouts.third}</p>
+
+          {spectatorMode && (
+            <div className="bg-blue-900 border border-blue-500 text-blue-200 text-center py-2 px-4 rounded mb-3 max-w-md mx-auto">
+              {liveMode ? '📡 Live Mode — Reload page for latest scores' : '👁️ Spectator Mode - View Only'}
+            </div>
+          )}
+
+          {!spectatorMode && isCompletedTournament && !editMode && (
+            <div className="bg-gray-800 border border-gray-600 text-gray-300 text-center py-2 px-4 rounded mb-3 max-w-md mx-auto flex items-center justify-center gap-3">
+              <span className="text-sm">Viewing official results</span>
+              <button onClick={enterEditMode} className="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded">Edit</button>
+            </div>
+          )}
+
+          {!spectatorMode && isCompletedTournament && editMode && (
+            <div className="bg-yellow-900 border border-yellow-600 text-yellow-200 text-center py-2 px-4 rounded mb-3 max-w-md mx-auto flex items-center justify-center gap-3">
+              <span className="text-sm">Edit Mode — changes saved locally</span>
+              <button onClick={exitEditMode} className="text-xs bg-yellow-800 hover:bg-yellow-700 px-2 py-1 rounded">Reset to Official</button>
+            </div>
+          )}
+
+          {!spectatorMode && (
+            <div className="flex justify-center gap-2 mb-2 flex-wrap">
+              <button onClick={saveProgress} title="Download tournament state as a JSON file for backup" className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600">💾 Save</button>
+              <label title="Load tournament state from a saved JSON file" className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600 cursor-pointer">
+                📂 Load
+                <input type="file" accept=".json" className="hidden" onChange={loadProgress} />
+              </label>
+              <button onClick={shareLink} title="Copy a one-time snapshot URL — anyone with the link can view current scores" className={`text-xs px-2 py-1 rounded ${linkCopied && !npointId ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-500'}`}>
+                {linkCopied && !npointId ? '✓ Copied!' : '🔗 Share Link'}
+              </button>
+              {npointId && (
+                <>
+                  <button
+                    onClick={publishToNpoint}
+                    disabled={publishStatus === 'publishing'}
+                    title="Push scores to the live viewer link — spectators reload to see updates"
+                    className={`text-xs px-2 py-1 rounded ${
+                      publishStatus === 'published' ? 'bg-green-600' :
+                      publishStatus === 'error' ? 'bg-red-600' :
+                      publishStatus === 'publishing' ? 'bg-yellow-600' :
+                      'bg-emerald-600 hover:bg-emerald-500'
+                    }`}
+                  >
+                    {publishStatus === 'published' ? '✓ Published!' :
+                     publishStatus === 'error' ? '✗ Failed' :
+                     publishStatus === 'publishing' ? '...' :
+                     '📡 Publish'}
+                  </button>
+                  <button
+                    onClick={copyLiveLink}
+                    className={`text-xs px-2 py-1 rounded ${linkCopied ? 'bg-green-600' : 'bg-gray-600 hover:bg-gray-500'}`}
+                  >
+                    {linkCopied ? '✓ Copied!' : '📡 Live Link'}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          <div className="flex justify-center gap-2 mb-4 flex-wrap">
+            <button onClick={() => setPhase('import')} className={`px-3 py-1 rounded text-sm ${phase === 'import' ? 'bg-orange-600' : 'bg-gray-700'}`}>Import</button>
+            <button onClick={() => setPhase('setup')} className={`px-3 py-1 rounded text-sm ${phase === 'setup' ? 'bg-purple-600' : 'bg-gray-700'}`} disabled={!teamsValid}>Setup</button>
+            {(rrGames > 0 || poolSize > 0) && <button onClick={() => setPhase('roundrobin')} className={`px-3 py-1 rounded text-sm ${phase === 'roundrobin' ? 'bg-blue-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Round Robin</button>}
+            {(rrGames > 0 || poolSize > 0) && <button onClick={() => setPhase('standings')} className={`px-3 py-1 rounded text-sm ${phase === 'standings' ? 'bg-cyan-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Standings</button>}
+            <button onClick={() => setPhase('bracket')} className={`px-3 py-1 rounded text-sm ${phase === 'bracket' ? 'bg-green-600' : 'bg-gray-700'}`} disabled={!matchupsGenerated}>Bracket</button>
+            <button onClick={() => setPhase('results')} className={`px-3 py-1 rounded text-sm ${phase === 'results' ? 'bg-yellow-600' : 'bg-gray-700'}`} disabled={!gfWinner}>Results</button>
+          </div>
+
+          {phase === 'import' && (
+            <div className="max-w-2xl mx-auto">
+              <h2 className="text-xl font-semibold mb-4 text-center">Import Teams</h2>
+              <div className="flex justify-center items-center gap-4 mb-4">
+                <label className="text-sm text-gray-300">Teams:</label>
+                <select
+                  value={teamCount}
+                  onChange={(e) => {
+                    const newCount = parseInt(e.target.value);
+                    setTeamCount(newCount);
+                    setWinnersCount(defaultWinnersCount[newCount] || 8);
+                  }}
+                  className="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-sm"
+                >
+                  {[8, 9, 10, 11, 12, 13, 14, 15, 16].map(n => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              </div>
+              <textarea
+                className="w-full h-72 bg-gray-800 border border-gray-600 rounded p-3 text-sm font-mono"
+                placeholder="Player 1 / Player 2&#10;Player 3 / Player 4&#10;...etc"
+                value={importText}
+                onChange={(e) => {
+                  setImportText(e.target.value);
+                  // Auto-detect team count from pasted text
+                  const lines = e.target.value.split('\n').filter(l => l.trim() && l.includes('/'));
+                  if (lines.length >= 8 && lines.length <= 16) {
+                    setTeamCount(lines.length);
+                    setWinnersCount(defaultWinnersCount[lines.length] || 8);
+                  }
+                }}
+              />
+              <button onClick={parseImportText} className="w-full mt-4 bg-orange-600 hover:bg-orange-500 py-2 rounded font-semibold">
+                Import {teamCount} Teams →
+              </button>
+            </div>
+          )}
+
+          {phase === 'setup' && (
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-xl font-semibold mb-2 text-center">Teams ({teamCount})</h2>
+              <p className="text-gray-400 text-xs text-center mb-1">Drag teams to reorder seeding</p>
+              {!spectatorMode && (
+                <p className="text-xs text-center mb-4">
+                  <span className={teams.filter(t => t.p1Paid && t.p2Paid).length === teamCount ? 'text-green-400' : 'text-yellow-400'}>
+                    {teams.reduce((n, t) => n + (t.p1Paid ? 1 : 0) + (t.p2Paid ? 1 : 0), 0)}/{teamCount * 2} paid
+                  </span>
+                </p>
+              )}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-yellow-400 font-semibold mb-2">Seeds 1-4</h3>
+                  {[0, 1, 2, 3].filter(i => i < teamCount).map(i => (
+                    <TeamInput
+                      key={`team-${i}`}
+                      index={i}
+                      color="text-yellow-400"
+                      team={teams[i]}
+                      dupr={getTeamDupr(teams[i])}
+                      onChange={(field, value) => handleTeamChange(i, field, value)}
+                      onDragStart={handleDragStart}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      isDragging={dragIndex === i}
+                      isDragOver={dragOverIndex === i}
+                      readOnly={spectatorMode}
+                    />
+                  ))}
+                  <h3 className="text-blue-400 font-semibold mb-2 mt-4">Seeds 5-8</h3>
+                  {[4, 5, 6, 7].filter(i => i < teamCount).map(i => (
+                    <TeamInput
+                      key={`team-${i}`}
+                      index={i}
+                      color="text-blue-400"
+                      team={teams[i]}
+                      dupr={getTeamDupr(teams[i])}
+                      onChange={(field, value) => handleTeamChange(i, field, value)}
+                      onDragStart={handleDragStart}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      isDragging={dragIndex === i}
+                      isDragOver={dragOverIndex === i}
+                      readOnly={spectatorMode}
+                    />
+                  ))}
+                </div>
+                <div>
+                  <h3 className="text-green-400 font-semibold mb-2">Seeds 9-12</h3>
+                  {[8, 9, 10, 11].filter(i => i < teamCount).map(i => (
+                    <TeamInput
+                      key={`team-${i}`}
+                      index={i}
+                      color="text-green-400"
+                      team={teams[i]}
+                      dupr={getTeamDupr(teams[i])}
+                      onChange={(field, value) => handleTeamChange(i, field, value)}
+                      onDragStart={handleDragStart}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      isDragging={dragIndex === i}
+                      isDragOver={dragOverIndex === i}
+                      readOnly={spectatorMode}
+                    />
+                  ))}
+                  {teamCount > 12 && (
+                    <>
+                      <h3 className="text-red-400 font-semibold mb-2 mt-4">Seeds 13-{teamCount}</h3>
+                      {[12, 13, 14, 15].filter(i => i < teamCount).map(i => (
+                        <TeamInput
+                          key={`team-${i}`}
+                          index={i}
+                          color="text-red-400"
+                          team={teams[i]}
+                          dupr={getTeamDupr(teams[i])}
+                          onChange={(field, value) => handleTeamChange(i, field, value)}
+                          onDragStart={handleDragStart}
+                          onDragOver={handleDragOver}
+                          onDrop={handleDrop}
+                          isDragging={dragIndex === i}
+                          isDragOver={dragOverIndex === i}
+                        />
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+              {teamsValid && !spectatorMode && (
+                <div className="mt-4">
+                  <div className="bg-gray-800 rounded p-3 mb-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">RR Games:</span>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={poolSize > 0 ? 'pools' : rrGames}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === 'pools') {
+                              setPoolSize(4);
+                            } else {
+                              setPoolSize(0);
+                              setRrGames(parseInt(val));
+                            }
+                          }}
+                          className="bg-gray-700 rounded px-2 py-1 text-sm"
+                        >
+                          <option value={0}>0 (skip to bracket)</option>
+                          <option value={1}>1 game (random)</option>
+                          <option value={2}>2 games (seed-balanced)</option>
+                          <option value={3}>3 games (random)</option>
+                          <option value={4}>4 games (random)</option>
+                          <option value={5}>5 games (random)</option>
+                          <option value={6}>6 games (random)</option>
+                          <option value={7}>7 games (random)</option>
+                          <option value="pools">Pools (round robin)</option>
+                        </select>
+                        <span className="text-gray-500">to</span>
+                        <select
+                          value={rrPointTarget}
+                          onChange={(e) => setRrPointTarget(parseInt(e.target.value))}
+                          className="bg-gray-700 rounded px-2 py-1 text-sm"
+                        >
+                          <option value={11}>11</option>
+                          <option value={15}>15</option>
+                        </select>
+                      </div>
+                    </div>
+                    {poolSize > 0 && (
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-xs text-gray-400">Pool Size:</span>
+                        <select
+                          value={poolSize}
+                          onChange={(e) => setPoolSize(parseInt(e.target.value))}
+                          className="bg-gray-700 rounded px-2 py-1 text-sm"
+                        >
+                          {[3, 4, 5, 6].map(n => (
+                            <option key={n} value={n}>{n} teams/pool ({n - 1} games each)</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <div className="text-xs text-gray-500 mt-1">
+                      {poolSize > 0
+                        ? `${Math.round(teamCount / poolSize)} pools of ~${poolSize}, ${poolSize - 1} games each to ${rrPointTarget}`
+                        : rrGames === 0
+                          ? 'Skip round robin — go directly to bracket with import seeding'
+                          : rrGames <= 2
+                            ? `Each team plays ${rrGames} game${rrGames > 1 ? 's' : ''} to ${rrPointTarget}${rrGames === 2 ? ' vs similar seeds' : ''}`
+                            : `Each team plays ${rrGames} random opponents to ${rrPointTarget}`}
+                    </div>
+                  </div>
+                  <div className="bg-gray-800 rounded p-3 mb-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Bracket Type:</span>
+                      <select
+                        value={bracketType}
+                        onChange={(e) => setBracketType(e.target.value)}
+                        className="bg-gray-700 rounded px-2 py-1 text-sm"
+                      >
+                        <option value="double">Double Elimination</option>
+                        <option value="single">Single Elimination</option>
+                      </select>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {bracketType === 'single'
+                        ? 'Single elimination with 3rd place match'
+                        : 'Double elimination — losers get a second chance'}
+                    </div>
+                  </div>
+                  <div className="bg-gray-800 rounded p-3 mb-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">{bracketType === 'double' ? 'Winners Bracket Size:' : 'Bracket Size:'}</span>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={winnersCount}
+                          onChange={(e) => setWinnersCount(parseInt(e.target.value))}
+                          className="bg-gray-700 rounded px-2 py-1 text-sm"
+                        >
+                          {Array.from({ length: teamCount - 3 }, (_, i) => i + 4).map(n => (
+                            <option key={n} value={n}>{n} teams</option>
+                          ))}
+                          <option value={teamCount}>{teamCount} (all)</option>
+                        </select>
+                        <button
+                          onClick={() => setWinnersCount(defaultWinnersCount[teamCount] || 8)}
+                          className="text-xs text-gray-400 hover:text-white"
+                        >
+                          Reset
+                        </button>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {bracketType === 'single'
+                        ? (winnersCount === teamCount ? 'All teams in bracket' : `Top ${winnersCount} advance to bracket, bottom ${teamCount - winnersCount} eliminated`)
+                        : (winnersCount === teamCount ? 'All teams start in Winners Bracket (losers drop to Losers Bracket)' : `Top ${winnersCount} → Winners, Bottom ${teamCount - winnersCount} → Losers`)}
+                    </div>
+                  </div>
+                  <div className="bg-gray-800 rounded p-3 mb-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">W-Semis Format:</span>
+                      <select
+                        value={bo3Finals ? 'bo3' : 'single'}
+                        onChange={(e) => setBo3Finals(e.target.value === 'bo3')}
+                        className="bg-gray-700 rounded px-2 py-1 text-sm"
+                      >
+                        <option value="bo3">2 of 3 to 11</option>
+                        <option value="single">1 to 15</option>
+                      </select>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {bracketType === 'single'
+                        ? 'Final is always 2 of 3 to 11'
+                        : bo3Finals ? 'W-Semis, W-Final & Grand Final are 2 of 3 to 11' : 'W-Final & Grand Final are 2 of 3 to 11 (semis are single game to 15)'}
+                    </div>
+                  </div>
+                  <div className="bg-gray-800 rounded p-3 mb-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Number of Courts:</span>
+                      <select
+                        value={courtCount}
+                        onChange={(e) => setCourtCount(parseInt(e.target.value))}
+                        className="bg-gray-700 rounded px-2 py-1 text-sm"
+                      >
+                        {[2, 3, 4, 5, 6, 7, 8, 9, 10, 12].map(n => (
+                          <option key={n} value={n}>{n} courts</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Courts are auto-assigned in order. Tournament runner can override any assignment.</div>
+                  </div>
+                  <div className="bg-gray-800 rounded p-3 mb-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Live Spectator Link:</span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={npointId}
+                          onChange={(e) => setNpointId(e.target.value.trim())}
+                          placeholder="npoint.io ID"
+                          className="bg-gray-700 rounded px-2 py-1 text-sm w-40 font-mono"
+                        />
+                        {npointId && (
+                          <button onClick={copyLiveLink} className="text-xs bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded">Copy</button>
+                        )}
+                      </div>
+                    </div>
+                    {npointId ? (
+                      <div className="mt-2 space-y-2">
+                        <div>
+                          <div className="text-xs text-gray-400 mb-1">📡 Live Link <span className="text-gray-600">(read-only for spectators)</span></div>
+                          <div className="text-xs text-gray-300 font-mono bg-gray-900 rounded px-2 py-1 select-all break-all">{window.location.origin}{window.location.pathname}?live={npointId}</div>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          <span className="text-yellow-400">How to use:</span> Click <span className="text-emerald-400">Publish</span> after entering scores. Spectators reload the page to see updates.
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          Manage your bin: <a href={`https://www.npoint.io/docs/${npointId}`} target="_blank" className="text-blue-400 underline">npoint.io/docs/{npointId}</a>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-2 space-y-1">
+                        <div className="text-xs text-gray-400">
+                          <span className="text-yellow-400">Setup (one time, 30 seconds):</span>
+                        </div>
+                        <div className="text-xs text-gray-500 pl-2">
+                          1. Go to <a href="https://www.npoint.io" target="_blank" className="text-blue-400 underline">npoint.io</a> and click "Create JSON Bin"<br/>
+                          2. Leave the default content, click "Save"<br/>
+                          3. Copy the ID from the URL (the part after <span className="font-mono text-gray-400">api.npoint.io/</span>)<br/>
+                          4. Paste it in the field above
+                        </div>
+                        <div className="text-xs text-gray-500">This enables the <span className="text-emerald-400">Publish</span> button so spectators can view scores at a stable link.</div>
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={generateRandomMatchups} title={Object.keys(pools).length > 0 ? "Generate intra-pool round robin matchups" : "Generate random matchups with repeat-avoidance"} className="w-full bg-yellow-600 hover:bg-yellow-500 py-2 rounded font-semibold mb-2">
+                    🎲 Generate Matchups
+                  </button>
+                  {matchupsGenerated && poolSize === 0 && rrGames >= 3 && rrMatchups.length > 0 && (() => {
+                    const sums = {};
+                    rrMatchups.forEach(round => {
+                      round.matches.forEach(({ t1, t2 }) => {
+                        sums[t1] = (sums[t1] || 0) + (t2 + 1);
+                        sums[t2] = (sums[t2] || 0) + (t1 + 1);
+                      });
+                    });
+                    const values = Object.values(sums);
+                    const min = Math.min(...values);
+                    const max = Math.max(...values);
+                    return (
+                      <div className="text-xs text-gray-400 mb-2 p-2 bg-gray-800 rounded">
+                        <div className="font-semibold text-gray-300 mb-1">Opponent Strength (sum of opponent seeds):</div>
+                        <div className="flex flex-wrap gap-1">
+                          {Array.from({ length: teamCount }, (_, i) => i).map(t => (
+                            <span key={t} title={`Seed ${t + 1}: opponents sum to ${sums[t] || 0}`}
+                              className={`px-1 rounded ${sums[t] === min || sums[t] === max ? 'text-yellow-300' : ''}`}>
+                              {t + 1}→{sums[t] || 0}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="mt-1 text-gray-500">Range: {min}–{max}{teamCount % 2 === 1 ? ` | ${rrMatchups.length} rounds (${rrMatchups.filter(r => r.bye >= 0).length} byes)` : ''}</div>
+                      </div>
+                    );
+                  })()}
+                  {matchupsGenerated && (
+                    <button onClick={() => setPhase(rrGames === 0 && poolSize === 0 ? 'bracket' : 'roundrobin')} className="w-full bg-blue-600 py-2 rounded font-semibold">
+                      {rrGames === 0 && poolSize === 0 ? 'Start Bracket →' : 'Start Round Robin →'}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {phase === 'roundrobin' && (
+            <div className="max-w-6xl mx-auto">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-xl font-semibold">Round Robin ({teamCount} teams, {seedingMatches.length} rounds, games to {rrPointTarget})</h2>
+                {!spectatorMode && <button onClick={generateFakeSeedingScores} title="Generate fake scores based on seeding for testing" className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>}
+              </div>
+              {!spectatorMode && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} onCourt={onCourt} />}
+
+              {Object.keys(pools).length > 0 && (() => {
+                const numPools = Math.max(...Object.values(pools)) + 1;
+                const poolColors = ['#facc15', '#60a5fa', '#4ade80', '#f87171', '#c084fc', '#fb923c', '#22d3ee', '#f472b6'];
+                const getPoolCourts = (poolIdx) => {
+                  const courtsPerPool = Math.max(1, Math.floor(courtCount / numPools));
+                  const start = poolIdx * courtsPerPool + 1;
+                  const end = poolIdx === numPools - 1 ? courtCount : start + courtsPerPool - 1;
+                  return start === end ? `Ct ${start}` : `Cts ${start}-${end}`;
+                };
+                return (
+                  <div className="mb-4 bg-gray-800 rounded p-3">
+                    <div className="text-sm font-semibold mb-2">Pool Assignments (Snake Draft)</div>
+                    <div className="grid gap-2 text-xs grid-cols-2 sm:grid-cols-4">
+                      {Array.from({ length: numPools }, (_, poolIdx) => (
+                        <div key={poolIdx} className="bg-gray-700 rounded p-2">
+                          <div className="font-semibold text-center mb-1" style={{ color: poolColors[poolIdx % poolColors.length] }}>
+                            Pool {String.fromCharCode(65 + poolIdx)} <span className="text-gray-400 font-normal">({getPoolCourts(poolIdx)})</span>
+                          </div>
+                          {Object.entries(pools).filter(([_, p]) => p === poolIdx).map(([teamIdx]) => (
+                            <div key={teamIdx} className="text-gray-300 mb-1">
+                              <span className="font-mono">{parseInt(teamIdx) + 1}.</span> {teams[teamIdx]?.p1Name?.split(' ')[0]} / {teams[teamIdx]?.p2Name?.split(' ')[0]}
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Pool-based layout: each column = one pool with all its games */}
+              {Object.keys(pools).length > 0 ? (() => {
+                const numPools = Math.max(...Object.values(pools)) + 1;
+                const poolColors = ['#facc15', '#60a5fa', '#4ade80', '#f87171', '#c084fc', '#fb923c', '#22d3ee', '#f472b6'];
+                const getPoolCourts = (poolIdx) => {
+                  const courtsPerPool = Math.max(1, Math.floor(courtCount / numPools));
+                  const start = poolIdx * courtsPerPool + 1;
+                  const end = poolIdx === numPools - 1 ? courtCount : start + courtsPerPool - 1;
+                  return start === end ? `Ct ${start}` : `Cts ${start}-${end}`;
+                };
+                return (
+                  <div className="flex gap-4 overflow-x-auto pb-2">
+                    {Array.from({ length: numPools }, (_, poolIdx) => {
+                      const poolColor = poolColors[poolIdx % poolColors.length];
+                      return (
+                        <div key={poolIdx} className="rounded-lg p-2 flex-shrink-0" style={{ backgroundColor: poolColor + '10', border: `1px solid ${poolColor}33`, minWidth: '260px', width: `${100 / numPools}%` }}>
+                          <h3 className="font-semibold mb-1 text-center" style={{ color: poolColor }}>
+                            Pool {String.fromCharCode(65 + poolIdx)}
+                          </h3>
+                          <div className="text-xs text-center mb-2" style={{ color: poolColor + 'aa' }}>{getPoolCourts(poolIdx)}</div>
+                          <div className="space-y-2">
+                            {seedingMatches.map((round, roundIdx) => {
+                              const poolMatches = round.matches.filter(m => pools[m.t1.seed - 1] === poolIdx);
+                              return poolMatches.map(m => (
+                                <div key={m.id}>
+                                  <div className="text-xs text-gray-500 mb-1">Game {roundIdx + 1}</div>
+                                  <SeedingMatch
+                                    match={m}
+                                    score={seedingScores[m.id] || {}}
+                                    isOnCourt={!!onCourt[m.id]}
+                                    courtNum={onCourt[m.id]}
+                                    onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
+                                    onToggleCourt={() => toggleOnCourt(m.id)}
+                                    onSetCourt={(ct) => setMatchCourt(m.id, ct)}
+                                    courtCount={courtCount}
+                                    readOnly={spectatorMode}
+                                    poolColor={poolColor}
+                                  />
+                                </div>
+                              ));
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })() : (
+                /* Game-based layout: dynamic columns */
+                <div className={`grid gap-2 ${seedingMatches.length <= 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
+                  {seedingMatches.map((round, roundIdx) => {
+                    const colors = ['text-blue-400', 'text-green-400', 'text-yellow-400', 'text-red-400', 'text-purple-400', 'text-pink-400', 'text-cyan-400'];
+                    return (
+                      <div key={roundIdx}>
+                        <h3 className={`${colors[roundIdx % colors.length]} font-semibold mb-2 text-center`}>Game {roundIdx + 1}</h3>
+                        {round.bye && <div className="text-xs text-gray-400 text-center mb-1">BYE: {round.bye.name.split(' / ').map(n => n.split(' ')[0]).join(' / ')}</div>}
+                        <div className="space-y-2">
+                          {round.matches.map(m => (
+                            <SeedingMatch
+                              key={m.id}
+                              match={m}
+                              score={seedingScores[m.id] || {}}
+                              isOnCourt={!!onCourt[m.id]}
+                              courtNum={onCourt[m.id]}
+                              onScoreChange={(field, value) => handleSeedingScore(m.id, field, value)}
+                              onToggleCourt={() => toggleOnCourt(m.id)}
+                              onSetCourt={(ct) => setMatchCourt(m.id, ct)}
+                              courtCount={courtCount}
+                              readOnly={spectatorMode}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {allSeedingComplete && (
+                <button onClick={() => setPhase('bracket')} className="w-full mt-4 bg-green-600 py-2 rounded font-semibold">
+                  Start Bracket →
+                </button>
+              )}
+            </div>
+          )}
+
+          {phase === 'standings' && (
+            <div className="max-w-2xl mx-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-center flex-1">Live Standings</h2>
+                {!spectatorMode && (
+                  <div className="flex items-center gap-2">
+                    {standingsOverride && (
+                      <button onClick={() => { setStandingsOverride(null); setBracketSeedOverride(null); }} className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600">Reset Order</button>
+                    )}
+                  </div>
+                )}
+              </div>
+              {standingsOverride && (
+                <div className="mb-2 bg-yellow-900/30 border border-yellow-600 rounded px-3 py-1 text-xs text-yellow-300 text-center">
+                  Manual order applied — drag to reorder, or Reset to recalculate
+                </div>
+              )}
+              {!spectatorMode && <p className="text-gray-500 text-xs text-center mb-2">Drag rows to manually reorder</p>}
+              <div className="bg-gray-800 rounded p-3">
+                <div className="text-xs text-gray-500 flex px-2 mb-2">
+                  <span className="w-6"></span>
+                  <span className="w-8">Rk</span>
+                  {Object.keys(pools).length > 0 && <span className="w-10">Pool</span>}
+                  <span className="flex-1">Team</span>
+                  <span className="w-12 text-center">W-L</span>
+                  <span className="w-12 text-center">PF</span>
+                  <span className="w-12 text-center">PA</span>
+                  <span className="w-12 text-right">PD</span>
+                </div>
+                {displayStandings.map((t, i) => {
+                  const isWinners = bracketType === 'single' || i < winnersCount;
+                  const poolColors = ['text-yellow-400', 'text-blue-400', 'text-green-400', 'text-red-400'];
+                  return (
+                    <div
+                      key={t.seed}
+                      draggable={!spectatorMode}
+                      onDragStart={(e) => handleStandingsDragStart(e, i)}
+                      onDragOver={(e) => handleStandingsDragOver(e, i)}
+                      onDrop={(e) => handleStandingsDrop(e, i)}
+                      onDragEnd={() => { setStandingsDragIndex(null); setStandingsDragOverIndex(null); }}
+                      className={`flex items-center text-sm py-2 px-2 rounded mb-1 transition-all ${
+                        standingsDragOverIndex === i ? 'border-2 border-yellow-400' : 'border-2 border-transparent'
+                      } ${standingsDragIndex === i ? 'opacity-50' : ''} ${isWinners ? 'bg-blue-900/30' : 'bg-red-900/30'} ${!spectatorMode ? 'cursor-move' : ''}`}
+                    >
+                      {!spectatorMode && <span className="w-6 text-gray-600 text-xs">☰</span>}
+                      <span className={`w-8 font-bold ${isWinners ? 'text-blue-400' : 'text-red-400'}`}>{i + 1}</span>
+                      {Object.keys(pools).length > 0 && (
+                        <span className={`w-10 text-xs ${poolColors[t.pool] || 'text-gray-400'}`}>
+                          {t.pool !== undefined ? String.fromCharCode(65 + t.pool) : '-'}
+                        </span>
+                      )}
+                      <span className="flex-1 truncate">{t.name}</span>
+                      <span className="w-12 text-center">{t.wins}-{t.losses}</span>
+                      <span className="w-12 text-center text-gray-400">{t.pf}</span>
+                      <span className="w-12 text-center text-gray-400">{t.pa}</span>
+                      <span className={`w-12 text-right ${t.pf - t.pa > 0 ? 'text-green-400' : t.pf - t.pa < 0 ? 'text-red-400' : ''}`}>
+                        {t.pf - t.pa > 0 ? '+' : ''}{t.pf - t.pa}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-2 text-xs text-gray-500 text-center">
+                {bracketType === 'single'
+                  ? `All ${teamCount} teams → Single Elimination Bracket`
+                  : winnersCount === teamCount
+                    ? `All ${teamCount} teams → Winners Bracket`
+                    : `Top ${winnersCount} → Winners Bracket | Bottom ${teamCount - winnersCount} → Losers Bracket`}
+              </div>
+              {allSeedingComplete && (
+                <button onClick={() => setPhase('bracket')} className="w-full mt-4 bg-green-600 py-2 rounded font-semibold">
+                  Start Bracket →
+                </button>
+              )}
+            </div>
+          )}
+
+          {phase === 'bracket' && (() => {
+            const hasBracketDataForPreview = Object.keys(bracketScores).length > 0 || Object.keys(bracketOverrides).length > 0;
+            const bracketPreview = !allSeedingComplete && matchupsGenerated && !hasBracketDataForPreview;
+            console.log('BRACKET DEBUG:', { allSeedingComplete, matchupsGenerated, hasBracketDataForPreview, bracketPreview, winnersLen: bracketTeams.winners?.length, losersLen: bracketTeams.losers?.length, matchKeys: Object.keys(bracketMatches), displayStandingsLen: displayStandings.length, poolsLen: Object.keys(pools).length, seedingMatchesLen: seedingMatches.flatMap(r => r.matches).length, seedingScoresLen: Object.keys(seedingScores).length });
+            // Helper to render a bracket match by ID
+            const renderMatch = (id) => {
+              const m = bracketMatches[id];
+              if (!m || m.bye) return null;
+              return (
+                <BracketMatch
+                  key={id}
+                  match={m}
+                  score={bracketPreview ? {} : (bracketScores[id] || {})}
+                  override={bracketPreview ? undefined : bracketOverrides[id]}
+                  isOnCourt={bracketPreview ? false : !!onCourt[id]}
+                  courtNum={bracketPreview ? undefined : onCourt[id]}
+                  showOverride={bracketPreview ? false : showOverride}
+                  onScoreChange={(field, value) => handleBracketScore(id, m?.t1, m?.t2, field, value)}
+                  onBo3ScoreChange={m?.bo3 ? (gi, field, value) => handleBo3Score(id, m?.t1, m?.t2, gi, field, value) : undefined}
+                  onToggleCourt={() => toggleOnCourt(id)}
+                  onSetCourt={(ct) => setMatchCourt(id, ct)}
+                  courtCount={courtCount}
+                  onOverride={(team) => handleBracketOverride(id, team, team === m?.t1 ? m?.t2 : m?.t1)}
+                  onClearOverride={() => clearBracketOverride(id)}
+                  winner={bracketPreview ? null : getBracketMatchTeam(id)}
+                  readOnly={spectatorMode || bracketPreview}
+                />
+              );
+            };
+
+            // Column helper: renders a labeled column of matches
+            const col = (label, ids, opts = {}) => {
+              const validIds = ids.filter(id => bracketMatches[id] && !bracketMatches[id].bye);
+              if (!validIds.length) return null;
+              return (
+                <div className={`space-y-2 w-44 flex-shrink-0 ${opts.pt || ''}`}>
+                  <div className="text-xs text-gray-500 text-center">{label}</div>
+                  {validIds.map((id, idx) => (
+                    <React.Fragment key={id}>
+                      {renderMatch(id)}
+                      {opts.gap && idx < validIds.length - 1 && <div className={opts.gap}></div>}
+                    </React.Fragment>
+                  ))}
+                </div>
+              );
+            };
+
+            return (
+            <div className="max-w-6xl mx-auto overflow-x-auto">
+              {bracketPreview && (
+                <div className="mb-3 bg-blue-900/50 border border-blue-600 rounded p-2 text-sm text-center text-blue-300">
+                  Bracket Preview — seeds will be filled after round robin is complete
+                </div>
+              )}
+              {!spectatorMode && !bracketPreview && <CourtStatus onCourtMatches={onCourtMatches} nextUpMatches={nextUpMatches} onToggleCourt={toggleOnCourt} onCourt={onCourt} />}
+
+              {bracketSwaps.length > 0 && !bracketPreview && !spectatorMode && !bracketSeedOverride && (
+                <div className="mb-3 bg-yellow-900/50 border border-yellow-600 rounded p-3 text-sm">
+                  <div className="font-semibold text-yellow-400 mb-1">🔄 Suggested Seeding Adjustments (No Pool Rematches in R1)</div>
+                  {bracketSwaps.map((swap, i) => (
+                    <label key={i} className="flex items-center gap-2 text-yellow-200 text-xs cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={swapSelections[i] !== false}
+                        onChange={() => setSwapSelections(prev => ({...prev, [i]: prev[i] === false ? true : false}))}
+                      />
+                      {swap.description}
+                    </label>
+                  ))}
+                  <div className="flex gap-2 mt-2">
+                    <button onClick={() => {
+                      const w = [...bracketTeams.unswappedWinners];
+                      const l = [...bracketTeams.unswappedLosers];
+                      bracketSwaps.forEach((swap, i) => {
+                        if (swapSelections[i] !== false) {
+                          const arr = swap.side === 'winners' ? w : l;
+                          [arr[swap.j], arr[swap.k]] = [arr[swap.k], arr[swap.j]];
+                        }
+                      });
+                      setBracketSeedOverride({ winners: w, losers: l });
+                    }} className="text-xs bg-green-600 hover:bg-green-500 px-3 py-1 rounded font-semibold">
+                      Apply Selected
+                    </button>
+                    <button onClick={() => setBracketSeedOverride({ winners: bracketTeams.unswappedWinners, losers: bracketTeams.unswappedLosers })} className="text-xs bg-red-600 hover:bg-red-500 px-3 py-1 rounded font-semibold">
+                      Keep Original Seeding
+                    </button>
+                  </div>
+                </div>
+              )}
+              {bracketSwaps.length > 0 && !bracketPreview && (spectatorMode || bracketSeedOverride) && bracketTeams.swaps?.length > 0 && (
+                <div className="mb-3 bg-yellow-900/50 border border-yellow-600 rounded p-2 text-sm">
+                  <div className="font-semibold text-yellow-400 mb-1">🔄 Seeding Adjusted (No Pool Rematches in R1)</div>
+                  {bracketSwaps.map((swap, i) => (
+                    <div key={i} className="text-yellow-200 text-xs">{swap.description}</div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-lg font-semibold text-blue-400">{bracketType === 'single' ? 'Single Elimination' : 'Winners Bracket'}</h2>
+                {!spectatorMode && !bracketPreview && (
+                  <div className="flex items-center gap-3">
+                    <button onClick={generateFakeBracketScores} title="Generate fake bracket scores based on seeding for testing" className="text-xs bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded">🎲 Test Scores</button>
+                    <label className="text-xs text-gray-500 flex items-center gap-1">
+                      <input type="checkbox" checked={showOverride} onChange={(e) => setShowOverride(e.target.checked)} />
+                      Override
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {showOverride && !spectatorMode && bracketType === 'double' && bracketTeams.winners.length > 0 && (
+                <div className="mb-3 bg-gray-800 rounded p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-semibold">Flip Bracket Seeds</span>
+                    <div className="flex gap-2">
+                      {selectedSwapTeam && <span className="text-xs text-yellow-400">Click another team to swap</span>}
+                      {bracketSeedOverride && (
+                        <button onClick={() => { setBracketSeedOverride(null); setBracketScores({}); setBracketOverrides({}); setSelectedSwapTeam(null); }} className="text-xs text-gray-400 hover:text-white bg-gray-700 px-2 py-0.5 rounded">Reset Seeds</button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs text-blue-400 mb-1 font-semibold">Winners Bracket</div>
+                      {bracketTeams.winners.map((t, i) => {
+                        const isSelected = selectedSwapTeam?.side === 'winners' && selectedSwapTeam?.pos === i;
+                        return (
+                          <div key={t.seed} className={`text-xs py-1 px-2 rounded cursor-pointer flex items-center gap-1 ${isSelected ? 'bg-yellow-600 text-white' : 'hover:bg-gray-700'}`} onClick={() => handleSeedSwap('winners', i)}>
+                            <span className="font-mono w-6">W{i+1}.</span>
+                            <span className="flex-1 truncate">{t.name.split(' / ').map(n => n.split(' ')[0]).join(' / ')}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {bracketTeams.losers.length > 0 && <div>
+                      <div className="text-xs text-red-400 mb-1 font-semibold">Losers Bracket</div>
+                      {bracketTeams.losers.map((t, i) => {
+                        const isSelected = selectedSwapTeam?.side === 'losers' && selectedSwapTeam?.pos === i;
+                        return (
+                          <div key={t.seed} className={`text-xs py-1 px-2 rounded cursor-pointer flex items-center gap-1 ${isSelected ? 'bg-yellow-600 text-white' : 'hover:bg-gray-700'}`} onClick={() => handleSeedSwap('losers', i)}>
+                            <span className="font-mono w-6">L{i+1}.</span>
+                            <span className="flex-1 truncate">{t.name.split(' / ').map(n => n.split(' ')[0]).join(' / ')}</span>
+                          </div>
+                        );
+                      })}
+                    </div>}
+                  </div>
+                </div>
+              )}
+
+              {/* ====== SINGLE ELIMINATION LAYOUT ====== */}
+              {bracketType === 'single' && (
+                <div className="flex gap-3 pb-4">
+                  {teamCount > 8 && col('R1', ['se_r1m1','se_r1m2','se_r1m3','se_r1m4'])}
+                  {col('QF', ['se_qf1','se_qf2','se_qf3','se_qf4'])}
+                  {col('SF', ['se_sf1','se_sf2'], { pt: 'pt-10', gap: 'h-12' })}
+                  <div className="w-48 flex-shrink-0 pt-16">
+                    <div className="text-xs text-gray-500 text-center">Final</div>
+                    {renderMatch('se_f')}
+                    {getBracketMatchTeam('se_f') && (
+                      <div className="mt-3 bg-gradient-to-r from-yellow-700 to-yellow-600 p-3 rounded text-center border-2 border-yellow-400">
+                        <div className="text-xs text-yellow-200">🥇 CHAMPION — ${currentPayouts.first}</div>
+                        {getBracketMatchTeam('se_f').name.split(' / ').map((p, i) => (
+                          <div key={i} className="text-sm font-bold text-white">{p}</div>
+                        ))}
+                      </div>
+                    )}
+                    {getBracketMatchLoser('se_f') && (
+                      <div className="mt-2 bg-gradient-to-r from-gray-500 to-gray-400 p-2 rounded text-center border border-gray-300">
+                        <div className="text-xs text-gray-200">🥈 2nd Place — ${currentPayouts.second}</div>
+                        {getBracketMatchLoser('se_f').name.split(' / ').map((p, i) => (
+                          <div key={i} className="text-xs font-semibold text-white">{p}</div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="mt-4">
+                      <div className="text-xs text-gray-500 text-center mb-1">3rd Place Match</div>
+                      {renderMatch('se_3rd')}
+                      {getBracketMatchTeam('se_3rd') && (
+                        <div className="mt-2 bg-gradient-to-r from-amber-800 to-amber-700 p-2 rounded text-center border border-amber-500">
+                          <div className="text-xs text-amber-200">🥉 3rd Place — ${currentPayouts.third}</div>
+                          {getBracketMatchTeam('se_3rd').name.split(' / ').map((p, i) => (
+                            <div key={i} className="text-xs font-semibold text-white">{p}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ====== DOUBLE ELIMINATION LAYOUT ====== */}
+              {bracketType === 'double' && (
+                <>
+                  <div className="flex gap-3 pb-4">
+                    {col('W-QF', ['wqf1','wqf2','wqf3','wqf4'])}
+                    {col('W-SF', ['wsf1','wsf2'], { pt: 'pt-10', gap: 'h-12' })}
+                    <div className="w-44 flex-shrink-0 pt-20">
+                      <div className="text-xs text-gray-500 text-center">W-Final</div>
+                      {renderMatch('wf')}
+                    </div>
+                    <div className="w-56 flex-shrink-0 pt-16">
+                      <h3 className="text-yellow-400 font-semibold mb-2 text-center text-sm">🏆 Grand Final</h3>
+                      {renderMatch('gf')}
+                      {bracketMatches['gf2'] && (
+                        <div className="mt-2">
+                          <div className="text-xs text-yellow-400 text-center mb-1">Game to 15</div>
+                          {renderMatch('gf2')}
+                        </div>
+                      )}
+                      {gfWinner && (
+                        <div className="mt-3 bg-gradient-to-r from-yellow-700 to-yellow-600 p-3 rounded text-center border-2 border-yellow-400">
+                          <div className="text-xs text-yellow-200">🥇 CHAMPION — ${currentPayouts.first}</div>
+                          {gfWinner.name.split(' / ').map((p, i) => (
+                            <div key={i} className="text-sm font-bold text-white">{p}</div>
+                          ))}
+                        </div>
+                      )}
+                      {getBracketMatchLoser(finalMatchId) && (
+                        <div className="mt-2 bg-gradient-to-r from-gray-500 to-gray-400 p-2 rounded text-center border border-gray-300">
+                          <div className="text-xs text-gray-200">🥈 2nd Place — ${currentPayouts.second}</div>
+                          {getBracketMatchLoser(finalMatchId).name.split(' / ').map((p, i) => (
+                            <div key={i} className="text-xs font-semibold text-white">{p}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <h2 className="text-lg font-semibold text-red-400 mb-2">Losers Bracket</h2>
+                  <div className="flex gap-3 pb-4 overflow-x-auto">
+                    {(() => {
+                      // Dynamically render losers bracket rounds from bracketMatches
+                      const losersRounds = {};
+                      Object.values(bracketMatches).forEach(m => {
+                        if (m.id === 'lsf' || m.id === 'lf' || m.id === 'gf' || m.id === 'gf2') return;
+                        if (!m.id.startsWith('lr')) return;
+                        const roundMatch = m.round.replace(' (bye)', '');
+                        if (!losersRounds[roundMatch]) losersRounds[roundMatch] = [];
+                        losersRounds[roundMatch].push(m.id);
+                      });
+                      const sortedRounds = Object.keys(losersRounds).sort((a, b) => {
+                        const numA = parseInt(a.replace('L-R', ''));
+                        const numB = parseInt(b.replace('L-R', ''));
+                        return numA - numB;
+                      });
+                      return sortedRounds.map((round, i) => {
+                        const pt = i >= 2 ? 'pt-10' : '';
+                        const gap = losersRounds[round].length <= 2 ? 'h-6' : undefined;
+                        return col(round, losersRounds[round], { pt, gap });
+                      });
+                    })()}
+                    {bracketMatches.lsf && (
+                    <div className="w-44 flex-shrink-0 pt-14">
+                      <div className="text-xs text-gray-500 text-center">L-Semi</div>
+                      {renderMatch('lsf')}
+                    </div>
+                    )}
+                    <div className="w-44 flex-shrink-0 pt-14">
+                      <div className="text-xs text-gray-500 text-center">L-Final</div>
+                      {renderMatch('lf')}
+                      {getBracketMatchTeam('lf') && (
+                        <div className="mt-2 text-center">
+                          <div className="text-xs text-yellow-400">↗ to Grand Final</div>
+                        </div>
+                      )}
+                      {getBracketMatchLoser('lf') && (
+                        <div className="mt-2 bg-gradient-to-r from-amber-800 to-amber-700 p-2 rounded text-center border border-amber-500">
+                          <div className="text-xs text-amber-200">🥉 3rd Place — ${currentPayouts.third}</div>
+                          {getBracketMatchLoser('lf').name.split(' / ').map((p, i) => (
+                            <div key={i} className="text-xs font-semibold text-white">{p}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            );
+          })()}
+
+          {phase === 'results' && (
+            <div className="max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold text-center mb-6">🏆 Final Results</h2>
+
+              <div className="space-y-4">
+                {gfWinner && (
+                  <div className="bg-gradient-to-r from-yellow-700 to-yellow-600 p-6 rounded-lg border-2 border-yellow-400 text-center">
+                    <div className="text-lg text-yellow-200">🥇 1st Place — ${currentPayouts.first}</div>
+                    {gfWinner.name.split(' / ').map((p, i) => (
+                      <div key={i} className="text-2xl font-bold text-white">{p}</div>
+                    ))}
+                  </div>
+                )}
+
+                {getBracketMatchLoser(finalMatchId) && (
+                  <div className="bg-gradient-to-r from-gray-500 to-gray-400 p-5 rounded-lg border-2 border-gray-300 text-center">
+                    <div className="text-md text-gray-200">🥈 2nd Place — ${currentPayouts.second}</div>
+                    {getBracketMatchLoser(finalMatchId).name.split(' / ').map((p, i) => (
+                      <div key={i} className="text-xl font-bold text-white">{p}</div>
+                    ))}
+                  </div>
+                )}
+
+                {(bracketType === 'single' ? getBracketMatchTeam(thirdMatchId) : getBracketMatchLoser(thirdMatchId)) && (
+                  <div className="bg-gradient-to-r from-amber-800 to-amber-700 p-4 rounded-lg border-2 border-amber-500 text-center">
+                    <div className="text-sm text-amber-200">🥉 3rd Place — ${currentPayouts.third}</div>
+                    {(bracketType === 'single' ? getBracketMatchTeam(thirdMatchId) : getBracketMatchLoser(thirdMatchId)).name.split(' / ').map((p, i) => (
+                      <div key={i} className="text-lg font-bold text-white">{p}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-8 text-center">
+                <button onClick={downloadResults} className="bg-green-600 hover:bg-green-500 px-6 py-3 rounded-lg text-lg font-semibold">
+                  📥 Download Full Results
+                </button>
+              </div>
+
+            </div>
+          )}
+
+            </>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
