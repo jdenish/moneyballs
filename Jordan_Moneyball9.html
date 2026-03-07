@@ -3309,7 +3309,7 @@
               const validIds = ids.filter(id => bracketMatches[id] && !bracketMatches[id].bye);
               if (!validIds.length) return null;
               return (
-                <div className={`space-y-2 w-44 flex-shrink-0 ${opts.pt || ''}`} style={opts.style}>
+                <div className={`space-y-2 w-44 flex-shrink-0 ${opts.pt || ''}`}>
                   <div className="text-xs text-gray-500 text-center">{label}</div>
                   {validIds.map((id, idx) => (
                     <React.Fragment key={id}>
@@ -3505,7 +3505,7 @@
                   </div>
 
                   <h2 className="text-lg font-semibold text-red-400 mb-2">Losers Bracket</h2>
-                  <div className="flex gap-3 pb-4 overflow-x-auto">
+                  <div className="flex gap-3 pb-4 overflow-x-auto items-center">
                     {(() => {
                       // Dynamically render losers bracket rounds from bracketMatches
                       const losersRounds = {};
@@ -3521,31 +3521,19 @@
                         const numB = parseFloat(b.replace('L-R', '')) || 0;
                         return numA - numB;
                       });
-                      // Calculate cumulative top padding so later rounds center relative to feeders
-                      const matchCounts = sortedRounds.map(r => losersRounds[r].filter(id => bracketMatches[id] && !bracketMatches[id].bye).length);
-                      let cumulativePt = 0;
                       return sortedRounds.map((round, i) => {
-                        const currCount = matchCounts[i];
+                        const currCount = losersRounds[round].filter(id => bracketMatches[id] && !bracketMatches[id].bye).length;
                         const gap = currCount <= 2 ? 'h-6' : undefined;
-                        const ptStyle = cumulativePt > 0 ? { paddingTop: `${cumulativePt}px` } : undefined;
-                        const result = col(round, losersRounds[round], { gap, style: ptStyle });
-                        // Add offset for next round: center between current matches
-                        if (i < sortedRounds.length - 1) {
-                          const nextCount = matchCounts[i + 1];
-                          const matchHeight = 88;
-                          const addedPt = Math.max(0, (currCount * matchHeight - nextCount * matchHeight) / 2);
-                          cumulativePt += addedPt;
-                        }
-                        return result;
+                        return col(round, losersRounds[round], { gap });
                       });
                     })()}
                     {bracketMatches.lsf && (
-                    <div className="w-44 flex-shrink-0 pt-14">
+                    <div className="w-44 flex-shrink-0">
                       <div className="text-xs text-gray-500 text-center">L-Semi</div>
                       {renderMatch('lsf')}
                     </div>
                     )}
-                    <div className="w-44 flex-shrink-0 pt-14">
+                    <div className="w-44 flex-shrink-0">
                       <div className="text-xs text-gray-500 text-center">L-Final</div>
                       {renderMatch('lf')}
                       {getBracketMatchTeam('lf') && (
