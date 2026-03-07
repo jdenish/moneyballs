@@ -1976,11 +1976,8 @@
             const updated = { ...m };
             if (sc.t1 && (!m.t1 || !m.t1.name)) updated.t1 = sc.t1;
             if (sc.t2 && (!m.t2 || !m.t2.name)) updated.t2 = sc.t2;
-            // If score teams differ from bracket teams, it's an off-bracket match
-            // Check: score has both teams, and at least one doesn't match bracket expectation
-            if (sc.t1 && sc.t2 && sc.s1 !== '' && sc.s2 !== '' && m.round?.startsWith('L-R') &&
-                ((m.t1 && sc.t1.seed !== m.t1.seed) || (m.t2 && sc.t2.seed !== m.t2.seed) ||
-                 (!m.t1 && !m.t2))) {
+            // If score teams differ from bracket teams in L-R2, it's an off-bracket match
+            if (sc.t1 && m.t1 && sc.t1.seed !== m.t1.seed && m.round === 'L-R2') {
               updated.round = 'L-R1.5';
               updated.t1 = sc.t1;
               updated.t2 = sc.t2;
@@ -3501,16 +3498,13 @@
                       Object.values(bracketMatches).forEach(m => {
                         if (m.id === 'lsf' || m.id === 'lf' || m.id === 'gf' || m.id === 'gf2') return;
                         if (!m.id.startsWith('lr')) return;
-                        // Detect off-bracket matches: score teams differ from bracket teams
-                        const sc = bracketScores[m.id];
-                        let roundMatch = (sc?.roundLabel || m.round).replace(' (bye)', '');
-                        if (sc?.t1 && m.t1 && sc.t1.seed !== m.t1.seed) roundMatch = 'Elim.';
+                        let roundMatch = m.round.replace(' (bye)', '');
                         if (!losersRounds[roundMatch]) losersRounds[roundMatch] = [];
                         losersRounds[roundMatch].push(m.id);
                       });
                       const sortedRounds = Object.keys(losersRounds).sort((a, b) => {
-                        const numA = a === 'Elim.' ? 1.5 : (parseFloat(a.replace('L-R', '')) || 0);
-                        const numB = b === 'Elim.' ? 1.5 : (parseFloat(b.replace('L-R', '')) || 0);
+                        const numA = parseFloat(a.replace('L-R', '')) || 0;
+                        const numB = parseFloat(b.replace('L-R', '')) || 0;
                         return numA - numB;
                       });
                       return sortedRounds.map((round, i) => {
