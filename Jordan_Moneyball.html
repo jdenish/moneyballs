@@ -1698,6 +1698,7 @@
         const rawL = rrIncomplete ? Array.from({ length: teamCount - winnersCount }, (_, i) => makePlaceholder(winnersCount + i + 1)) : (bracketTeams.losers || []);
         const w = rawW.map(resolveFromStandings);
         const l = rawL.map(resolveFromStandings);
+        console.log('BRACKET BUILD:', { rrIncomplete, winnersCount, standingsOverride, displayStandingsOrder: displayStandings.map(t => `${t.name?.split('/')[0]?.trim()}(s${t.seed})`).join(', '), wOrder: w.map(t => `${t.name?.split('/')[0]?.trim()}(s${t.seed})`).join(', '), lOrder: l.map(t => `${t.name?.split('/')[0]?.trim()}(s${t.seed})`).join(', ') });
 
         // ========= SINGLE ELIMINATION =========
         if (bracketType === 'single') {
