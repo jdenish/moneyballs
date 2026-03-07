@@ -73,8 +73,8 @@ When "Pools" mode is selected, you can choose pool sizes of 3, 4, 5, or 6 teams:
 
 ### Configurable Bracket Type
 Choose between **Double Elimination** (default) or **Single Elimination**:
-- **Single Elimination:** QF → SF → Final + 3rd Place Match. Play-in round for >8 teams (byes for top seeds).
-- **Double Elimination:** Winners Bracket + Losers Bracket → Grand Final. Dynamically generated for any winner/loser count.
+- **Single Elimination:** QF → SF → Final + 3rd Place Match. Play-in round for >8 teams (byes for top seeds). **Limited to ≤ 16 teams** (not available for 17-20).
+- **Double Elimination:** Winners Bracket + Losers Bracket → Grand Final. Dynamically generated for any winner/loser count. Supports all team counts 8-20.
 
 ### Configurable Finals Format
 Choose between **Best of 3** or **Single Game** for finals:
@@ -82,7 +82,7 @@ Choose between **Best of 3** or **Single Game** for finals:
 - Double Elim: applies to Winners Final and Grand Final
 
 ### Configurable Winners Bracket Size
-The number of teams starting in the Winners Bracket is **configurable** on the Setup page. Defaults are shown above but can be adjusted (e.g., set to "all" so everyone starts in Winners and losers drop to Losers Bracket after their first loss). Hidden when Single Elimination is selected.
+The number of teams starting in the Winners Bracket is **configurable** on the Setup page (4-12 teams, capped at 12 due to bracket architecture). Defaults are shown above but can be adjusted. Hidden when Single Elimination is selected.
 
 ### Phase 1: Seeding Games (0-7 games per team)
 - **Format:** Games to 11 (configurable point target)
