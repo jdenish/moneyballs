@@ -596,6 +596,7 @@
         if (v('matchupsGenerated', 'mg')) setMatchupsGenerated(v('matchupsGenerated', 'mg'));
         if (v('onCourt', 'oc')) setOnCourt(v('onCourt', 'oc'));
         // bracketSeedOverride intentionally NOT loaded — always rebuild from standings
+        if (v('standingsOverride', 'so')) setStandingsOverride(v('standingsOverride', 'so'));
         // Restore bracket scores: expand slim format back to full team objects
         if (d.bracketScores) {
           setBracketScores(d.bracketScores);
@@ -678,7 +679,7 @@
             if (data.matchupsGenerated) setMatchupsGenerated(data.matchupsGenerated);
             if (data.onCourt) setOnCourt(data.onCourt);
             // bracketSeedOverride intentionally NOT loaded — always rebuild from standings
-            setStandingsOverride(data.standingsOverride || null);
+            setStandingsOverride(data.standingsOverride || data.so || null);
             // Auto-detect phase
             const hasBracket = data.bracketScores && Object.keys(data.bracketScores).length > 0;
             const hasBracketOverrides = data.bracketOverrides && Object.keys(data.bracketOverrides).length > 0;
@@ -760,7 +761,7 @@
             if (data.matchupsGenerated) setMatchupsGenerated(data.matchupsGenerated);
             if (data.onCourt) setOnCourt(data.onCourt);
             // bracketSeedOverride intentionally NOT loaded — always rebuild from standings
-            setStandingsOverride(data.standingsOverride || null);
+            setStandingsOverride(data.standingsOverride || data.so || null);
             const hasBracket = data.bracketScores && Object.keys(data.bracketScores).length > 0;
             const hasBracketOverrides = data.bracketOverrides && Object.keys(data.bracketOverrides).length > 0;
             if (hasBracket || hasBracketOverrides) setPhase('bracket');
@@ -866,7 +867,8 @@
           tc: teamCount, rg: rrGames, rp: rrPointTarget, wc: winnersCount,
           t: teams.map(({ p1Paid, p2Paid, ...rest }) => rest), ss: seedingScores, bo: bracketOverrides,
           rm: rrMatchups, bt: bracketType, b3: bo3Finals, ps: poolSize, cc: courtCount,
-          p: pools, mg: matchupsGenerated, oc: onCourt, bso: bracketSeedOverride, ph: phase
+          p: pools, mg: matchupsGenerated, oc: onCourt, bso: bracketSeedOverride, ph: phase,
+          so: standingsOverride
         };
         // Slim bracket scores: store only seeds + scores (no full team objects)
         if (Object.keys(bracketScores).length > 0) {
@@ -899,7 +901,8 @@
           tc: teamCount, rg: rrGames, rp: rrPointTarget, wc: winnersCount,
           t: teams.map(({ p1Paid, p2Paid, ...rest }) => rest), ss: seedingScores, bo: bracketOverrides,
           rm: rrMatchups, bt: bracketType, b3: bo3Finals, ps: poolSize, cc: courtCount,
-          p: pools, mg: matchupsGenerated, oc: onCourt, bso: bracketSeedOverride, ph: phase
+          p: pools, mg: matchupsGenerated, oc: onCourt, bso: bracketSeedOverride, ph: phase,
+          so: standingsOverride
         };
         if (Object.keys(bracketScores).length > 0) {
           const slim = {};
@@ -2150,8 +2153,8 @@
         teamCount, rrGames, rrPointTarget, winnersCount, teams,
         seedingScores, bracketScores, bracketOverrides, matchupsGenerated,
         rrMatchups, pools, onCourt, bracketSeedOverride, bracketType,
-        bo3Finals, poolSize, courtCount, npointId
-      }), [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, matchupsGenerated, rrMatchups, pools, onCourt, bracketSeedOverride, bracketType, bo3Finals, poolSize, courtCount, npointId]);
+        bo3Finals, poolSize, courtCount, npointId, standingsOverride
+      }), [teamCount, rrGames, rrPointTarget, winnersCount, teams, seedingScores, bracketScores, bracketOverrides, matchupsGenerated, rrMatchups, pools, onCourt, bracketSeedOverride, bracketType, bo3Finals, poolSize, courtCount, npointId, standingsOverride]);
 
       const saveProgress = useCallback(() => {
         const data = getSaveData();
