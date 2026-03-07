@@ -165,7 +165,7 @@
           wsf1:{a:2,b:1,s1:'13',s2:'15'},wsf2:{a:7,b:4,s1:'10',s2:'15'},
           wf:{a:1,b:4,g:[{s1:'8',s2:'11'},{s1:'2',s2:'11'}]},
           lr2m2:{a:6,b:14,s1:'15',s2:'12',rl:'L-R2'},lr2m4:{a:3,b:10,s1:'15',s2:'1',rl:'L-R2'},
-          lr3m1:{a:6,b:8,s1:'5',s2:'15'},lr3m2:{a:3,b:5,s1:'13',s2:'15'},
+          lr3m1:{a:6,b:8,s1:'5',s2:'15'},lr3m2:{a:3,b:5,s1:'13',s2:'15'},lr3m3:{a:8,b:9,s1:'15',s2:'5'},
           lr4m1:{a:8,b:2,s1:'11',s2:'15'},lr4m2:{a:5,b:7,s1:'10',s2:'15'},
           lsf:{a:2,b:7,s1:'15',s2:'11'},lf:{a:2,b:1,s1:'15',s2:'10'},
           gf:{a:4,b:2,g:[{s1:'11',s2:'8'},{s1:'6',s2:'11'},{s1:'11',s2:'0'}]}
@@ -2031,6 +2031,13 @@
             }
             if (sc.roundLabel) updated.round = sc.roundLabel;
             matches[id] = updated;
+          }
+        }
+        // Create match entries for scores that have no generated bracket match (off-bracket matches)
+        for (const [id, sc] of Object.entries(bracketScores)) {
+          if (!matches[id] && sc.t1 && sc.t2) {
+            const round = sc.roundLabel || (id.startsWith('lr') ? `L-R${id.match(/lr(\d+)/)?.[1] || '?'}` : id);
+            matches[id] = { id, t1: sc.t1, t2: sc.t2, round };
           }
         }
         return matches;
