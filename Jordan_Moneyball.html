@@ -1505,6 +1505,13 @@
         return { winners, losers, swaps, unswappedWinners, unswappedLosers };
       }, [displayStandings, teamCount, winnersCount, bracketSeedOverride, pools]);
 
+      // Clear stale bracketSeedOverride when standings change so bracket rebuilds
+      useEffect(() => {
+        if (bracketSeedOverride && displayStandings.length >= teamCount) {
+          setBracketSeedOverride(null);
+        }
+      }, [displayStandings]);
+
       // Sync bracketSwaps state from bracketTeams (useEffect instead of setState in useMemo)
       useEffect(() => {
         if (bracketSeedOverride) {
