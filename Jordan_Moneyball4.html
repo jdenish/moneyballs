@@ -820,7 +820,7 @@
           // Live mode: fetch state from npoint
           setView('tournament');
           setLiveMode(true);
-          fetch(`https://api.npoint.io/${liveId}`)
+          fetch(`https://api.npoint.io/${liveId}?_=${Date.now()}`)
             .then(r => r.json())
             .then(data => {
               if (data && Object.keys(data).length > 0) {
