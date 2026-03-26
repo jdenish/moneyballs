@@ -2989,6 +2989,7 @@
                     const newCount = parseInt(e.target.value);
                     setTeamCount(newCount);
                     setWinnersCount(defaultWinnersCount[newCount] || 8);
+                    setCourtCount(Math.floor(newCount / 2));
                     if (newCount > 16) setBracketType('double');
                   }}
                   className="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-sm"
@@ -3009,6 +3010,7 @@
                   if (lines.length >= 8 && lines.length <= 20) {
                     setTeamCount(lines.length);
                     setWinnersCount(defaultWinnersCount[lines.length] || 8);
+                    setCourtCount(Math.floor(lines.length / 2));
                     if (lines.length > 16) setBracketType('double');
                   }
                 }}
