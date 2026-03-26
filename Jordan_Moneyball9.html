@@ -1181,7 +1181,7 @@
                 roundMatches.push(...poolRounds[r]);
               }
             });
-            rounds.push(roundMatches);
+            rounds.push({ matches: roundMatches, bye: -1 });
           }
 
           setRrMatchups(rounds);
