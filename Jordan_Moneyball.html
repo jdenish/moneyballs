@@ -171,6 +171,46 @@
           lsf:{a:2,b:7,s1:'15',s2:'11'},lf:{a:2,b:1,s1:'15',s2:'10'},
           gf:{a:4,b:2,g:[{s1:'11',s2:'8'},{s1:'6',s2:'11'},{s1:'11',s2:'0'}]}
         }
+      },
+      '2026-03-27': {
+        tc:12,rg:3,rp:11,wc:8,
+        t:[
+          {p1Name:'Sanil Jagtiani',p1Dupr:'',p2Name:'Oscar Serra',p2Dupr:''},
+          {p1Name:'Matt Meadows',p1Dupr:'',p2Name:'Alex Szczepkowski',p2Dupr:''},
+          {p1Name:'Preston Gordon',p1Dupr:'',p2Name:'Jack Hared',p2Dupr:''},
+          {p1Name:'James Lin',p1Dupr:'',p2Name:'James Peng',p2Dupr:''},
+          {p1Name:'Frank Anthony Davis',p1Dupr:'',p2Name:'Roger Mosteller',p2Dupr:''},
+          {p1Name:'Tyler Juhl',p1Dupr:'',p2Name:'Andrew Meadows',p2Dupr:''},
+          {p1Name:'Dylan Ashbach',p1Dupr:'',p2Name:'Steven Fernandez',p2Dupr:''},
+          {p1Name:'Darren Johnson',p1Dupr:'',p2Name:'Zachary Lessner',p2Dupr:''},
+          {p1Name:'Jay Bhavsar',p1Dupr:'',p2Name:'Dhaval Bhavsar',p2Dupr:''},
+          {p1Name:'Ian Hansen',p1Dupr:'',p2Name:'Austin Keefer',p2Dupr:''},
+          {p1Name:'Vaughn McClelland',p1Dupr:'',p2Name:'Nick Mirabelli',p2Dupr:''},
+          {p1Name:'Matthew Chen',p1Dupr:'',p2Name:'Johny Mario',p2Dupr:''}
+        ],
+        ss:{g1m0:{s1:'11',s2:'5'},g1m1:{s1:'5',s2:'11'},g1m2:{s1:'11',s2:'4'},g1m3:{s1:'11',s2:'6'},g1m4:{s1:'11',s2:'6'},g1m5:{s1:'11',s2:'8'},g2m0:{s1:'11',s2:'4'},g2m1:{s1:'3',s2:'11'},g2m2:{s1:'11',s2:'4'},g2m3:{s1:'11',s2:'7'},g2m4:{s1:'11',s2:'3'},g2m5:{s1:'7',s2:'11'},g3m0:{s1:'11',s2:'5'},g3m1:{s1:'11',s2:'4'},g3m2:{s1:'9',s2:'11'},g3m3:{s1:'10',s2:'12'},g3m4:{s1:'11',s2:'7'},g3m5:{s1:'5',s2:'11'}},
+        bo:{},
+        rm:[
+          [{t1:0,t2:11},{t1:5,t2:6},{t1:1,t2:10},{t1:4,t2:7},{t1:2,t2:9},{t1:3,t2:8}],
+          [{t1:0,t2:6},{t1:11,t2:5},{t1:1,t2:7},{t1:10,t2:4},{t1:2,t2:8},{t1:9,t2:3}],
+          [{t1:0,t2:5},{t1:6,t2:11},{t1:1,t2:4},{t1:7,t2:10},{t1:2,t2:3},{t1:8,t2:9}]
+        ],
+        bt:'double',b3:false,ps:4,cc:6,
+        p:{0:0,1:1,2:2,3:2,4:1,5:0,6:0,7:1,8:2,9:2,10:1,11:0},
+        mg:true,oc:{},bso:null,ph:'bracket',
+        so:[1,3,2,7,5,4,11,10,6,8,9,12],
+        bs:{
+          wqf1:{a:1,b:10,s1:'15',s2:'5'},wqf2:{a:7,b:5,s1:'15',s2:'12'},wqf3:{a:3,b:11,s1:'15',s2:'8'},wqf4:{a:2,b:4,s1:'11',s2:'15'},
+          lr1m1:{a:6,b:12,s1:'13',s2:'15'},lr1m2:{a:8,b:9,s1:'15',s2:'13'},
+          wsf1:{a:1,b:7,s1:'15',s2:'5'},wsf2:{a:3,b:4,s1:'16',s2:'18'},
+          wf:{a:1,b:4,g:[{s1:'11',s2:'4'},{s1:'11',s2:'1'}]},
+          lr2m1:{a:12,b:11,s1:'10',s2:'15'},lr2m3:{a:8,b:10,s1:'16',s2:'14'},
+          lr3m1:{a:11,b:2,s1:'12',s2:'15'},lr3m2:{a:8,b:5,s1:'15',s2:'11'},
+          lr4m1:{a:2,b:7,s1:'15',s2:'10'},lr4m2:{a:8,b:3,s1:'8',s2:'15'},
+          lsf:{a:2,b:3,s1:'13',s2:'15'},lf:{a:3,b:4,s1:'15',s2:'13'},
+          gf:{a:1,b:3,g:[{s1:'11',s2:'9'},{s1:'4',s2:'11'},{s1:'9',s2:'11'}]},
+          gf2:{a:1,b:3,s1:'12',s2:'15'}
+        }
       }
     };
 
@@ -212,8 +252,12 @@
         id: '2026-03-27',
         date: 'March 27, 2026',
         title: 'Moneyball #4',
-        status: 'upcoming',
-        teamCount: 16
+        status: 'completed',
+        results: {
+          first: 'Preston Gordon / Jack Hared',
+          second: 'Sanil Jagtiani / Oscar Serra',
+          third: 'James Lin / James Peng'
+        }
       }
     ];
 
@@ -1006,7 +1050,7 @@
 
       const copyLiveLink = useCallback(() => {
         if (!npointId) return;
-        const url = `${window.location.origin}${window.location.pathname}?live=${npointId}`;
+        const url = `${window.location.origin}${window.location.pathname}?view=${npointId}`;
         navigator.clipboard.writeText(url).then(() => {
           setLinkCopied(true);
           setTimeout(() => setLinkCopied(false), 2000);
@@ -2547,7 +2591,7 @@
             if (data.pools) setPools(data.pools);
             if (data.matchupsGenerated) setMatchupsGenerated(data.matchupsGenerated);
             if (data.onCourt) setOnCourt(data.onCourt);
-            setStandingsOverride(null);
+            setStandingsOverride(data.standingsOverride || null);
 
             // If bracket scores exist, reconstruct original bracket seeding from the played matches
             // so we don't recompute with new logic that might change positions
@@ -2589,7 +2633,12 @@
             // Auto-detect the right phase
             const hasBracketOverrides = data.bracketOverrides && Object.keys(data.bracketOverrides).length > 0;
             const hasOnCourtBracket = data.onCourt && Object.keys(data.onCourt).some(k => k.startsWith('w') || k.startsWith('l') || k === 'gf');
-            if (hasBracketData || hasBracketOverrides || hasOnCourtBracket) {
+            // Check if grand final is complete (tournament finished)
+            const bs = data.bracketScores || {};
+            const gfComplete = bs.gf?.games?.length >= 2 || bs.gf2?.games?.length >= 2 || (data.bracketType === 'single' && bs.se_f?.games?.length >= 2);
+            if (gfComplete) {
+              setPhase('results');
+            } else if (hasBracketData || hasBracketOverrides || hasOnCourtBracket) {
               setPhase('bracket');
             } else if (data.seedingScores && Object.keys(data.seedingScores).length > 0) {
               const totalExpected = (data.rrGames || 3) * Math.floor((data.teamCount || 16) / 2);
@@ -2817,14 +2866,14 @@
                       <li>Click a tournament to open it in edit mode</li>
                       <li><strong className="text-gray-300">Quick Save</strong> saves progress to this browser</li>
                       <li><strong className="text-gray-300">Save</strong> also downloads a JSON backup file</li>
-                      <li><strong className="text-gray-300">Share Link</strong> copies a snapshot link</li>
-                      <li><strong className="text-gray-300">Publish</strong> pushes scores to live link</li>
+                      <li><strong className="text-gray-300">Snapshot Link</strong> copies a frozen snapshot URL</li>
+                      <li><strong className="text-gray-300">Publish</strong> pushes scores to spectator link</li>
                     </ul>
                   </div>
                   <div>
                     <div className="text-blue-400 font-semibold mb-1">Spectators</div>
                     <ul className="space-y-1 list-disc list-inside">
-                      <li>Open the <strong className="text-gray-300">📡 Live Link</strong> to see scores</li>
+                      <li>Open the <strong className="text-gray-300">📡 Spectator Link</strong> to see scores</li>
                       <li>View-only — no editing allowed</li>
                       <li>Reload the page for latest updates</li>
                     </ul>
@@ -2836,7 +2885,7 @@
                       <li>Leave default content, click "Save"</li>
                       <li>Copy the ID from the URL</li>
                       <li>Tournament → Setup → paste in "Live Spectator Link"</li>
-                      <li>Use the <strong className="text-gray-300">📡 Live Link</strong> from the toolbar</li>
+                      <li>Use the <strong className="text-gray-300">📡 Spectator Link</strong> from the toolbar</li>
                     </ol>
                   </div>
                 </div>
@@ -2937,15 +2986,15 @@
                 📂 Load
                 <input type="file" accept=".json" className="hidden" onChange={loadProgress} />
               </label>
-              <button onClick={shareLink} title="Copy a one-time snapshot URL — anyone with the link can view current scores" className={`text-xs px-2 py-1 rounded ${linkCopied && !npointId ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-500'}`}>
-                {linkCopied && !npointId ? '✓ Copied!' : '🔗 Share Link'}
+              <button onClick={shareLink} title="Copy a frozen snapshot URL — anyone with the link can view scores as of right now" className={`text-xs px-2 py-1 rounded ${linkCopied && !npointId ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-500'}`}>
+                {linkCopied && !npointId ? '✓ Copied!' : '🔗 Snapshot Link'}
               </button>
               {npointId && (
                 <>
                   <button
                     onClick={publishToNpoint}
                     disabled={publishStatus === 'publishing'}
-                    title="Push scores to the live viewer link — spectators reload to see updates"
+                    title="Push scores to the spectator link — spectators reload to see updates"
                     className={`text-xs px-2 py-1 rounded ${
                       publishStatus === 'published' ? 'bg-green-600' :
                       publishStatus === 'error' ? 'bg-red-600' :
@@ -2962,7 +3011,7 @@
                     onClick={copyLiveLink}
                     className={`text-xs px-2 py-1 rounded ${linkCopied ? 'bg-green-600' : 'bg-gray-600 hover:bg-gray-500'}`}
                   >
-                    {linkCopied ? '✓ Copied!' : '📡 Live Link'}
+                    {linkCopied ? '✓ Copied!' : '📡 Spectator Link'}
                   </button>
                 </>
               )}
@@ -3270,8 +3319,8 @@
                     {npointId ? (
                       <div className="mt-2 space-y-2">
                         <div>
-                          <div className="text-xs text-gray-400 mb-1">📡 Live Link <span className="text-gray-600">(read-only for spectators)</span></div>
-                          <div className="text-xs text-gray-300 font-mono bg-gray-900 rounded px-2 py-1 select-all break-all">{window.location.origin}{window.location.pathname}?live={npointId}</div>
+                          <div className="text-xs text-gray-400 mb-1">📡 Spectator Link <span className="text-gray-600">(read-only for spectators)</span></div>
+                          <div className="text-xs text-gray-300 font-mono bg-gray-900 rounded px-2 py-1 select-all break-all">{window.location.origin}{window.location.pathname}?view={npointId}</div>
                         </div>
                         <div className="text-xs text-gray-500">
                           <span className="text-yellow-400">How to use:</span> Click <span className="text-emerald-400">Publish</span> after entering scores. Spectators reload the page to see updates.
@@ -3668,7 +3717,7 @@
                   </div>
                 </div>
               )}
-              {bracketSwaps.length > 0 && !bracketPreview && (spectatorMode || bracketSeedOverride) && bracketTeams.swaps?.length > 0 && (
+              {bracketSwaps.length > 0 && !bracketPreview && !spectatorMode && bracketSeedOverride && bracketTeams.swaps?.length > 0 && (
                 <div className="mb-3 bg-yellow-900/50 border border-yellow-600 rounded p-2 text-sm">
                   <div className="font-semibold text-yellow-400 mb-1">🔄 Seeding Adjusted (No Pool Rematches in R1)</div>
                   {bracketSwaps.map((swap, i) => (
