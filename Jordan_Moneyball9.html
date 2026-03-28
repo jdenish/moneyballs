@@ -331,7 +331,8 @@
       if (!match) return null;
       const t1 = match.t1;
       const t2 = match.t2;
-      const isReady = t1 && t2;
+      const hasPending = t1?.pending || t2?.pending;
+      const isReady = t1 && t2 && !hasPending;
       const hasBo3Games = score.games && score.games.length > 0;
 
       // Bo3 completion logic
@@ -394,7 +395,7 @@
               )}
             </div>
           </div>
-          <div className={`flex items-start gap-1 ${t1Won ? 'text-green-400 font-bold' : 'text-gray-300'}`}>
+          <div className={`flex items-start gap-1 ${t1Won ? 'text-green-400 font-bold' : t1?.pending ? 'text-gray-500 italic' : 'text-gray-300'}`}>
             <div className="flex-1 min-w-0">
               {t1 ? (t1.name || 'TBD').split(' / ').map((p, i) => (
                 <div key={i} className="text-xs leading-tight truncate">{p}</div>
@@ -427,7 +428,7 @@
               <button className="text-xs bg-gray-700 px-1 rounded hover:bg-green-700 flex-shrink-0" onClick={() => onOverride(t1)}>W</button>
             )}
           </div>
-          <div className={`flex items-start gap-1 mt-1 pt-1 border-t border-gray-700 ${t2Won ? 'text-green-400 font-bold' : 'text-gray-300'}`}>
+          <div className={`flex items-start gap-1 mt-1 pt-1 border-t border-gray-700 ${t2Won ? 'text-green-400 font-bold' : t2?.pending ? 'text-gray-500 italic' : 'text-gray-300'}`}>
             <div className="flex-1 min-w-0">
               {t2 ? (t2.name || 'TBD').split(' / ').map((p, i) => (
                 <div key={i} className="text-xs leading-tight truncate">{p}</div>
@@ -655,6 +656,24 @@
       };
       const currentPayouts = payouts[teamCount] || payouts[16];
       const showPayouts = teamCount >= 14;
+
+      // Detect if grand final is complete (a team has won 2 games in Bo3)
+      const isGrandFinalComplete = (bs, bt) => {
+        const checkBo3 = (games) => {
+          if (!games || games.length < 2) return false;
+          let w1 = 0, w2 = 0;
+          games.forEach(g => {
+            const s1 = parseInt(g.s1), s2 = parseInt(g.s2);
+            if (!isNaN(s1) && !isNaN(s2)) { if (s1 > s2) w1++; else if (s2 > s1) w2++; }
+          });
+          return w1 >= 2 || w2 >= 2;
+        };
+        if (!bs) return false;
+        if (bs.gf2?.s1 && bs.gf2?.s2) return true; // Reset game played = definitely complete
+        if (checkBo3(bs.gf?.games || bs.gf?.g)) return true;
+        if (bt === 'single' && checkBo3(bs.se_f?.games || bs.se_f?.g)) return true;
+        return false;
+      };
 
       // Load shared state from URL or embedded data (handles both old and slim formats)
       // opts.spectator: if false, don't set spectator mode (for organizer loading)
@@ -918,7 +937,9 @@
             .then(data => {
               if (data && Object.keys(data).length > 0) {
                 loadSharedState(data, { spectator: true });
-                setPhase('bracket');
+                const bs = data.bracketScores || data.bs || {};
+                const bt = data.bracketType || data.bt;
+                setPhase(isGrandFinalComplete(bs, bt) ? 'results' : 'bracket');
               }
             })
             .catch(e => { console.error('Failed to load view state', e); });
@@ -2154,6 +2175,12 @@
 
           // === L-R2: Merge survivors with W-QF losers (crossed) ===
           const getLr15Win = (id) => matches[id]?.bye ? matches[id]?.t1 : getBracketMatchTeam(id);
+          // Placeholder for pending feeder match results (shows "TBD" but keeps match visible)
+          const pending = (feederId, type) => {
+            const m = matches[feederId];
+            const label = m ? `${type} of ${m.round.replace(' (bye)', '')}` : 'TBD';
+            return { seed: null, name: label, pending: true };
+          };
           const topCount = Math.ceil(preWqfMergeIds.length / 2);
           const topSurvivorIds = preWqfMergeIds.slice(0, topCount);
           const bottomSurvivorIds = preWqfMergeIds.slice(topCount);
@@ -2165,12 +2192,14 @@
           const topPairs = Math.max(topSurvivorIds.length, wqfDropsTop.length);
           for (let i = 0; i < topPairs; i++) {
             const matchId = `lr2m${lr2Idx++}`;
-            const survivor = i < topSurvivorIds.length ? getLr15Win(topSurvivorIds[i]) : null;
-            const drop = i < wqfDropsTop.length ? getBracketMatchLoser(wqfDropsTop[i]) : null;
+            const survivor = i < topSurvivorIds.length ? (getLr15Win(topSurvivorIds[i]) || pending(topSurvivorIds[i], 'Winner')) : null;
+            const drop = i < wqfDropsTop.length ? (getBracketMatchLoser(wqfDropsTop[i]) || pending(wqfDropsTop[i], 'Loser')) : null;
             if (survivor && drop) {
               matches[matchId] = { id: matchId, t1: survivor, t2: drop, round: 'L-R2' };
-            } else {
+            } else if (survivor || drop) {
               matches[matchId] = { id: matchId, t1: survivor || drop, t2: null, round: 'L-R2 (bye)', bye: true };
+            } else {
+              matches[matchId] = { id: matchId, t1: pending(matchId, 'TBD'), t2: pending(matchId, 'TBD'), round: 'L-R2' };
             }
             lr2WinnerIds.push(matchId);
           }
@@ -2179,12 +2208,14 @@
           const bottomPairs = Math.max(bottomSurvivorIds.length, wqfDropsBottom.length);
           for (let i = 0; i < bottomPairs; i++) {
             const matchId = `lr2m${lr2Idx++}`;
-            const survivor = i < bottomSurvivorIds.length ? getLr15Win(bottomSurvivorIds[i]) : null;
-            const drop = i < wqfDropsBottom.length ? getBracketMatchLoser(wqfDropsBottom[i]) : null;
+            const survivor = i < bottomSurvivorIds.length ? (getLr15Win(bottomSurvivorIds[i]) || pending(bottomSurvivorIds[i], 'Winner')) : null;
+            const drop = i < wqfDropsBottom.length ? (getBracketMatchLoser(wqfDropsBottom[i]) || pending(wqfDropsBottom[i], 'Loser')) : null;
             if (survivor && drop) {
               matches[matchId] = { id: matchId, t1: survivor, t2: drop, round: 'L-R2' };
-            } else {
+            } else if (survivor || drop) {
               matches[matchId] = { id: matchId, t1: survivor || drop, t2: null, round: 'L-R2 (bye)', bye: true };
+            } else {
+              matches[matchId] = { id: matchId, t1: pending(matchId, 'TBD'), t2: pending(matchId, 'TBD'), round: 'L-R2' };
             }
             lr2WinnerIds.push(matchId);
           }
@@ -2200,6 +2231,7 @@
             }
             return null;
           };
+          const getLrWinOrPending = (id) => getLrWin(id) || pending(id, 'Winner');
 
           // === Reduction rounds: halve survivors until 2 remain ===
           let currentIds = lr2WinnerIds;
@@ -2211,9 +2243,9 @@
             for (let i = 0; i < currentIds.length; i += 2) {
               const matchId = `lr${roundNum}m${mNum++}`;
               if (i + 1 < currentIds.length) {
-                matches[matchId] = { id: matchId, t1: getLrWin(currentIds[i]), t2: getLrWin(currentIds[i + 1]), round: `L-R${roundNum}` };
+                matches[matchId] = { id: matchId, t1: getLrWinOrPending(currentIds[i]), t2: getLrWinOrPending(currentIds[i + 1]), round: `L-R${roundNum}` };
               } else {
-                matches[matchId] = { id: matchId, t1: getLrWin(currentIds[i]), t2: null, round: `L-R${roundNum} (bye)`, bye: true };
+                matches[matchId] = { id: matchId, t1: getLrWinOrPending(currentIds[i]), t2: null, round: `L-R${roundNum} (bye)`, bye: true };
               }
               nextIds.push(matchId);
             }
@@ -2227,13 +2259,9 @@
           const mergeCount = Math.max(currentIds.length, wsfDrops.length);
           for (let i = 0; i < mergeCount; i++) {
             const matchId = `lr${roundNum}m${i + 1}`;
-            const survivor = i < currentIds.length ? getLrWin(currentIds[i]) : null;
-            const drop = i < wsfDrops.length ? getBracketMatchLoser(wsfDrops[i]) : null;
-            if (survivor && drop) {
-              matches[matchId] = { id: matchId, t1: survivor, t2: drop, round: `L-R${roundNum}` };
-            } else {
-              matches[matchId] = { id: matchId, t1: survivor || drop, t2: null, round: `L-R${roundNum} (bye)`, bye: true };
-            }
+            const survivor = i < currentIds.length ? getLrWinOrPending(currentIds[i]) : null;
+            const drop = i < wsfDrops.length ? (getBracketMatchLoser(wsfDrops[i]) || pending(wsfDrops[i], 'Loser')) : null;
+            matches[matchId] = { id: matchId, t1: survivor || pending(matchId, 'TBD'), t2: drop || pending(matchId, 'TBD'), round: `L-R${roundNum}` };
             lr4Ids.push(matchId);
           }
           roundNum++;
@@ -2242,7 +2270,7 @@
           let finalIds = lr4Ids;
           while (finalIds.length > 1) {
             if (finalIds.length === 2) {
-              matches.lsf = { id: 'lsf', t1: getLrWin(finalIds[0]), t2: getLrWin(finalIds[1]), round: 'L-Semi' };
+              matches.lsf = { id: 'lsf', t1: getLrWinOrPending(finalIds[0]), t2: getLrWinOrPending(finalIds[1]), round: 'L-Semi' };
               finalIds = ['lsf'];
             } else {
               const nextIds = [];
@@ -2250,9 +2278,9 @@
               for (let i = 0; i < finalIds.length; i += 2) {
                 const matchId = `lr${roundNum}m${mNum++}`;
                 if (i + 1 < finalIds.length) {
-                  matches[matchId] = { id: matchId, t1: getLrWin(finalIds[i]), t2: getLrWin(finalIds[i + 1]), round: `L-R${roundNum}` };
+                  matches[matchId] = { id: matchId, t1: getLrWinOrPending(finalIds[i]), t2: getLrWinOrPending(finalIds[i + 1]), round: `L-R${roundNum}` };
                 } else {
-                  matches[matchId] = { id: matchId, t1: getLrWin(finalIds[i]), t2: null, round: `L-R${roundNum} (bye)`, bye: true };
+                  matches[matchId] = { id: matchId, t1: getLrWinOrPending(finalIds[i]), t2: null, round: `L-R${roundNum} (bye)`, bye: true };
                 }
                 nextIds.push(matchId);
               }
@@ -2261,7 +2289,7 @@
             }
           }
 
-          matches.lf = { id: 'lf', t1: getLrWin(finalIds[0]), t2: getBracketMatchLoser('wf'), round: 'L-Final' };
+          matches.lf = { id: 'lf', t1: getLrWinOrPending(finalIds[0]), t2: getBracketMatchLoser('wf') || pending('wf', 'Loser'), round: 'L-Final' };
         }
 
         matches.gf = { id: 'gf', t1: getBracketMatchTeam('wf'), t2: getBracketMatchTeam('lf'), round: 'Grand Final', bo3: true };
@@ -2633,10 +2661,7 @@
             // Auto-detect the right phase
             const hasBracketOverrides = data.bracketOverrides && Object.keys(data.bracketOverrides).length > 0;
             const hasOnCourtBracket = data.onCourt && Object.keys(data.onCourt).some(k => k.startsWith('w') || k.startsWith('l') || k === 'gf');
-            // Check if grand final is complete (tournament finished)
-            const bs = data.bracketScores || {};
-            const gfComplete = bs.gf?.games?.length >= 2 || bs.gf2?.games?.length >= 2 || (data.bracketType === 'single' && bs.se_f?.games?.length >= 2);
-            if (gfComplete) {
+            if (isGrandFinalComplete(data.bracketScores, data.bracketType)) {
               setPhase('results');
             } else if (hasBracketData || hasBracketOverrides || hasOnCourtBracket) {
               setPhase('bracket');
