@@ -160,6 +160,7 @@
         date: 'March 27, 2026',
         title: 'Moneyball #4',
         status: 'completed',
+        payouts: { first: 400, second: 120, third: 60 },
         results: {
           first: 'Preston Gordon / Jack Hared',
           second: 'Sanil Jagtiani / Oscar Serra',
@@ -292,7 +293,8 @@
       const [poolSize, setPoolSize] = useState(0);
       const [bracketSeedOverride, setBracketSeedOverride] = useState(null);
 
-      const currentPayouts = PAYOUTS[teamCount] || PAYOUTS[16];
+      const activeTournament = TOURNAMENTS.find(t => t.id === activeTournamentId);
+      const currentPayouts = activeTournament?.payouts || PAYOUTS[teamCount] || PAYOUTS[16];
 
       // Load shared state from embedded data (slim key format)
       const loadSharedState = useCallback((d) => {
