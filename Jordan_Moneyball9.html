@@ -1863,7 +1863,9 @@
         }
         // ========= SINGLE ELIMINATION =========
         if (bracketType === 'single') {
-          const seTeams = (rrIncomplete ? Array.from({ length: teamCount }, (_, i) => makePlaceholder(i + 1)) : displayStandings.slice(0, teamCount)).map(resolveFromStandings);
+          // Use winnersCount if RR/pools phase exists (top N advance), otherwise all teams
+          const seCount = (rrGames > 0 || Object.keys(pools).length > 0) ? winnersCount : teamCount;
+          const seTeams = (rrIncomplete ? Array.from({ length: seCount }, (_, i) => makePlaceholder(i + 1)) : displayStandings.slice(0, seCount)).map(resolveFromStandings);
           if (seTeams.length < 2) return {};
           const matches = {};
           const n = seTeams.length;
