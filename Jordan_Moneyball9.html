@@ -263,7 +263,16 @@
         id: '2026-04-17',
         date: 'April 17, 2026',
         title: 'Moneyball #5',
-        status: 'upcoming'
+        status: 'upcoming',
+        preloadedTeams: [
+          { p1Name: 'Brandon Fritze', p2Name: 'Alex Tong', p1Dupr: '', p2Dupr: '' },
+          { p1Name: 'Alex Szczepkowski', p2Name: 'Jordan Denish', p1Dupr: '', p2Dupr: '' },
+          { p1Name: 'Zach Bowe', p2Name: 'Kenoa Tio', p1Dupr: '', p2Dupr: '' },
+          { p1Name: 'Dhaval Bhavsar', p2Name: 'Kishan Shah', p1Dupr: '', p2Dupr: '' },
+          { p1Name: 'Darren Johnson', p2Name: 'Zachary Lessner', p1Dupr: '', p2Dupr: '' },
+          { p1Name: 'Thomas Abramski', p2Name: 'Sebastian Ferrer', p1Dupr: '', p2Dupr: '' },
+          { p1Name: 'Tejas Goculdas', p2Name: 'Michael Velez', p1Dupr: '', p2Dupr: '' }
+        ]
       },
       {
         id: '2026-04-24',
@@ -649,9 +658,11 @@
       }, [passwordInput]);
 
       // Default winners count based on team count
-      const defaultWinnersCount = { 8: 8, 9: 8, 10: 8, 11: 8, 12: 8, 13: 8, 14: 8, 15: 8, 16: 8, 17: 8, 18: 8, 19: 8, 20: 8 };
+      const defaultWinnersCount = { 6: 6, 7: 7, 8: 8, 9: 8, 10: 8, 11: 8, 12: 8, 13: 8, 14: 8, 15: 8, 16: 8, 17: 8, 18: 8, 19: 8, 20: 8 };
 
       const payouts = {
+        6: { first: 160, second: 60, third: 0, total: 220 },
+        7: { first: 200, second: 80, third: 0, total: 280 },
         8: { first: 240, second: 100, third: 0, total: 340 },
         9: { first: 280, second: 120, third: 0, total: 400 },
         10: { first: 320, second: 140, third: 0, total: 460 },
@@ -3080,7 +3091,7 @@
                   }}
                   className="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-sm"
                 >
-                  {[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(n => (
+                  {[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(n => (
                     <option key={n} value={n}>{n}</option>
                   ))}
                 </select>
@@ -3093,7 +3104,7 @@
                   setImportText(e.target.value);
                   // Auto-detect team count from pasted text
                   const lines = e.target.value.split('\n').filter(l => l.trim() && l.includes('/'));
-                  if (lines.length >= 8 && lines.length <= 20) {
+                  if (lines.length >= 6 && lines.length <= 20) {
                     setTeamCount(lines.length);
                     setWinnersCount(defaultWinnersCount[lines.length] || 8);
                     setCourtCount(Math.floor(lines.length / 2));
