@@ -752,7 +752,15 @@
           setBracketScores(full);
         }
         if (opts.spectator !== false) setSpectatorMode(true);
-        setPhase(v('phase', 'ph') || 'bracket');
+        // Auto-detect best phase to show based on data, ignoring saved phase
+        const hasBracket = (d.bracketScores && Object.keys(d.bracketScores).length > 0) || (d.bs && Object.keys(d.bs).length > 0);
+        const hasBracketOverrides = (d.bracketOverrides && Object.keys(d.bracketOverrides).length > 0) || (d.bo && Object.keys(d.bo).length > 0);
+        const hasSeedingScores = (d.seedingScores && Object.keys(d.seedingScores).length > 0) || (d.ss && Object.keys(d.ss).length > 0);
+        const hasMatchups = d.matchupsGenerated || d.mg;
+        if (isGrandFinalComplete(d.bs || d.bracketScores || {}, d.bracketType || d.bt)) setPhase('results');
+        else if (hasBracket || hasBracketOverrides) setPhase('bracket');
+        else if (hasSeedingScores || hasMatchups) setPhase('roundrobin');
+        else setPhase('bracket');
       };
 
       // Load a tournament by ID (organizer mode from home page)
