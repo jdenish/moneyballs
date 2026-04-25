@@ -897,7 +897,7 @@
                       <div className="mt-2 space-y-0.5">
                         <div className="text-xs flex items-center gap-1"><span>{'\u{1F947}'}</span><span className="text-yellow-300">{tournament.results.first}</span></div>
                         <div className="text-xs flex items-center gap-1"><span>{'\u{1F948}'}</span><span className="text-gray-300">{tournament.results.second}</span></div>
-                        <div className="text-xs flex items-center gap-1"><span>{'\u{1F949}'}</span><span className="text-amber-400">{tournament.results.third}</span></div>
+                        {tournament.results.third && <div className="text-xs flex items-center gap-1"><span>{'\u{1F949}'}</span><span className="text-amber-400">{tournament.results.third}</span></div>}
                       </div>
                     )}
                     {tournament.status === 'upcoming' && tournament.teamCount && (
